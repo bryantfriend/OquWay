@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>OquWay Educational App</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+  <link rel="stylesheet" href="css/style.css?v=4" /> </head>
+<body style="background: linear-gradient(to right, #a7e6f8, #f8d3a7);">
+
+    <div class="container">
+        <div id="languageSwitcher" class="language-switcher">
+            <img src="https://flagcdn.com/us.svg" data-lang="en" class="selected" alt="EN">
+            <img src="https://flagcdn.com/ru.svg" data-lang="ru" alt="RU">
+            <img src="https://flagcdn.com/kg.svg" data-lang="kg" alt="KG">
+        </div>
+
+        <div class="content-wrapper">
+            <div id="messageBox" class="message-box"></div>
+            <div id="screenContainer" class="h-full overflow-y-auto">
+                <div id="courseItemsContainer" class="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingScreen" style="position: fixed; top: 0; right: 0; bottom: 0; left: 0; background-color: white; display: flex; align-items: center; justify-content: center; z-index: 50;">
+        <div class="text-center space-y-4">
+            <div class="text-4xl animate-bounce">🦊📚🦉</div>
+            <div class="text-lg font-semibold">Loading magic schools...</div>
+        </div>
+    </div>
+
+    <script type="module" src="js/firebase-init.js"></script>
+    <script type="module" src="js/config.js"></script>
+    <script type="module" src="js/data.js"></script>
+    <script type="module" src="js/i18n.js"></script>
+    <script type="module" src="js/utilities.js"></script>
+    <script type="module" src="js/router.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
