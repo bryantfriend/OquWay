@@ -14,6 +14,7 @@ function resolveLocalized(val, lang = getLang()) {
 let currentSceneIndex = 0;
 let partData = null;
 let sceneContainer = null;
+let isChoiceActive = true; // Prevents multiple clicks while processing an answer
 
 function renderScene() {
     if (!partData || !sceneContainer) return;
@@ -21,35 +22,36 @@ function renderScene() {
     const scene = partData.scenes[currentSceneIndex];
 
     if (!scene) {
-        // End of sequence, maybe show a summary or nothing
+        // End of sequence - you could add a completion message here
+        sceneContainer.innerHTML += `<div class="text-center p-4 bg-green-100 text-green-800 rounded-lg">Roleplay complete! Well done.</div>`;
         return;
     }
 
     let sceneHtml = '';
     if (scene.character === "You") {
-        // This is a player choice scene
+        isChoiceActive = true; // Enable choices for the new scene
         const prompt = resolveLocalized(scene.prompt, lang);
         const optionsHtml = scene.options.map(opt => {
             const text = resolveLocalized(opt.text, lang);
-            // Use JSON stringify and escape single quotes for the HTML attribute
             const escapedOptionData = JSON.stringify(opt).replace(/'/g, "&apos;");
-            return `<button class="player-option-btn w-full text-left p-3 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition mb-2" data-option='${escapedOptionData}'>
+            return `<button class="player-option-btn w-full text-left p-3 bg-white border-2 border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition mb-2" data-option='${escapedOptionData}'>
                         ${text}
                     </button>`;
         }).join('');
 
         sceneHtml = `
-            <div class="mb-4 p-4 bg-blue-50 border-l-4 border-blue-400">
+            <div class="mb-4 p-4 bg-blue-50 border-l-4 border-blue-400 animate-fade-in">
                 <p class="font-semibold text-blue-800">${prompt}</p>
                 <div class="mt-3">${optionsHtml}</div>
                 <div class="feedback-container mt-2 h-8 text-sm font-semibold"></div>
             </div>`;
     } else {
         // This is an NPC dialogue scene
-        const dialogue = resolveLocalized(scene.dialogue, lang);
+        const dialogueSource = scene.dialogue || (scene.options && scene.options[0] ? scene.options[0].text : "");
+        const dialogue = resolveLocalized(dialogueSource, lang);
         const avatar = scene.avatar ? `<img src="${scene.avatar}" class="w-12 h-12 rounded-full mr-3">` : '';
         sceneHtml = `
-            <div class="mb-4 p-4 flex items-center bg-gray-100 rounded-lg">
+            <div class="mb-4 p-4 flex items-center bg-gray-100 rounded-lg animate-fade-in">
                 ${avatar}
                 <div>
                     <p class="font-bold">${scene.character}</p>
@@ -57,44 +59,57 @@ function renderScene() {
                 </div>
             </div>`;
     }
-    sceneContainer.innerHTML += sceneHtml; // Append the new scene
-    sceneContainer.scrollTop = sceneContainer.scrollHeight; // Auto-scroll to the bottom
+    sceneContainer.innerHTML += sceneHtml;
+    sceneContainer.scrollTop = sceneContainer.scrollHeight;
 
     if (scene.character !== "You") {
-        // If it's NPC dialogue, automatically move to the next scene
         currentSceneIndex++;
-        setTimeout(renderScene, 500); // Small delay for effect
+        setTimeout(renderScene, 1200); // Slightly longer delay for reading
     }
 }
 
 
 function handleOptionClick(e) {
     const button = e.target.closest('.player-option-btn');
-    if (!button) return;
+    if (!button || !isChoiceActive) return;
 
-    // Now this will parse correctly
-    const optionData = JSON.parse(button.dataset.option); 
+    isChoiceActive = false; // Disable further clicks until this choice is resolved
+    const optionData = JSON.parse(button.dataset.option);
     const lang = getLang();
-    const feedbackContainer = button.closest('.p-4').querySelector('.feedback-container');
+    const choiceContainer = button.parentElement;
+    const feedbackContainer = choiceContainer.nextElementSibling;
 
-    // Disable all buttons in this choice set
-    button.parentElement.querySelectorAll('.player-option-btn').forEach(btn => {
+    // Visually disable all buttons in this choice set
+    choiceContainer.querySelectorAll('.player-option-btn').forEach(btn => {
         btn.disabled = true;
         btn.classList.add('opacity-60');
     });
 
     if (optionData.isCorrect) {
-        button.classList.remove('border-gray-300');
+        button.classList.remove('border-gray-300', 'opacity-60');
         button.classList.add('bg-green-100', 'border-green-500');
         currentSceneIndex++;
-        setTimeout(renderScene, 800); // Proceed after a short delay
+        setTimeout(renderScene, 800);
     } else {
-        button.classList.remove('border-gray-300');
+        // --- THIS IS THE CORRECTED LOGIC ---
+        button.classList.remove('border-gray-300', 'opacity-60');
         button.classList.add('bg-red-100', 'border-red-500');
         const feedback = resolveLocalized(optionData.feedback, lang);
         if (feedback && feedbackContainer) {
             feedbackContainer.innerHTML = `<p class="text-red-600">${feedback}</p>`;
         }
+
+        // After a delay, reset the buttons so the user can try again.
+        setTimeout(() => {
+            if (feedbackContainer) feedbackContainer.innerHTML = ''; // Clear feedback
+            
+            choiceContainer.querySelectorAll('.player-option-btn').forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('opacity-60', 'bg-red-100', 'border-red-500');
+                btn.classList.add('border-gray-300');
+            });
+            isChoiceActive = true; // Re-enable choices
+        }, 2000); // Wait 2 seconds before resetting
     }
 }
 
@@ -105,7 +120,7 @@ export default function renderRoleplaySequence(container, part) {
     const scenario = resolveLocalized(part.scenario);
 
     container.innerHTML = `
-        <div class="p-2">
+        <div class="p-2 max-w-2xl mx-auto">
             <h3 class="text-lg font-bold mb-3 text-center bg-gray-100 p-2 rounded">${scenario}</h3>
             <div id="scenes-container" class="space-y-4"></div>
         </div>

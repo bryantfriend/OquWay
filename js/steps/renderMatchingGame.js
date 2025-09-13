@@ -4,22 +4,55 @@ import { speak } from './speech.js'; // <-- PATH UPDATED to look in the current 
 
 // Helper to get localized text
 function resolveLocalized(val) {
-    // ... (rest of the function is the same)
-    if (!val) return "";
-    if (typeof val === "string") return val;
-    const lang = (localStorage.getItem("language") || "en").toLowerCase();
-    const normalizedLang = lang === "ky" ? "kg" : lang;
-    return val[normalizedLang] ?? val.en ?? Object.values(val)[0] ?? [];
+  if (!val) return "";
+  if (typeof val === "string") return val;
+
+  // 👇 NEW: if it's already an array (like your pairs), just return it
+  if (Array.isArray(val)) return val;
+
+  const lang = (localStorage.getItem("language") || "en").toLowerCase();
+  const normalizedLang = lang === "ky" ? "kg" : lang;
+  return val[normalizedLang] ?? val.en ?? Object.values(val)[0] ?? [];
 }
 
+
 export default function renderMatchingGame(container, part) {
-    // The rest of this file is exactly the same as before.
-    // ...
-    const pairs = resolveLocalized(part.pairs);
-    if (!pairs || pairs.length === 0) {
-        container.innerHTML = `<p class="text-red-500">Error: No pairs found for this game.</p>`;
+
+   // js/steps/renderMatchingGame.js
+
+// PASTE THIS NEW BLOCK
+
+    // --- NEW DATA PROCESSING (Updated for your Firestore structure) ---
+
+    // Step 1: Get the raw array of pair objects for the current language.
+    let rawPairObjects = part.pairs;
+    if (rawPairObjects && !Array.isArray(rawPairObjects)) {
+        const lang = (localStorage.getItem("language") || "en").toLowerCase();
+        const normalizedLang = lang === "ky" ? "kg" : lang;
+        rawPairObjects = rawPairObjects[normalizedLang] ?? rawPairObjects.en ?? Object.values(rawPairObjects)[0] ?? [];
+    }
+
+    if (!rawPairObjects || !Array.isArray(rawPairObjects) || rawPairObjects.length === 0) {
+        container.innerHTML = `<p class="text-red-500">Error: No valid pairs found for this game.</p>`;
         return;
     }
+
+    // Step 2: Map the raw objects to a clean [term, target] string array.
+    // THIS IS THE KEY CHANGE: We now use p.word and p.match.
+    const pairs = rawPairObjects.map(p => {
+        // Use the correct keys from your Firestore data: "word" and "match"
+        const term = resolveLocalized(p.word);
+        const target = resolveLocalized(p.match);
+        return [term, target];
+    }).filter(p => p[0] && p[1]); // Ensure we don't have empty pairs
+
+    // Final check in case filtering removed everything
+    if (pairs.length === 0) {
+        container.innerHTML = `<p class="text-red-500">Error: Pairs data could not be processed.</p>`;
+        return;
+    }
+
+// --- END OF NEW BLOCK ---
 
     const answerKey = new Map(pairs);
     let correctMatches = 0;
