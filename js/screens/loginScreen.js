@@ -4,6 +4,10 @@ import { db } from '../firebase-init.js';
 import {
   collection, getDocs, query, where, limit
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import {
+  doc, getDoc, setDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import { FRUIT_EMOJIS, studentData } from '../config.js';
 import { navigateTo } from '../router.js';
 import { getText } from '../i18n.js';
@@ -22,6 +26,36 @@ function toRenderableUrl(u = '') {
     ? u.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob/', '/')
     : u;
 }
+
+async function ensureUserDocForAnon(student) {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not signed in anonymously yet");
+
+  const ref = doc(db, "users", user.uid);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    await setDoc(ref, {
+      createdAt: serverTimestamp(),
+      role: "student",
+      displayName: student.name,
+      classId: student.classId || null,
+      avatar: student.photoUrl || "",
+      fruit: (student.fruitPassword || []).join?.('') || "",
+    });
+  } else {
+    // Optional: update info each login
+    await setDoc(ref, {
+      lastLogin: serverTimestamp(),
+      classId: student.classId || null,
+      avatar: student.photoUrl || "",
+    }, { merge: true });
+  }
+
+  return ref.id;
+}
+
 
 function isStale(v) { return v !== screenVersion; }
 
@@ -453,11 +487,24 @@ async function handleLogin() {
   }
   if ((stored || []).join('') !== emojis.join('')) return alert("Incorrect password.");
 
+  // ✅ Save locally
   studentData.studentId = user.id;
   studentData.name      = user.name;
   studentData.avatar    = user.photoUrl || '';
   studentData.points    = { physical: 0, cognitive: 0, creative: 0, social: 0 };
   studentData.classId   = selectedClass;
+
+  // ✅ Create or update their own Firestore doc (by anonymous UID)
+  try {
+    await ensureUserDocForAnon({
+      name: user.name,
+      classId: selectedClass,
+      photoUrl: user.photoUrl,
+      fruitPassword: stored,
+    });
+  } catch (err) {
+    console.error("Failed to ensure user doc:", err);
+  }
 
   navigateTo('dashboard');
 }
