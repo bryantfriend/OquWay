@@ -1,14 +1,20 @@
 // js/main.js
+// 🌟 Central entry point for OquWay (modular version)
+
 import { setLanguage } from "./i18n.js";
 import { navigateTo } from "./router.js";
 import { renderLoginScreen } from "./screens/loginScreen.js";
+import "./config.js";
+import "./data.js";
+import "./utilities.js";
 
-import { getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
-import { initializeApp } from "firebase/app";
+// ✅ Import initialized Firebase objects (already created in firebase-init.js)
+import { app, auth, db, storage } from "./firebase-init.js";
 
-// (if not already initialized somewhere else)
-const firebaseConfig = { /* ...your config... */ };
-initializeApp(firebaseConfig);
+import {
+  onAuthStateChanged,
+  signInAnonymously
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
 function normalizeLang(l = "en") {
   const v = String(l).toLowerCase();
@@ -16,6 +22,7 @@ function normalizeLang(l = "en") {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // 🌐 Language setup
   const savedLang = normalizeLang(localStorage.getItem("language") || "en");
   setLanguage(savedLang);
 
@@ -25,22 +32,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     setLanguage(normalizeLang(img.dataset.lang));
   });
 
-  const auth = getAuth();
-
-  // Wait for auth state. If no user, sign in anonymously, then proceed.
+  // 🔒 Authentication flow
   onAuthStateChanged(auth, async (user) => {
     try {
       if (!user) {
-        await signInAnonymously(auth); // creates/stores a persistent anon user
-        return; // onAuthStateChanged will fire again with the new user
+        await signInAnonymously(auth);
+        return; // will trigger again once signed in
       }
 
-      // 🔐 We are now authenticated (anonymously).
-      // Safe to call screens that use Firestore:
+      // ✅ Authenticated (anonymous or real)
       await renderLoginScreen(document.getElementById("screenContainer"));
     } catch (err) {
       console.error("Auth error:", err);
-      // Optionally render a friendly error UI here
     } finally {
       const loadingScreen = document.getElementById("loadingScreen");
       if (loadingScreen) loadingScreen.style.display = "none";
