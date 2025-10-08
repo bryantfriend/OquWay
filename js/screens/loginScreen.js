@@ -1,16 +1,16 @@
 // js/screens/loginScreen.js
-
 import { db } from '../firebase-init.js';
-import {
-  collection, getDocs, query, where, limit
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-import {
-  doc, getDoc, setDoc, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+import { collection, getDocs, query, where, limit } 
+  from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import { FRUIT_EMOJIS, studentData } from '../config.js';
 import { navigateTo } from '../router.js';
 import { getText } from '../i18n.js';
+import { getFunctions, httpsCallable } 
+  from "https://www.gstatic.com/firebasejs/11.10.0/firebase-functions.js";
+import { signInWithCustomToken } 
+  from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import { auth } from "../firebase-init.js";
+
 
 // State
 let locations = [];
@@ -27,35 +27,6 @@ function toRenderableUrl(u = '') {
     : u;
 }
 
-async function ensureUserDocForAnon(student) {
-  const auth = getAuth();
-  const user = auth.currentUser;
-  if (!user) throw new Error("Not signed in anonymously yet");
-
-  const ref = doc(db, "users", user.uid);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
-    await setDoc(ref, {
-      createdAt: serverTimestamp(),
-      role: "student",
-      displayName: student.name,
-      classId: student.classId || null,
-      avatar: student.photoUrl || "",
-      fruit: (student.fruitPassword || []).join?.('') || "",
-    });
-  } else {
-    // Optional: update info each login
-    await setDoc(ref, {
-      lastLogin: serverTimestamp(),
-      classId: student.classId || null,
-      avatar: student.photoUrl || "",
-    }, { merge: true });
-  }
-
-  return ref.id;
-}
-
 
 function isStale(v) { return v !== screenVersion; }
 
@@ -70,6 +41,20 @@ function thumbUrl(u = '', w = 160, h = 160) {
 function imgSrcFrom(obj) {
   const raw = obj?.photoUrl || obj?.photoDataUrl || obj?.imageUrl || '';
   return thumbUrl(raw) || 'assets/school-default.jpg';
+}
+
+// --- auto-login from localStorage ---
+const saved = localStorage.getItem("studentData");
+if (saved) {
+  try {
+    const parsed = JSON.parse(saved);
+    console.log("🔄 Restored saved session:", parsed);
+    Object.assign(studentData, parsed);
+    navigateTo("dashboard");
+  } catch (err) {
+    console.warn("⚠️ Failed to restore saved session:", err);
+    localStorage.removeItem("studentData");
+  }
 }
 
 // --- main render ---
@@ -446,12 +431,19 @@ function buildFruitGrid() {
   const grid = document.getElementById("fruitGrid");
   const emojiInput = document.getElementById("emojiPasswordInput");
   const loginBtn = document.getElementById("loginBtn");
-  grid.innerHTML = '';
+  grid.innerHTML = "";
 
+  if (!grid || !emojiInput || !loginBtn) {
+    console.error("Fruit grid elements missing in DOM");
+    return;
+  }
+
+  // ✅ Build fruit buttons
   FRUIT_EMOJIS.forEach(fruit => {
     const btn = document.createElement("button");
-    btn.className = "fruit-button";
+    btn.className = "fruit-button cursor-pointer text-2xl";
     btn.textContent = fruit;
+
     btn.addEventListener("click", () => {
       const current = [...emojiInput.value.matchAll(/[\u{1F300}-\u{1FAFF}]/gu)].map(m => m[0]);
       if (current.length < 4) {
@@ -459,15 +451,17 @@ function buildFruitGrid() {
         if (current.length + 1 === 4) loginBtn.disabled = false;
       }
     });
+
     grid.appendChild(btn);
   });
 
+  // ✅ Add backspace button
   const clearBtn = document.createElement("button");
-  clearBtn.className = "fruit-button";
+  clearBtn.className = "fruit-button cursor-pointer text-2xl";
   clearBtn.textContent = "🔙";
   clearBtn.addEventListener("click", () => {
     const current = [...emojiInput.value.matchAll(/[\u{1F300}-\u{1FAFF}]/gu)].map(m => m[0]);
-    emojiInput.value = current.slice(0, -1).join('');
+    emojiInput.value = current.slice(0, -1).join("");
     loginBtn.disabled = true;
   });
   grid.appendChild(clearBtn);
@@ -476,38 +470,59 @@ function buildFruitGrid() {
 // --- login ---
 async function handleLogin() {
   const emojiInput = document.getElementById("emojiPasswordInput");
-  const inputPwd = emojiInput.value;
+  const inputPwd = emojiInput.value.trim();
   const user = selectedStudent;
+
+  // Validate fruit password
   const emojis = [...inputPwd.matchAll(/[\u{1F300}-\u{1FAFF}]/gu)].map(m => m[0]);
-  if (!user?.id || emojis.length !== 4) return alert("Please enter 4 emoji password.");
-
-  let stored = user.fruitPassword;
-  if (typeof stored === 'string') {
-    try { stored = JSON.parse(stored); } catch { stored = []; }
+  if (!user?.id || emojis.length !== 4) {
+    alert("Please enter 4 emoji password.");
+    return;
   }
-  if ((stored || []).join('') !== emojis.join('')) return alert("Incorrect password.");
 
-  // ✅ Save locally
-  studentData.studentId = user.id;
-  studentData.name      = user.name;
-  studentData.avatar    = user.photoUrl || '';
-  studentData.points    = { physical: 0, cognitive: 0, creative: 0, social: 0 };
-  studentData.classId   = selectedClass;
+  const fruitArray = emojis;
 
-  // ✅ Create or update their own Firestore doc (by anonymous UID)
   try {
-    await ensureUserDocForAnon({
-      name: user.name,
-      classId: selectedClass,
-      photoUrl: user.photoUrl,
-      fruitPassword: stored,
-    });
-  } catch (err) {
-    console.error("Failed to ensure user doc:", err);
-  }
+    console.log("🧑 Selected student:", user);
 
-  navigateTo('dashboard');
+    if (!user?.id) {
+      alert("Error: Student ID not found. Please reselect your student photo.");
+      return;
+    }
+
+    const functions = getFunctions();
+    const studentLogin = httpsCallable(functions, "studentLogin");
+
+    const { data } = await studentLogin({
+      studentId: user.id,
+      fruitPassword: fruitArray,
+    });
+
+    // ✅ Sign in using custom token
+    await signInWithCustomToken(auth, data.token);
+    console.log("✅ Signed in as:", auth.currentUser.uid);
+
+    // ✅ Save locally (cached student info)
+    studentData.studentId = user.id;
+    studentData.name = user.name || "Student";
+    studentData.avatar = user.photoUrl || "";
+    studentData.points = { physical: 0, cognitive: 0, creative: 0, social: 0 };
+    studentData.classId = user.classId || selectedClass || null;
+
+    // ✅ Persist login in localStorage
+    localStorage.setItem("studentData", JSON.stringify(studentData));
+    console.log("💾 Saved studentData to localStorage:", studentData);
+
+    // Proceed to dashboard
+    navigateTo("dashboard");
+
+  } catch (err) {
+    console.error("❌ Fruit login failed:", err);
+    alert("Login failed: " + err.message);
+  }
 }
+
+
 
 // --- back nav ---
 function goBack() {
