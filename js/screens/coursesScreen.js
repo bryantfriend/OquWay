@@ -1,177 +1,89 @@
-// js/coursePlayerScreen.js
+// js/coursesScreen.js
 
 import { db } from "../firebase-init.js";
-import { doc, getDoc, setDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-import { navigateTo } from '../router.js';
-import { auth } from "../firebase-init.js";
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import { studentData } from "../config.js";
-
-// --- HELPER FUNCTIONS (No change here) ---
-function getLang() {
-  const raw = (localStorage.getItem("language") || "en").toLowerCase();
-  return raw === "ky" ? "kg" : raw;
-}
-
-function resolveLocalized(val) {
-  if (!val) return "";
-  if (typeof val === "string") return val;
-  const lang = getLang();
-  return val[lang] ?? val.en ?? Object.values(val)[0] ?? "";
-}
+import { navigateTo } from "../router.js";
 
 /**
- * Marks a module as completed for the current student
+ * Renders the list of courses associated with the student's class.
  */
-async function markModuleCompleted(moduleId) {
-  try {
-    const user = auth.currentUser;
-    if (!user) {
-      alert("You must be logged in to mark a module complete.");
-      return;
-    }
-
-    const uid = user.uid;
-    const docId = `${uid}_${moduleId}`;
-
-    await setDoc(doc(db, "modules_completed", docId), {
-      userId: uid,
-      moduleId,
-      completedAt: serverTimestamp(),
-    });
-
-    console.log(`✅ Module ${moduleId} marked completed for ${uid}`);
-    alert("✅ Progress saved!");
-  } catch (err) {
-    console.error("❌ Failed to mark module complete:", err);
-    alert("Error saving progress: " + err.message);
-  }
-}
-
-/**
- * Checks if a module is already completed for the current student
- */
-async function isModuleCompleted(moduleId) {
-  try {
-    const user = auth.currentUser;
-    if (!user) return false;
-    const docId = `${user.uid}_${moduleId}`;
-    const snap = await getDoc(doc(db, "modules_completed", docId));
-    return snap.exists();
-  } catch (err) {
-    console.error("⚠️ Error checking module completion:", err);
-    return false;
-  }
-}
-
-
-// --- RENDER FUNCTION (No change here) ---
-export async function renderCoursePlayerScreen(container) {
+export async function renderCoursesScreen(container) {
   container.innerHTML = `
     <div class="p-4">
-      <h1 id="courseTitle" class="text-xl font-bold mb-4">Course Modules</h1>
-      <div id="modulesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <p>Loading modules...</p>
+      <h1 class="text-xl font-bold mb-4" data-i18n="activitiesTitle">Courses</h1>
+      <div id="coursesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <p>Loading...</p>
       </div>
-      <button id="backFromCourseBtn" class="bg-gray-600 text-white py-2 w-full rounded">Back</button>
+      <button id="backFromCoursesBtn" class="bg-gray-600 text-white w-full py-2 rounded" data-i18n="backToDashboardBtn">Back</button>
     </div>
   `;
 
-  document.getElementById("backFromCourseBtn")
-    .addEventListener("click", () => navigateTo("courses"));
+  document.getElementById("backFromCoursesBtn")
+    .addEventListener("click", () => navigateTo("dashboard"));
 
-  const courseDocId = localStorage.getItem("activeCourseDocId");
-  if (!courseDocId) {
-    document.getElementById("modulesContainer").innerHTML = `<p class="text-red-600">No course selected.</p>`;
+  await loadCourses();
+}
+
+/**
+ * Loads and displays courses for the current student's class.
+ */
+async function loadCourses() {
+  const container = document.getElementById("coursesContainer");
+  container.innerHTML = '';
+
+  if (!studentData.classId) {
+    container.innerHTML = `<p class="text-red-600">No class ID found. Cannot load courses.</p>`;
+    console.error("❌ Missing classId in studentData:", studentData);
     return;
   }
 
-  await loadCourseModules(courseDocId);
-}
-
-
-// --- DATA LOADING FUNCTION (REWRITTEN) ---
-async function loadCourseModules(courseDocId) {
-  const container = document.getElementById("modulesContainer");
-  container.innerHTML = '';
+  console.log("✅ studentData.classId =", studentData.classId);
 
   try {
-    // First, get the main course document to display its title
-    const courseDocRef = doc(db, "courses", courseDocId);
-    const courseSnap = await getDoc(courseDocRef);
+    const q = query(
+      collection(db, "courses"),
+      where("classes", "array-contains", studentData.classId)
+    );
 
-    if (!courseSnap.exists()) {
-      throw new Error("❌ Course not found in Firestore.");
+    console.log("📡 Executing Firestore query...");
+    const snapshot = await getDocs(q);
+    console.log(`📦 Retrieved ${snapshot.size} course(s)`);
+
+    if (snapshot.empty) {
+      container.innerHTML = `<p class="text-gray-600">No courses found for your class.</p>`;
+      console.warn("⚠️ No matching courses found for classId:", studentData.classId);
+      return;
     }
 
-    const courseData = courseSnap.data();
-    const courseTitleEl = document.getElementById("courseTitle");
-    if (courseTitleEl && courseData.title) {
-      courseTitleEl.textContent = resolveLocalized(courseData.title) || "Modules";
-    }
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      console.log("📘 Course loaded:", data);
+    console.log("📘 Course doc ID:", doc.id);
+    console.log("📘 Course.classes array:", data.classes);
 
-    // --- NEW LOGIC: Query the 'modules' subcollection ---
-    const modulesRef = collection(db, "courses", courseDocId, "modules");
-    const modulesSnap = await getDocs(modulesRef);
+      const card = document.createElement("div");
+      card.className = "border rounded p-4 shadow bg-white hover:bg-gray-50 transition text-center";
 
-    if (modulesSnap.empty) {
-        container.innerHTML = `<p class="text-gray-600">No modules found for this course.</p>`;
-        return;
-    }
+      card.innerHTML = `
+        <img src="${data.iconUrl}" class="mx-auto w-14 h-14 rounded-full mb-3" alt="Course Icon">
+        <div class="text-lg font-semibold mb-1">${data.title || "Untitled Course"}</div>
+        <p class="text-sm text-gray-700 mb-3">${data.description || "No description available."}</p>
+        <button class="bg-blue-600 text-white py-1 px-4 rounded text-sm">Start</button>
+      `;
 
-modulesSnap.forEach(async (moduleDoc) => {
-  const moduleData = moduleDoc.data();
-  const moduleId = moduleDoc.id;
+      card.querySelector("button").addEventListener("click", () => {
+        localStorage.setItem("activeCourseDocId", doc.id);
+        navigateTo(data.startScreenId || "coursePlayerScreen");
+      });
 
-  const completed = await isModuleCompleted(moduleId);
-
-  const card = document.createElement("div");
-  card.className = "border rounded p-4 shadow bg-white hover:bg-gray-50 transition text-center";
-
-  const displayTitle = resolveLocalized(moduleData.title) || moduleId;
-
-  card.innerHTML = `
-    <div class="text-lg font-semibold mb-2 flex items-center justify-center gap-2">
-      ${displayTitle}
-      ${completed ? '<span class="text-green-600">✅</span>' : ""}
-    </div>
-    <p class="text-sm text-gray-600 mb-3">Start Date: ${moduleData.startDate || 'Not set'}</p>
-    <div class="flex justify-center gap-2">
-      <button class="start-btn bg-green-600 text-white px-4 py-1 rounded text-sm">Start</button>
-      ${
-        completed
-          ? '<button disabled class="bg-gray-300 text-gray-600 px-4 py-1 rounded text-sm">Completed</button>'
-          : '<button class="complete-btn bg-blue-600 text-white px-4 py-1 rounded text-sm">Mark Complete</button>'
-      }
-    </div>
-  `;
-
-  // ✅ Start button logic
-  card.querySelector(".start-btn").addEventListener("click", () => {
-    localStorage.setItem("activeCourseDocId", courseDocId);
-    localStorage.setItem("activeModuleId", moduleId);
-    navigateTo("moduleScreen");
-  });
-
-  // ✅ Complete button logic
-  const completeBtn = card.querySelector(".complete-btn");
-  if (completeBtn) {
-    completeBtn.addEventListener("click", async () => {
-      await markModuleCompleted(moduleId);
-      completeBtn.disabled = true;
-      completeBtn.textContent = "Completed";
-      completeBtn.classList.remove("bg-blue-600", "text-white");
-      completeBtn.classList.add("bg-gray-300", "text-gray-600");
-      card.querySelector(".text-green-600")?.remove();
-      card.querySelector(".text-lg").insertAdjacentHTML("beforeend", '<span class="text-green-600">✅</span>');
+      container.appendChild(card);
     });
-  }
-
-  container.appendChild(card);
-});
-
 
   } catch (err) {
-    console.error("🚨 Error loading course modules from Firestore:", err);
-    container.innerHTML = `<p class="text-red-600">Failed to load course data.</p>`;
+    container.innerHTML = `<p class="text-red-600">Error loading courses. See console for details.</p>`;
+    console.error("🔥 Firestore getDocs() failed:", err);
+    console.log("👨‍🎓 Full studentData snapshot:", studentData);
   }
 }
+
