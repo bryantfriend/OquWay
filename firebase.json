@@ -1,8 +1,12 @@
+// firebase.json
+
 {
   "functions": [
     {
       "source": "functions",
       "codebase": "default",
+      "runtime": "nodejs18",
+      // Ensure there is NO "serviceAccount" line here
       "ignore": [
         "node_modules",
         ".git",
