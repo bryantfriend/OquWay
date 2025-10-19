@@ -10,6 +10,8 @@ import { getFunctions, httpsCallable }
 import { signInWithCustomToken } 
   from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import { auth } from "../firebase-init.js";
+import { dumpAuthClaims } from "../firebase-init.js";
+
 
 
 // State
@@ -209,10 +211,47 @@ async function fetchClassesForLocation(locationId) {
 }
 
 async function fetchStudentsForClass(classId) {
-  const studentsRef = collection(db, 'users');
-  const snap = await getDocs(query(studentsRef, where('classId', '==', classId), limit(500)));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.role === 'student');
+  console.log("👀 [fetchStudentsForClass] classId =", classId, "auth?", !!auth.currentUser);
+
+  try {
+    // extra sanity logs
+    if (!classId) {
+      console.error("❌ [fetchStudentsForClass] Missing classId");
+      return [];
+    }
+
+    // Query for students by class
+    const studentsRef = collection(db, 'users');
+    const q = query(
+      studentsRef, 
+      where('classId', '==', classId),
+      where('role', '==', 'student'),  // <-- ADD THIS LINE
+      limit(500)
+    );
+    console.log("📡 [fetchStudentsForClass] Running query…");
+
+    const snap = await getDocs(q);
+    console.log("✅ [fetchStudentsForClass] snap.size =", snap.size);
+
+    const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const onlyStudents = rows.filter(u => u.role === 'student');
+    console.log("📊 [fetchStudentsForClass] total docs:", rows.length, "students:", onlyStudents.length);
+    if (rows.length && !onlyStudents.length) {
+      console.warn("⚠️ Returned docs did not have role='student'. Check data.");
+    }
+
+    return onlyStudents;
+  } catch (err) {
+    console.error("🔥 [fetchStudentsForClass] FAILED:", err);
+    if (auth.currentUser) {
+      await dumpAuthClaims("fetchStudentsForClass");
+    } else {
+      console.warn("🕵️ [fetchStudentsForClass] No user signed in (expected on login screen).");
+    }
+    return [];
+  }
 }
+
 
 // --- lazy image loader ---
 const io = new IntersectionObserver((entries) => {
