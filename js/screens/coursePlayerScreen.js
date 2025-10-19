@@ -29,13 +29,13 @@ async function markModuleCompleted(moduleId) {
       alert("You must be logged in to mark a module complete.");
       return;
     }
-
     const uid = user.uid;
-    const docId = `${uid}_${moduleId}`;
 
-    await setDoc(doc(db, "modules_completed", docId), {
-      userId: uid,
-      moduleId,
+    // V-- New path: users/{their_id}/modules_completed/{the_module_id}
+    const moduleProgressRef = doc(db, "users", uid, "modules_completed", moduleId);
+
+    await setDoc(moduleProgressRef, {
+      // We don't need to store userId and moduleId again, as they're in the path!
       completedAt: serverTimestamp(),
     });
 
@@ -54,8 +54,12 @@ async function isModuleCompleted(moduleId) {
   try {
     const user = auth.currentUser;
     if (!user) return false;
-    const docId = `${user.uid}_${moduleId}`;
-    const snap = await getDoc(doc(db, "modules_completed", docId));
+
+    // ✅ CORRECTED PATH:
+    // The path must match your rules: /users/{uid}/modules_completed/{moduleId}
+    const moduleProgressRef = doc(db, "users", user.uid, "modules_completed", moduleId);
+    const snap = await getDoc(moduleProgressRef);
+    
     return snap.exists();
   } catch (err) {
     console.error("⚠️ Error checking module completion:", err);
