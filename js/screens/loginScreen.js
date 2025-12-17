@@ -12,8 +12,6 @@ import { signInWithCustomToken }
 import { auth } from "../firebase-init.js";
 import { dumpAuthClaims } from "../firebase-init.js";
 
-
-
 // State
 let locations = [];
 let selectedLocation = null;
@@ -29,6 +27,26 @@ function toRenderableUrl(u = '') {
     : u;
 }
 
+function setLoginLoading(isLoading) {
+  const btn = document.getElementById("loginBtn");
+  if (!btn) return;
+
+  if (isLoading) {
+    btn.disabled = true;
+    btn.dataset.originalText = btn.innerHTML;
+    btn.innerHTML = `
+      <span class="flex items-center justify-center gap-2">
+        <span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+        <span>Logging in…</span>
+      </span>
+    `;
+    btn.classList.add("opacity-80", "cursor-wait");
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.originalText || getText("loginBtnLabel");
+    btn.classList.remove("opacity-80", "cursor-wait");
+  }
+}
 
 function isStale(v) { return v !== screenVersion; }
 
@@ -41,9 +59,27 @@ function thumbUrl(u = '', w = 160, h = 160) {
 }
 
 function imgSrcFrom(obj) {
-  const raw = obj?.photoUrl || obj?.photoDataUrl || obj?.imageUrl || '';
+  const raw =
+    obj?.photoUrl ||
+    obj?.photoDataUrl ||
+    obj?.imageUrl ||
+    '';
+
+  if (!raw) return 'assets/school-default.jpg';
+
+  // Firebase Storage URLs → use directly
+  if (raw.includes('firebasestorage.googleapis.com')) {
+    return raw;
+  }
+
+  // data URLs
+  if (raw.startsWith('data:')) {
+    return raw;
+  }
+
   return thumbUrl(raw) || 'assets/school-default.jpg';
 }
+
 
 // --- auto-login from localStorage ---
 const saved = localStorage.getItem("studentData");
@@ -52,7 +88,18 @@ if (saved) {
     const parsed = JSON.parse(saved);
     console.log("🔄 Restored saved session:", parsed);
     Object.assign(studentData, parsed);
+
+    // 🧠 Normalize avatar on restore
+    studentData.avatar =
+      (studentData.avatar && studentData.avatar.trim()) || "";
+
     navigateTo("dashboard");
+    
+    if (studentData.avatar) {
+      studentData.avatar += `?t=${Date.now()}`;
+    }
+
+
   } catch (err) {
     console.warn("⚠️ Failed to restore saved session:", err);
     localStorage.removeItem("studentData");
@@ -153,7 +200,12 @@ async function loadLocationsOnly() {
     localStorage.removeItem(CACHE_KEY);
   }
 
-  const snap = await getDocs(collection(db, 'locations'));
+  const q = query(
+  collection(db, 'locations'),
+  where('isArchived', '==', false)
+);
+
+const snap = await getDocs(q);
   locations = snap.docs.map(docSnap => {
     const raw = docSnap.data();
     const safe = JSON.parse(JSON.stringify(raw));
@@ -191,67 +243,53 @@ async function populateClasses(locationId) {
   }
 }
 
-async function refreshClasses(locationId) {
-  const fresh = await fetchClassesForLocation(locationId);
-  writeCache(CLASS_CACHE_KEY, locationId, fresh);
-  if (selectedLocation === locationId) {
-    renderClassNamesFirst(fresh);
-    queueMicrotask(hydrateClassIcons);
-  }
-}
-
 async function fetchClassesForLocation(locationId) {
   const classesRef = collection(db, 'classes');
-  const byCamel = await getDocs(query(classesRef, where('locationId', '==', locationId), where('isArchived', '==', false)));
-  let out = byCamel.docs.map(d => ({ id: d.id, ...d.data() }));
-  const bySnake = await getDocs(query(classesRef, where('location_id', '==', locationId), where('isArchived', '==', false)));
-  out = out.concat(bySnake.docs.map(d => ({ id: d.id, ...d.data() })));
+  
+  // Fetch only the standardized classes (camelCase)
+  const q1 = query(
+    classesRef, 
+    where('locationId', '==', locationId), 
+    where("isVisible", "==", true)
+  );
+  
+  // Fallback for snake_case data structure
+  const q2 = query(
+    classesRef, 
+    where('location_id', '==', locationId), 
+    where("isVisible", "==", true)
+  );
+
+  // Use Promise.all to fetch both structures simultaneously
+  const [snap1, snap2] = await Promise.all([
+    getDocs(q1),
+    getDocs(q2)
+  ]);
+  
+  let out = snap1.docs.map(d => ({ id: d.id, ...d.data() }));
+  out = out.concat(snap2.docs.map(d => ({ id: d.id, ...d.data() })));
+  
+  console.log(`✅ [fetchClassesForLocation] Found ${out.length} classes for locationId=${locationId}`);
+  
+  // Deduplicate and return
   const seen = new Set();
   return out.filter(c => !seen.has(c.id) && seen.add(c.id));
 }
 
 async function fetchStudentsForClass(classId) {
-  console.log("👀 [fetchStudentsForClass] classId =", classId, "auth?", !!auth.currentUser);
-
   try {
-    // extra sanity logs
-    if (!classId) {
-      console.error("❌ [fetchStudentsForClass] Missing classId");
-      return [];
-    }
+    const functions = getFunctions();
+    const fn = httpsCallable(functions, "getStudentsForClass");
 
-    // Query for students by class
-    const studentsRef = collection(db, 'users');
-    const q = query(
-      studentsRef, 
-      where('classId', '==', classId),
-      where('role', '==', 'student'),  // <-- ADD THIS LINE
-      limit(500)
-    );
-    console.log("📡 [fetchStudentsForClass] Running query…");
+    const { data } = await fn({ classId });
 
-    const snap = await getDocs(q);
-    console.log("✅ [fetchStudentsForClass] snap.size =", snap.size);
-
-    const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    const onlyStudents = rows.filter(u => u.role === 'student');
-    console.log("📊 [fetchStudentsForClass] total docs:", rows.length, "students:", onlyStudents.length);
-    if (rows.length && !onlyStudents.length) {
-      console.warn("⚠️ Returned docs did not have role='student'. Check data.");
-    }
-
-    return onlyStudents;
+    console.log("✅ [fetchStudentsForClass] via CF:", data.length);
+    return data;
   } catch (err) {
     console.error("🔥 [fetchStudentsForClass] FAILED:", err);
-    if (auth.currentUser) {
-      await dumpAuthClaims("fetchStudentsForClass");
-    } else {
-      console.warn("🕵️ [fetchStudentsForClass] No user signed in (expected on login screen).");
-    }
     return [];
   }
 }
-
 
 // --- lazy image loader ---
 const io = new IntersectionObserver((entries) => {
@@ -512,55 +550,55 @@ async function handleLogin() {
   const inputPwd = emojiInput.value.trim();
   const user = selectedStudent;
 
-  // Validate fruit password
   const emojis = [...inputPwd.matchAll(/[\u{1F300}-\u{1FAFF}]/gu)].map(m => m[0]);
   if (!user?.id || emojis.length !== 4) {
     alert("Please enter 4 emoji password.");
     return;
   }
 
-  const fruitArray = emojis;
+  setLoginLoading(true);
 
   try {
-    console.log("🧑 Selected student:", user);
-
-    if (!user?.id) {
-      alert("Error: Student ID not found. Please reselect your student photo.");
-      return;
-    }
-
     const functions = getFunctions();
     const studentLogin = httpsCallable(functions, "studentLogin");
 
-    const { data } = await studentLogin({
+    const result = await studentLogin({
       studentId: user.id,
-      fruitPassword: fruitArray,
+      fruitPassword: emojis,
     });
 
-    // ✅ Sign in using custom token
-    await signInWithCustomToken(auth, data.token);
-    console.log("✅ Signed in as:", auth.currentUser.uid);
+    const data = result.data;
 
-    // ✅ Save locally (cached student info)
+    await signInWithCustomToken(auth, data.token);
+
+    // ✅ Save student data (authoritative source first)
     studentData.studentId = user.id;
     studentData.name = user.name || "Student";
-    studentData.avatar = user.photoUrl || "";
+    studentData.avatar =
+      (data.photoUrl && data.photoUrl.trim()) ||
+      (user.photoUrl && user.photoUrl.trim()) ||
+      "";
     studentData.points = { physical: 0, cognitive: 0, creative: 0, social: 0 };
     studentData.classId = user.classId || selectedClass || null;
 
-    // ✅ Persist login in localStorage
-    localStorage.setItem("studentData", JSON.stringify(studentData));
-    console.log("💾 Saved studentData to localStorage:", studentData);
+    // 🔥 Bust stale student cache
+    localStorage.removeItem('studentsCache:v1');
 
-    // Proceed to dashboard
+    // 🧠 Cache-bust avatar
+    if (studentData.avatar) {
+      studentData.avatar += `?t=${Date.now()}`;
+    }
+
+    localStorage.setItem("studentData", JSON.stringify(studentData));
+
     navigateTo("dashboard");
 
   } catch (err) {
     console.error("❌ Fruit login failed:", err);
     alert("Login failed: " + err.message);
+    setLoginLoading(false);
   }
 }
-
 
 
 // --- back nav ---

@@ -1,7 +1,7 @@
 // js/coursesScreen.js
 
 import { db } from "../firebase-init.js";
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+import { collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import { studentData } from "../config.js";
 import { navigateTo } from "../router.js";
 
@@ -30,60 +30,89 @@ export async function renderCoursesScreen(container) {
  */
 async function loadCourses() {
   const container = document.getElementById("coursesContainer");
-  container.innerHTML = '';
+  container.innerHTML = "";
 
   if (!studentData.classId) {
-    container.innerHTML = `<p class="text-red-600">No class ID found. Cannot load courses.</p>`;
-    console.error("❌ Missing classId in studentData:", studentData);
+    container.innerHTML = `<p class="text-red-600">No class ID found.</p>`;
     return;
   }
 
   console.log("✅ studentData.classId =", studentData.classId);
 
   try {
-    const q = query(
-      collection(db, "courses"),
-      where("classes", "array-contains", studentData.classId)
-    );
+    // 1️⃣ Load the class document
+    const classRef = doc(db, "classes", studentData.classId);
+    const classSnap = await getDoc(classRef);
 
-    console.log("📡 Executing Firestore query...");
-    const snapshot = await getDocs(q);
-    console.log(`📦 Retrieved ${snapshot.size} course(s)`);
-
-    if (snapshot.empty) {
-      container.innerHTML = `<p class="text-gray-600">No courses found for your class.</p>`;
-      console.warn("⚠️ No matching courses found for classId:", studentData.classId);
+    if (!classSnap.exists()) {
+      container.innerHTML = `<p class="text-red-600">Class not found.</p>`;
+      console.error("❌ Class not found:", studentData.classId);
       return;
     }
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      console.log("📘 Course loaded:", data);
-    console.log("📘 Course doc ID:", doc.id);
-    console.log("📘 Course.classes array:", data.classes);
+    const classData = classSnap.data();
+    const courseIds = classData.courseIds || [];
+
+    console.log("📚 Course IDs for class:", courseIds);
+
+    if (!courseIds.length) {
+      container.innerHTML = `<p class="text-gray-600">No courses assigned to your class.</p>`;
+      return;
+    }
+
+    // 2️⃣ Load each course
+    let loadedCount = 0;
+
+    for (const courseId of courseIds) {
+      const courseRef = doc(db, "courses", courseId);
+      const courseSnap = await getDoc(courseRef);
+
+      if (!courseSnap.exists()) {
+        console.warn("⚠️ Course not found:", courseId);
+        continue;
+      }
+
+      const data = courseSnap.data();
+      loadedCount++;
+
+      console.log("📘 Loaded course:", courseId, data);
 
       const card = document.createElement("div");
-      card.className = "border rounded p-4 shadow bg-white hover:bg-gray-50 transition text-center";
+      card.className =
+        "border rounded p-4 shadow bg-white hover:bg-gray-50 transition text-center";
 
       card.innerHTML = `
-        <img src="${data.iconUrl}" class="mx-auto w-14 h-14 rounded-full mb-3" alt="Course Icon">
-        <div class="text-lg font-semibold mb-1">${data.title || "Untitled Course"}</div>
-        <p class="text-sm text-gray-700 mb-3">${data.description || "No description available."}</p>
-        <button class="bg-blue-600 text-white py-1 px-4 rounded text-sm">Start</button>
+        <img src="${data.iconUrl || ""}"
+             class="mx-auto w-14 h-14 rounded-full mb-3"
+             alt="Course Icon">
+        <div class="text-lg font-semibold mb-1">
+          ${data.title || "Untitled Course"}
+        </div>
+        <p class="text-sm text-gray-700 mb-3">
+          ${data.description || "No description available."}
+        </p>
+        <button class="bg-blue-600 text-white py-1 px-4 rounded text-sm">
+          Start
+        </button>
       `;
 
       card.querySelector("button").addEventListener("click", () => {
-        localStorage.setItem("activeCourseDocId", doc.id);
+        localStorage.setItem("activeCourseDocId", courseId);
         navigateTo(data.startScreenId || "coursePlayerScreen");
       });
 
       container.appendChild(card);
-    });
+    }
+
+    console.log(`📦 Rendered ${loadedCount} course(s)`);
+
+    if (!loadedCount) {
+      container.innerHTML = `<p class="text-gray-600">No valid courses found.</p>`;
+    }
 
   } catch (err) {
-    container.innerHTML = `<p class="text-red-600">Error loading courses. See console for details.</p>`;
-    console.error("🔥 Firestore getDocs() failed:", err);
-    console.log("👨‍🎓 Full studentData snapshot:", studentData);
+    console.error("🔥 Failed to load courses:", err);
+    container.innerHTML = `<p class="text-red-600">Error loading courses.</p>`;
   }
 }
 
