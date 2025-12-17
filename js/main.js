@@ -51,3 +51,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 });
+const fullscreenBtn = document.getElementById("fullscreenBtn");
+
+function toggleFullscreen() {
+  const elem = document.documentElement;
+
+  if (!document.fullscreenElement) {
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen(); // iOS / Safari
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+  }
+}
+
+fullscreenBtn.addEventListener("click", toggleFullscreen);
+
