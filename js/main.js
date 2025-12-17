@@ -71,5 +71,78 @@ function toggleFullscreen() {
   }
 }
 
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/service-worker.js");
+  });
+}
+let kioskEnabled = false;
+
+function enableKioskMode() {
+  kioskEnabled = true;
+
+  // Disable right-click
+  document.addEventListener("contextmenu", preventDefault, true);
+
+  // Disable key combos
+  document.addEventListener("keydown", blockKeys, true);
+
+  // Lock scrolling bounce
+  document.body.style.overflow = "hidden";
+
+  // Force fullscreen if possible
+  document.documentElement.requestFullscreen?.();
+
+  localStorage.setItem("kiosk", "on");
+}
+
+function disableKioskMode() {
+  kioskEnabled = false;
+
+  document.removeEventListener("contextmenu", preventDefault, true);
+  document.removeEventListener("keydown", blockKeys, true);
+
+  document.body.style.overflow = "";
+
+  localStorage.removeItem("kiosk");
+}
+
+function preventDefault(e) {
+  e.preventDefault();
+}
+
+function blockKeys(e) {
+  const blocked = ["Escape", "Tab", "Meta", "Alt", "Control", "F5"];
+  if (blocked.includes(e.key)) {
+    e.preventDefault();
+  }
+}
+
+document.getElementById("kioskBtn").addEventListener("click", () => {
+  kioskEnabled ? disableKioskMode() : enableKioskMode();
+});
+
+if (localStorage.getItem("kiosk") === "on") {
+  enableKioskMode();
+}
+let tapCount = 0;
+let tapTimer;
+
+document.querySelector(".container").addEventListener("click", () => {
+  tapCount++;
+  clearTimeout(tapTimer);
+
+  tapTimer = setTimeout(() => (tapCount = 0), 800);
+
+  if (tapCount === 5) {
+    const code = prompt("Teacher code:");
+    if (code === "4321") {
+      disableKioskMode();
+    }
+    tapCount = 0;
+  }
+});
+
+
 fullscreenBtn.addEventListener("click", toggleFullscreen);
 
