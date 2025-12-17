@@ -15,6 +15,11 @@ margin: 0;
 color: #333;
 }
 
+/* Prevent iOS double-tap zoom while keeping scrolling */
+* {
+  touch-action: manipulation;
+}
+
 .container {
 background-color: #ffffff;
 width: 100%;
@@ -764,3 +769,55 @@ box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
   margin-bottom: 1rem;
 }
 
+.animate-fade-in { animation: fadeIn 0.5s ease forwards; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.shake { animation: shake 0.3s; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+.animate-fall {
+  animation: confettiFall 1.2s linear forwards;
+}
+@keyframes confettiFall {
+  from { transform: translateY(-100%); opacity: 1; }
+  to { transform: translateY(100%); opacity: 0; }
+}
+
+.avatar-talking {
+  animation: mouthMove 0.25s infinite alternate;
+}
+@keyframes mouthMove {
+  0% { transform: scaleY(1); }
+  100% { transform: scaleY(0.85); }
+}
+
+.avatar-idle {
+  animation: idleMove 3s ease-in-out infinite;
+}
+@keyframes idleMove {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
+}
+
+.avatar-talking {
+  transition: transform 0.1s ease;
+  filter: brightness(1.1);
+}
+
+.avatar-talking::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255,255,255,0.15);
+  animation: blink 3s infinite;
+}
+
+@keyframes blink {
+  0%, 90%, 100% { opacity: 0; }
+  95% { opacity: 1; }
+}
