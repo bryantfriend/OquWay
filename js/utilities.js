@@ -12,32 +12,30 @@ export function showMessage(key, duration = 3000, ...args) {
   box.classList.add("active");
   setTimeout(() => box.classList.remove("active"), duration);
 }
+function safeSetText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
 
 
 /**
  * Updates the displayed point balances on the dashboard.
  */
 export function updateDashboardPoints() {
-  document.getElementById("physicalPoints").textContent = studentData.points.physical;
-  document.getElementById("cognitivePoints").textContent = studentData.points.cognitive;
-  document.getElementById("creativePoints").textContent = studentData.points.creative;
-  document.getElementById("socialPoints").textContent = studentData.points.social;
-
-  // Update labels to current language
-  document.querySelector(".point-physical .label").textContent = getText("physicalPoints");
-  document.querySelector(".point-cognitive .label").textContent = getText("cognitivePoints");
-  document.querySelector(".point-creative .label").textContent = getText("creativePoints");
-  document.querySelector(".point-social .label").textContent = getText("socialPoints");
+  safeSetText("physicalPoints",  studentData.points?.physical ?? 0);
+  safeSetText("cognitivePoints", studentData.points?.cognitive ?? 0);
+  safeSetText("creativePoints",  studentData.points?.creative ?? 0);
+  safeSetText("socialPoints",    studentData.points?.social ?? 0);
 }
 
 /**
  * Updates the displayed point balances on the store screen.
  */
 export function updateStorePoints() {
-  document.getElementById("storePhysicalPoints").textContent = studentData.points.physical;
-  document.getElementById("storeCognitivePoints").textContent = studentData.points.cognitive;
-  document.getElementById("storeCreativePoints").textContent = studentData.points.creative;
-  document.getElementById("storeSocialPoints").textContent = studentData.points.social;
+  safeSetText("storePhysicalPoints",  studentData.points?.physical ?? 0);
+  safeSetText("storeCognitivePoints", studentData.points?.cognitive ?? 0);
+  safeSetText("storeCreativePoints",  studentData.points?.creative ?? 0);
+  safeSetText("storeSocialPoints",    studentData.points?.social ?? 0);
 }
 
 /**

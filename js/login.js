@@ -111,7 +111,11 @@ async function populateClasses(locationId) {
     container.innerHTML = '<p class="text-gray-500 text-center">Loading classes...</p>';
 
     try {
-        const q = query(collection(db, 'classes'), where("locationId", "==", locationId), where("isArchived", "==", false));
+        const q = query(
+            collection(db, 'classes'),
+            where("locationId", "==", locationId),
+            where("isVisible", "==", true)
+        );
         const classSnap = await getDocs(q);
         const classes = classSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 

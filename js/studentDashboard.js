@@ -5,65 +5,117 @@ import { showMessage, updateDashboardPoints } from "./utilities.js";
 import { getText } from "./i18n.js";
 import { navigateTo } from "./router.js";
 import { db } from "./firebase-init.js";
-import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
-// This function's job is to FILL the existing HTML with data.
+import { doc, updateDoc } 
+  from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+import { getStorage, ref, uploadBytes, getDownloadURL } 
+  from "https://www.gstatic.com/firebasejs/11.10.0/firebase-storage.js";
+
+const storage = getStorage();
+
+/* ============================
+   RENDER DASHBOARD (DATA ONLY)
+   ============================ */
 export function renderDashboard() {
   const avatarImg = document.getElementById("dashboard-avatar");
+  const studentName = document.getElementById("student-name");
+
   if (avatarImg) {
     avatarImg.src = studentData.avatar || "assets/default-avatar.png";
   }
 
-  const studentName = document.getElementById("student-name");
   if (studentName) {
-    studentName.textContent = studentData.name;
+    studentName.textContent = studentData.name || "";
   }
-  
+
   updateDashboardPoints();
 }
 
-// This function's job is to add ALL event listeners for the dashboard.
+function showAvatarSaving(show) {
+  const overlay = document.getElementById("avatarSavingOverlay");
+  if (!overlay) return;
+  overlay.classList.toggle("hidden", !show);
+}
+
+
+/* ============================
+   INIT DASHBOARD (EVENTS)
+   ============================ */
 export function initStudentDashboard() {
-  // --- Avatar Upload Logic ---
   const avatarImg = document.getElementById("dashboard-avatar");
   const avatarInput = document.getElementById("avatarInput");
 
   if (avatarImg && avatarInput) {
-    avatarImg.addEventListener("click", () => avatarInput.click());
 
-    avatarInput.addEventListener("change", e => {
-      const file = e.target.files[0];
-      if (!file) return;
+    // ❌ REMOVE this — label already handles click
+    // avatarImg.addEventListener("click", () => avatarInput.click());
 
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const dataUrl = reader.result;
-        avatarImg.src = dataUrl;
-        studentData.avatar = dataUrl;
-        
-        try {
-          await updateDoc(doc(db, "users", studentData.studentId), { photoUrl: dataUrl });
-        } catch (err) {
-          console.error("Failed to save avatar:", err);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    avatarInput.addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // 🔥 IMMEDIATE LOCAL PREVIEW
+  const localPreview = URL.createObjectURL(file);
+  avatarImg.src = localPreview;
+
+  showAvatarSaving(true);
+
+  try {
+    const avatarRef = ref(
+      storage,
+      `avatars/${studentData.studentId}/avatar.jpg`
+    );
+
+    await uploadBytes(avatarRef, file);
+
+    const downloadUrl = await getDownloadURL(avatarRef);
+
+    await updateDoc(
+      doc(db, "users", studentData.studentId),
+      { photoUrl: downloadUrl }
+    );
+
+    // Save state
+    studentData.avatar = downloadUrl;
+    localStorage.setItem("studentData", JSON.stringify(studentData));
+
+    // 🔁 Swap preview → real image (with cache bust)
+    avatarImg.src = `${downloadUrl}?t=${Date.now()}`;
+
+  } catch (err) {
+    console.error("❌ Avatar upload failed:", err);
+    alert("Failed to upload avatar.");
+  } finally {
+    showAvatarSaving(false);
+    avatarInput.value = ""; // allow same file again
+  }
+});
+
   }
 
-  // --- Button Click Logic ---
-  document.getElementById("earnQuickPointsBtn")?.addEventListener("click", earnQuickPoints);
-  document.getElementById("logPhysicalActivityBtn")?.addEventListener("click", logPhysicalActivity);
-  document.getElementById("goToCoursesBtn")?.addEventListener("click", () => navigateTo("courses"));
-  document.getElementById("visitStoreBtn")?.addEventListener("click", () => navigateTo("store"));
+  document.getElementById("earnQuickPointsBtn")
+    ?.addEventListener("click", earnQuickPoints);
+
+  document.getElementById("logPhysicalActivityBtn")
+    ?.addEventListener("click", logPhysicalActivity);
+
+  document.getElementById("goToCoursesBtn")
+    ?.addEventListener("click", () => navigateTo("courses"));
+
+  document.getElementById("visitStoreBtn")
+    ?.addEventListener("click", () => navigateTo("store"));
 }
 
-// --- Functionality ---
 
+/* ============================
+   POINT LOGIC
+   ============================ */
 export function earnQuickPoints() {
   const types = ["physical", "cognitive", "creative", "social"];
   const t = types[Math.floor(Math.random() * types.length)];
   const pts = Math.floor(Math.random() * 5) + 1;
+
   studentData.points[t] += pts;
   showMessage(
     "pointsEarned",
@@ -71,6 +123,7 @@ export function earnQuickPoints() {
     pts,
     getText(t + "Points").toLowerCase()
   );
+
   updateDashboardPoints();
 }
 
