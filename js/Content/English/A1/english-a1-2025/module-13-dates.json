@@ -1,0 +1,21 @@
+{
+  "moduleId": "english-a1-13-dates",
+  "slug": "module-13-dates",
+  "title": {
+    "en": "Dates",
+    "ru": "",
+    "kg": ""
+  },
+  "unlockWeek": 5,
+  "steps": [
+    {
+      "type": "primer",
+      "mediaType": "text",
+      "text": {
+        "en": "Introduction to dates",
+        "ru": "",
+        "kg": ""
+      }
+    }
+  ]
+}

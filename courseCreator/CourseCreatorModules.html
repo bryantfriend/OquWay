@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Module Editor</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+  <script type="module" src="./CourseCreatorModules.js"></script>
+</head>
+<body class="bg-gray-100">
+  <div class="max-w-5xl mx-auto p-6">
+
+    <!-- Header -->
+    <div class="flex justify-between items-start mb-4">
+      <div>
+        <h1 id="courseName" class="text-2xl font-bold">Loading Course...</h1>
+        <p id="courseLanguages" class="text-sm text-gray-600 mt-1"></p>
+      </div>
+
+      <button id="backBtn"
+              class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition">
+        ← Back to Courses
+      </button>
+    </div>
+
+
+    <!-- Module List -->
+    <div id="modulesList" class="space-y-4">
+      <p class="text-gray-600">Loading modules...</p>
+    </div>
+
+    <!-- Add Module -->
+    <div class="mt-6">
+      <button id="addModuleBtn"
+              class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+        ➕ Add New Module
+      </button>
+      <button id="importModuleBtn"
+              class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition">
+        📥 Import Module from JSON
+      </button>       
+      <button id="importHelpBtn"
+              class="bg-gray-300 text-gray-800 px-3 py-2 rounded hover:bg-gray-400 transition"
+              title="Show JSON Import Instructions">
+
+        ❓
+      </button>      
+    </div>
+
+  </div>
+  <!-- Import Instructions Modal -->
+  <div id="importHelpModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-full overflow-y-auto">
+      <div class="flex justify-between items-center p-4 border-b">
+        <h3 class="text-xl font-semibold">📥 JSON Import Instructions</h3>
+        <button id="closeImportHelpBtn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+      </div>
+      <div class="p-4">
+        <div class="flex justify-end mb-2">
+          <button id="copyImportHelpBtn" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm">
+            📋 Copy Instructions
+          </button>
+        </div>
+        <pre id="importHelpText" class="whitespace-pre-wrap text-sm font-mono bg-gray-50 p-3 rounded border"></pre>
+      </div>
+    </div>
+  </div>
+  <div id="addStepModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-full overflow-y-auto">
+      <div class="flex justify-between items-center p-4 border-b">
+        <h3 class="text-xl font-semibold">Select a Step Type</h3>
+        <button id="closeModalBtn" class="text-gray-500 hover:text-gray-800">&times;</button>
+      </div>
+      <div class="p-4">
+        <input id="stepSearchInput" 
+               class="border p-2 rounded w-full mb-4" 
+               placeholder="Search for a step type...">
+        
+        <div id="stepOptionsGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          </div>
+      </div>
+    </div>
+  </div>     
+  <div id="importModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+      <div class="p-4 border-b">
+        <h3 class="text-xl font-semibold">Import Module from JSON</h3>
+      </div>
+      <div class="p-4">
+        <textarea id="jsonImportData" class="w-full h-64 border rounded p-2 font-mono text-sm" placeholder="Paste your module JSON here..."></textarea>
+      </div>
+      <div class="flex justify-end p-4 border-t bg-gray-50">
+        <button id="cancelImportBtn" class="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancel</button>
+        <button id="confirmImportBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Import Module</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

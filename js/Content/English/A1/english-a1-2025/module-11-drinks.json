@@ -1,0 +1,21 @@
+{
+  "moduleId": "english-a1-11-drinks",
+  "slug": "module-11-drinks",
+  "title": {
+    "en": "Drinks",
+    "ru": "",
+    "kg": ""
+  },
+  "unlockWeek": 4,
+  "steps": [
+    {
+      "type": "primer",
+      "mediaType": "text",
+      "text": {
+        "en": "Introduction to drinks",
+        "ru": "",
+        "kg": ""
+      }
+    }
+  ]
+}

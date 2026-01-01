@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OquWay Super Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./css/admin.css">
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+  <!-- ✅ Fixed Mobile Header -->
+  <div class="md:hidden bg-white p-4 shadow flex justify-between items-center fixed w-full z-40 top-0 left-0">
+    <h1 class="text-xl font-bold text-blue-600">OquWay Admin</h1>
+    <button id="toggleSidebar" class="text-gray-700 text-2xl">&#9776;</button>
+  </div>
+
+  <!-- ✅ Spacer below fixed mobile header -->
+  <div class="h-16 md:hidden"></div>
+
+  <!-- ✅ App Container -->
+  <div id="admin-container" class="md:flex h-screen relative">
+
+    <!-- ✅ Sidebar -->
+    <aside
+  id="sidebar"
+  class="w-full md:w-64 bg-white shadow-md p-4 absolute z-50 top-16 left-0 h-full transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0 md:top-0 md:block hidden">
+
+      <h1 class="text-xl font-bold mb-6 text-blue-600">OquWay Admin</h1>
+      <ul class="space-y-2 text-sm font-medium">
+        <li><button class="tab-btn" data-tab="locations">📍 Locations</button></li>
+        <li><button class="tab-btn" data-tab="classes">📘 Classes</button></li>
+        <li><button class="tab-btn" data-tab="schedules">🗓️ Schedules</button></li>
+        <li><button class="tab-btn" data-tab="courses">🖼️ Courses</button></li>
+        <li><button class="tab-btn" data-tab="users">👥 Users</button></li>
+        <li><button class="tab-btn" data-tab="permissions">🔐 Permissions</button></li>
+        <li><button class="tab-btn" data-tab="settings">⚙️ Settings</button></li>
+        <li><button id="logoutBtn" class="text-sm text-red-500 hover:underline">Logout</button></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 overflow-y-auto">
+      <div id="panel-title" class="text-2xl font-semibold mb-4">Welcome, Super Admin</div>
+      <div id="panel-content">
+        <!-- Content injected by JS -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Global Loading Overlay -->
+  <div id="global-loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 hidden opacity-0">
+    <div class="text-center">
+      <svg class="animate-spin h-10 w-10 text-white mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="white" stroke-width="4"></circle>
+        <path class="opacity-75" fill="white" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16 8 8 0 01-8-8z" />
+      </svg>
+      <p id="loading-text" class="text-white text-lg font-semibold">Loading...</p>
+    </div>
+  </div>
+
+  <!-- Firebase + Modules -->
+  <script type="module" src="./js/AdminPanel/adminPanel.js"></script>
+
+
+  <!-- ✅ Sidebar Toggle Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('toggleSidebar');
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+
+      toggleBtn.addEventListener('click', () => {
+        const isHidden = sidebar.classList.contains('hidden');
+
+        // Show sidebar
+        sidebar.classList.remove('hidden');
+        sidebar.classList.toggle('-translate-x-full');
+
+        // Show backdrop
+        if (isHidden) {
+          backdrop.classList.remove('hidden');
+
+          // Auto-close when clicking on backdrop
+          backdrop.addEventListener('click', closeSidebar);
+        }
+      });
+
+      function closeSidebar() {
+        sidebar.classList.add('-translate-x-full');
+        sidebar.classList.add('hidden');
+        backdrop.classList.add('hidden');
+        backdrop.removeEventListener('click', closeSidebar);
+      }
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          closeSidebar();
+        });
+      });
+    });
+
+  </script>
+  <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-40 hidden md:hidden"></div>
+</body>
+</html>

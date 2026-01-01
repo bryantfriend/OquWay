@@ -1,0 +1,21 @@
+{
+  "moduleId": "english-a1-28-nature",
+  "slug": "module-28-nature",
+  "title": {
+    "en": "Nature",
+    "ru": "",
+    "kg": ""
+  },
+  "unlockWeek": 10,
+  "steps": [
+    {
+      "type": "primer",
+      "mediaType": "text",
+      "text": {
+        "en": "Introduction to nature",
+        "ru": "",
+        "kg": ""
+      }
+    }
+  ]
+}

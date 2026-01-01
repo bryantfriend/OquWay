@@ -1,0 +1,21 @@
+{
+  "moduleId": "english-a1-05-family",
+  "slug": "module-05-family",
+  "title": {
+    "en": "Family",
+    "ru": "",
+    "kg": ""
+  },
+  "unlockWeek": 2,
+  "steps": [
+    {
+      "type": "primer",
+      "mediaType": "text",
+      "text": {
+        "en": "Introduction to family",
+        "ru": "",
+        "kg": ""
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "moduleId": "english-a1-33-review2",
+  "slug": "module-33-review2",
+  "title": {
+    "en": "Review2",
+    "ru": "",
+    "kg": ""
+  },
+  "unlockWeek": 11,
+  "steps": [
+    {
+      "type": "primer",
+      "mediaType": "text",
+      "text": {
+        "en": "Introduction to review2",
+        "ru": "",
+        "kg": ""
+      }
+    }
+  ]
+}

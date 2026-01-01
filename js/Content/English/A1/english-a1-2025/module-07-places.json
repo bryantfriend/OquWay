@@ -1,0 +1,21 @@
+{
+  "moduleId": "english-a1-07-places",
+  "slug": "module-07-places",
+  "title": {
+    "en": "Places",
+    "ru": "",
+    "kg": ""
+  },
+  "unlockWeek": 3,
+  "steps": [
+    {
+      "type": "primer",
+      "mediaType": "text",
+      "text": {
+        "en": "Introduction to places",
+        "ru": "",
+        "kg": ""
+      }
+    }
+  ]
+}

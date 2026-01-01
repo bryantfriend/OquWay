@@ -1,0 +1,328 @@
+/* General page styling */
+body {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background: #f9fafb;
+  color: #1f2937;
+}
+
+/* Headings */
+h1, h2 {
+  color: #111827;
+}
+
+/* Course & Module Cards */
+.course-card, .module-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.course-card:hover, .module-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+/* Buttons */
+button {
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+button:active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Archive / Un-archive button colors */
+button.archiveBtn {
+  background-color: #fbbf24; /* yellow-400 */
+}
+
+button.archiveBtn.unarchive {
+  background-color: #10b981; /* green-500 */
+}
+
+/* Save button */
+button.saveBtn {
+  background-color: #2563eb; /* blue-600 */
+}
+
+/* Delete button */
+button.deleteBtn {
+  color: #dc2626; /* red-600 */
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button.deleteBtn:hover {
+  text-decoration: underline;
+}
+
+/* Input fields */
+input[type="text"], input[type="date"] {
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  width: 100%;
+  font-size: 0.9rem;
+  background: #f9fafb;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+input[type="text"]:focus, input[type="date"]:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+/* Style for the buttons inside the 'Add Step' modal */
+.step-option {
+  border: 1px solid #d1d5db; /* gray-300 */
+  padding: 1rem;
+  border-radius: 0.375rem; /* rounded-md */
+  text-align: center;
+  font-weight: 500;
+  cursor: pointer;
+  background-color: #f9fafb; /* gray-50 */
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.step-option:hover {
+  background-color: #f3f4f6; /* gray-100 */
+  border-color: #2563eb; /* blue-600 */
+}
+/* Drag-and-Drop Styles */
+.step-card {
+  cursor: grab;
+  user-select: none;
+}
+.step-card:active {
+  cursor: grabbing;
+}
+.sortable-ghost {
+  opacity: 0.4;
+  background: #c7d2fe; /* indigo-200 */
+}
+
+/* Form Styles for Step Editor */
+.form-group {
+  margin-bottom: 1rem;
+}
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+  color: #4b5563; /* gray-600 */
+}
+.form-group input, .form-group textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+}
+.form-group textarea {
+  min-height: 80px;
+}
+.multilang-grid {
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.multilang-grid span {
+  font-weight: bold;
+  text-align: center;
+  color: #6b7280; /* gray-500 */
+}
+
+/* In styles.css */
+
+/* --- NEW: Styles for Contextual Step Inserter --- */
+.step-inserter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 20px;
+  transform: translateY(-10px); /* Center it on the gap */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
+  pointer-events: none; /* Allows mouse events to pass through */
+  z-index: 10;
+}
+
+.step-inserter.visible {
+  opacity: 1;
+  pointer-events: auto; /* Make it clickable when visible */
+}
+
+.step-inserter .line {
+  flex-grow: 1;
+  height: 1px;
+  background-color: #3b82f6; /* blue-500 */
+}
+
+.step-inserter .add-here-btn {
+  background-color: #3b82f6; /* blue-500 */
+  color: white;
+  border-radius: 9999px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  margin: 0 8px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+/* --- NEW: Reusable Loading Spinner --- */
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  -webkit-animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+/* Spinner for overlays (darker background) */
+.steps-overlay .loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(0, 0, 0, 0.2);
+    border-top-color: #333;
+}
+
+@keyframes spin {
+  to { -webkit-transform: rotate(360deg); }
+}
+@-webkit-keyframes spin {
+  to { -webkit-transform: rotate(360deg); }
+}
+
+/* Helper class to add overlay */
+.steps-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+}
+
+.avatar-talking {
+  transition: transform 0.1s ease;
+  filter: brightness(1.1);
+}
+
+.scene-tab {
+  transition: background 0.2s, color 0.2s;
+}
+.scene-tab:hover {
+  background: #f1f5f9;
+}
+.scene-tab.add-tab:hover {
+  background: #bfdbfe;
+}
+
+/* === ADD THIS TO YOUR MAIN CSS === */
+
+/* Style for cards that are full */
+.card-full {
+  background-color: #f9fafb; /* gray-50 */
+  opacity: 0.7;
+}
+.card-full:hover {
+  opacity: 1;
+  background-color: #f3f4f6; /* gray-100 */
+}
+
+/* Base style for the new health tag */
+.health-tag {
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 600; /* font-semibold */
+  padding: 0.125rem 0.5rem; /* px-2 py-0.5 */
+  border-radius: 9999px; /* rounded-full */
+}
+
+/* Health tag color variations */
+.health-green {
+  background-color: #dcfce7; /* green-100 */
+  color: #166534; /* green-800 */
+}
+.health-yellow {
+  background-color: #fef9c3; /* yellow-100 */
+  color: #854d0e; /* yellow-800 */
+}
+.health-blue {
+  background-color: #dbeafe; /* blue-100 */
+  color: #1e40af; /* blue-800 */
+}
+.health-red {
+  background-color: #fee2e2; /* red-100 */
+  color: #991b1b; /* red-800 */
+}
+
+/* --- NEW: Skeleton Loading Animation --- */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.375rem; /* rounded-md */
+}
+
+.skeleton-text {
+  height: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.skeleton-card {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.skeleton-title {
+  height: 1.5rem;
+  width: 70%;
+}
+
+.skeleton-body {
+  height: 4rem;
+  width: 100%;
+}

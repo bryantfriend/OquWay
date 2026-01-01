@@ -1,0 +1,21 @@
+{
+  "moduleId": "english-a1-17-hometown",
+  "slug": "module-17-hometown",
+  "title": {
+    "en": "Hometown",
+    "ru": "",
+    "kg": ""
+  },
+  "unlockWeek": 6,
+  "steps": [
+    {
+      "type": "primer",
+      "mediaType": "text",
+      "text": {
+        "en": "Introduction to hometown",
+        "ru": "",
+        "kg": ""
+      }
+    }
+  ]
+}

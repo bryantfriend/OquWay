@@ -1,0 +1,21 @@
+{
+  "moduleId": "english-a1-19-shopping",
+  "slug": "module-19-shopping",
+  "title": {
+    "en": "Shopping",
+    "ru": "",
+    "kg": ""
+  },
+  "unlockWeek": 7,
+  "steps": [
+    {
+      "type": "primer",
+      "mediaType": "text",
+      "text": {
+        "en": "Introduction to shopping",
+        "ru": "",
+        "kg": ""
+      }
+    }
+  ]
+}

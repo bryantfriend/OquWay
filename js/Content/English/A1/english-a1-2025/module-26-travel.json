@@ -1,0 +1,21 @@
+{
+  "moduleId": "english-a1-26-travel",
+  "slug": "module-26-travel",
+  "title": {
+    "en": "Travel",
+    "ru": "",
+    "kg": ""
+  },
+  "unlockWeek": 9,
+  "steps": [
+    {
+      "type": "primer",
+      "mediaType": "text",
+      "text": {
+        "en": "Introduction to travel",
+        "ru": "",
+        "kg": ""
+      }
+    }
+  ]
+}

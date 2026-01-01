@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OquWay Admin Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-200 font-sans h-screen flex items-center justify-center">
+
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm">
+        <h1 class="text-3xl font-bold mb-6 text-center text-blue-600">OquWay Admin</h1>
+        <h2 class="text-xl font-semibold mb-6 text-center text-gray-700">Login</h2>
+
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email (Username)</label>
+                <input
+                    type="email"
+                    id="email"
+                    required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="admin@example.com"
+                />
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="••••••••"
+                />
+            </div>
+
+            <button
+                type="submit"
+                id="loginBtn"
+                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out"
+            >
+                Sign In
+            </button>
+            <p id="errorMsg" class="text-red-500 text-sm mt-3 text-center hidden">
+                Invalid email or password.
+            </p>
+        </form>
+    </div>
+
+    <script type="module">
+        // 1. Firebase Imports
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+        
+        // 2. Local Firebase Initialization Import
+        // Assumes firebase-init.js is in the same directory (the root)
+        import { app } from "./firebase-init.js"; 
+
+        const auth = getAuth(app);
+        const form = document.getElementById('loginForm');
+        const errorMsg = document.getElementById('errorMsg');
+        const loginBtn = document.getElementById('loginBtn');
+        
+        // Function to check login status on load
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is already signed in, redirect to Admin Panel
+                window.location.href = "index.html";
+            }
+        });
+
+        // Handle Form Submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            errorMsg.classList.add('hidden');
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+
+            try {
+                // Firebase sign-in call
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                
+                // Success: Redirect to the main Admin Panel
+                window.location.href = "index.html";
+
+            } catch (error) {
+                console.error("Login Error:", error.code, error.message);
+                errorMsg.textContent = "Error: " + (error.message || "Invalid credentials.");
+                errorMsg.classList.remove('hidden');
+                
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+            }
+        });
+    </script>
+</body>
+</html>
