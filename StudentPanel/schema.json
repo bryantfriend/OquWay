@@ -1,0 +1,111 @@
+{
+  "game_sessions": {
+    "nGnPRGKt684ekpGOlWYd": {
+      "questionSet": [
+        "001.json",
+        "007.json",
+        "014.json"
+      ],
+      "studentId": "shirin_001",
+      "tagSummary": {
+        "greetings": {
+          "correct": 2,
+          "incorrect": 1
+        },
+        "past_tense": {
+          "correct": 1,
+          "incorrect": 2
+        }
+      },
+      "timeSpentMs": 720000,
+      "timestamp": "July 6, 2025 at 10:29:24 AM UTC+6"
+    }
+  },
+  "question_responses": {
+    "o7USqvgzAFsm54NT6TLz": {
+      "correct": false,
+      "correctAnswer": "Hello!",
+      "prompt": "Hello!",
+      "questionFile": "english_a1/dialogue_greetings/001.json",
+      "selectedAnswer": "Goodbye!",
+      "studentId": "shirin_001",
+      "tags": {
+        "food_vocab": false,
+        "present_simple": true
+      },
+      "timeSpentMs": 12000,
+      "timestamp": "July 6, 2025 at 10:26:43 AM UTC+6"
+    }
+  },
+  "recommendation_logs": {
+    "X2dolL5zOiCX66EkY7u8": {
+      "contentFile": "english_a1/dialogue_greetings/003.json",
+      "reason": "Struggled with past_tense in last session",
+      "recommendationType": "reinforce / recap / stretch",
+      "studentId": "shirin_001",
+      "targetTags": [
+        "past_tense",
+        "greetings"
+      ],
+      "timestamp": "July 6, 2025 at 10:39:08 AM UTC+6"
+    }
+  },
+  "students": {
+    "P5uL3TBbze7YdAkSr": {
+      "age": 8,
+      "ambition": 0,
+      "anger": 0,
+      "empathy": 0,
+      "creativity": 0,
+      "discipline": 0,
+      "fear": 0,
+      "generosity": 0,
+      "happiness": 0,
+      "humor": 0,
+      "kindness": 0,
+      "motivation": 0,
+      "patience": 0,
+      "selfAwareness": 0,
+      "selfRegulation": 0,
+      "socialSkills": 0,
+      "learningProfile": {
+        "english_A1": {
+          "grammar": {
+            "be_verbs_present": "",
+            "can_ability": "",
+            "causatives": "",
+            "modal_verbs": "",
+            "passive_voice": "",
+            "past_simple": "",
+            "questions_form": "",
+            "relative_clauses": ""
+          },
+          "skills": {
+            "asking_questions": "",
+            "describing_daily_routine": "",
+            "listening_familiar_phrases": "",
+            "reading_signs_labels": "",
+            "speaking_basic_sentences": "",
+            "writing_short_texts": ""
+          },
+          "topics": {
+            "family": "",
+            "food_shopping": "",
+            "leisure_activities": "",
+            "personal_information": "",
+            "places_directions": "",
+            "travel_experience": ""
+          },
+          "vocabulary": {
+            "adjectives": "",
+            "body_parts": "",
+            "clothes": "",
+            "colors": "",
+            "numbers": "",
+            "objects_household": ""
+          }
+        }
+      }
+    }
+  }
+}

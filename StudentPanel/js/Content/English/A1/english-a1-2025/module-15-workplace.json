@@ -1,0 +1,21 @@
+{
+  "moduleId": "english-a1-15-workplace",
+  "slug": "module-15-workplace",
+  "title": {
+    "en": "Workplace",
+    "ru": "",
+    "kg": ""
+  },
+  "unlockWeek": 5,
+  "steps": [
+    {
+      "type": "primer",
+      "mediaType": "text",
+      "text": {
+        "en": "Introduction to workplace",
+        "ru": "",
+        "kg": ""
+      }
+    }
+  ]
+}

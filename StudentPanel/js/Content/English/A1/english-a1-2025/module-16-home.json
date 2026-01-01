@@ -1,0 +1,21 @@
+{
+  "moduleId": "english-a1-16-home",
+  "slug": "module-16-home",
+  "title": {
+    "en": "Home",
+    "ru": "",
+    "kg": ""
+  },
+  "unlockWeek": 6,
+  "steps": [
+    {
+      "type": "primer",
+      "mediaType": "text",
+      "text": {
+        "en": "Introduction to home",
+        "ru": "",
+        "kg": ""
+      }
+    }
+  ]
+}

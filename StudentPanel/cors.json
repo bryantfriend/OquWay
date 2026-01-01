@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["http://localhost:5000", "http://localhost:60376", "http://127.0.0.1:5500", "https://oquway.web.app", "https://oquway.firebaseapp.com"],
+    "method": ["GET", "POST", "PUT", "DELETE"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": ["Content-Type", "x-goog-meta-*"]
+  }
+]

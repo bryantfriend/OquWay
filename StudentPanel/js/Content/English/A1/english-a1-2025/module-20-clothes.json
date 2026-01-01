@@ -1,0 +1,21 @@
+{
+  "moduleId": "english-a1-20-clothes",
+  "slug": "module-20-clothes",
+  "title": {
+    "en": "Clothes",
+    "ru": "",
+    "kg": ""
+  },
+  "unlockWeek": 7,
+  "steps": [
+    {
+      "type": "primer",
+      "mediaType": "text",
+      "text": {
+        "en": "Introduction to clothes",
+        "ru": "",
+        "kg": ""
+      }
+    }
+  ]
+}

@@ -1,0 +1,236 @@
+{
+  "moduleId": "english-a1-week1-greetings",
+  "slug": "week1-greetings",
+  "title": {
+    "en": "Greetings & Introductions",
+    "ru": "Приветствия и знакомство",
+    "kg": "Саламдашуу жана таанышуу"
+  },
+  "unlockWeek": 1,
+  "startDate": "2025-08-12",
+  "allowEarlyAccess": false,
+  "intentionReward": {
+    "blue": 10,
+    "purple": 5
+  },
+  "steps": [
+    {
+      "type": "intentCheck",
+      "question": {
+        "en": "Why do you want to learn English?",
+        "ru": "Почему вы хотите учить английский язык?",
+        "kg": "Эмне үчүн англис тилин үйрөнгүңүз келет?"
+      },
+      "options": {
+        "en": ["Talk to people", "Help my child", "Get a job", "Travel"],
+        "ru": ["Общаться с людьми", "Помогать ребёнку", "Найти работу", "Путешествовать"],
+        "kg": ["Адамдар менен сүйлөшүү", "Балага жардам берүү", "Иш табуу", "Саякаттоо"]
+      }
+    },
+    {
+      "type": "primer",
+      "mediaType": "image",
+      "src": "images/greeting-world.png",
+      "text": {
+        "en": "In every country, the first step to conversation is a greeting. Let's learn the most important ways to say hello in English!",
+        "ru": "В любой стране первый шаг к разговору — это приветствие. Давайте выучим самые важные способы поздороваться на английском!",
+        "kg": "Ар бир өлкөдө баарлашуунун биринчи кадамы – бул саламдашуу. Келгиле, англис тилинде саламдашуунун эң маанилүү жолдорун үйрөнөлү!"
+      }
+    },
+    {
+      "type": "audioLesson",
+      "title": {
+        "en": "Basic Greetings",
+        "ru": "Основные приветствия",
+        "kg": "Негизги саламдашуулар"
+      },
+      "items": [
+        { "word": { "en": "Hello" }, "translation": { "en": "Salam", "ru": "Здравствуйте / Привет", "kg": "Салам" } },
+        { "word": { "en": "Hi" }, "translation": { "en": "Salam (informal)", "ru": "Привет (неформально)", "kg": "Салам (бейформал)" } },
+        { "word": { "en": "Good morning" }, "translation": { "en": "Kutman tań", "ru": "Доброе утро", "kg": "Кутман таң" } },
+        { "word": { "en": "Good afternoon" }, "translation": { "en": "Kutman kün", "ru": "Добрый день", "kg": "Кутман күн" } },
+        { "word": { "en": "Good evening" }, "translation": { "en": "Kutman kech", "ru": "Добрый вечер", "kg": "Кутман кеч" } }
+      ]
+    },
+    {
+      "type": "matchingGame",
+      "title": {
+        "en": "Practice: Match the Greeting",
+        "ru": "Практика: Сопоставьте приветствия",
+        "kg": "Көнүгүү: Саламдашууларды дал келтириңиз"
+      },
+      "pairs": {
+        "en": [ ["Good morning", "Kutman tań"], ["Hello", "Salam"], ["Good evening", "Kutman kech"], ["Hi", "Salam (informal)"], ["Good afternoon", "Kutman kün"] ],
+        "ru": [ ["Good morning", "Доброе утро"], ["Hello", "Здравствуйте"], ["Good evening", "Добрый вечер"], ["Hi", "Привет"], ["Good afternoon", "Добрый день"] ],
+        "kg": [ ["Good morning", "Кутман таң"], ["Hello", "Салам"], ["Good evening", "Кутман кеч"], ["Hi", "Салам (бейформал)"], ["Good afternoon", "Кутман күн"] ]
+      }
+    },
+    {
+      "type": "audioLesson",
+      "title": {
+        "en": "Starting a Conversation",
+        "ru": "Как начать разговор",
+        "kg": "Сүйлөшүүнү баштоо"
+      },
+      "items": [
+        { "word": { "en": "How are you?" }, "translation": { "en": "Kandaysyz?", "ru": "Как у вас дела?", "kg": "Кандайсыз?" } },
+        { "word": { "en": "I'm fine, thank you." }, "translation": { "en": "Rahmat, jakshy.", "ru": "Спасибо, я в порядке.", "kg": "Рахмат, жакшы." } },
+        { "word": { "en": "And you?" }, "translation": { "en": "Sizdechi?", "ru": "А у вас?", "kg": "Сиздечи?" } },
+        { "word": { "en": "What's your name?" }, "translation": { "en": "Sizdin atynyz kim?", "ru": "Как вас зовут?", "kg": "Сиздин атыңыз ким?" } },
+        { "word": { "en": "My name is..." }, "translation": { "en": "Menin atym...", "ru": "Меня зовут...", "kg": "Менин атым..." } }
+      ]
+    },
+    {
+      "type": "fillInTheBlank",
+      "prompt": {
+        "en": "Complete the short conversation.",
+        "ru": "Завершите короткий диалог.",
+        "kg": "Кыска диалогду толуктаңыз."
+      },
+      "question": {
+        "en": "A: Hello! What's your name? \nB: Hi! ___ name is Maria.",
+        "ru": "A: Здравствуйте! Как вас зовут? \nB: Привет! ___ зовут Мария.",
+        "kg": "A: Салам! Сиздин атыңыз ким? \nB: Салам! ___ атым Мария."
+      },
+      "options": [
+        { "text": { "en": "My", "ru": "Меня", "kg": "Менин" }, "isCorrect": true },
+        { "text": { "en": "Your", "ru": "Вас", "kg": "Сиздин" }, "isCorrect": false, "feedback": { "en": "Not quite. 'Your' refers to the other person. Maria is talking about herself.", "ru": "Не совсем. 'Вас' относится к другому человеку. Мария говорит о себе.", "kg": "Туура эмес. 'Сиздин' башка адамга тиешелүү. Мария өзү жөнүндө айтып жатат." } },
+        { "text": { "en": "I", "ru": "Я", "kg": "Мен" }, "isCorrect": false, "feedback": { "en": "Good try! 'I' is usually followed by a verb like 'am' (I am Maria). The blank is before the word 'name'.", "ru": "Хорошая попытка! За 'Я' обычно следует глагол, например 'am' (I am Maria). Пропуск стоит перед словом 'зовут'.", "kg": "Жакшы аракет! 'Мен' дегенден кийин көбүнчө 'am' сыяктуу этиш келет (I am Maria). Бош орун 'атым' деген сөздүн алдында турат." } }
+      ]
+    },
+    {
+      "type": "grammarMini",
+      "focus": { "en": "The Verb 'To Be' (am, is, are)" },
+      "explanation": {
+        "en": "We use 'to be' to describe states and identity. 'I' uses 'am'. 'You' uses 'are'. 'He' and 'She' use 'is'.",
+        "ru": "Мы используем 'to be' для описания состояний и личности. 'I' используется с 'am'. 'You' с 'are'. 'He' и 'She' с 'is'.",
+        "kg": "'To be' этиши абалдарды жана ким экендигин сүрөттөө үчүн колдонулат. 'I' менен 'am' колдонулат. 'You' менен 'are'. 'He' жана 'She' менен 'is'."
+      },
+      "examples": {
+        "en": ["I **am** happy.", "You **are** a student.", "He **is** John.", "How **are** you?", "My name **is** Anna."],
+        "ru": ["I **am** happy. (Я счастлив)", "You **are** a student. (Ты студент)", "He **is** John. (Он Джон)", "How **are** you? (Как дела?)", "My name **is** Anna. (Меня зовут Анна)"],
+        "kg": ["I **am** happy. (Мен бактылуумун)", "You **are** a student. (Сен студентсиң)", "He **is** John. (Ал Жон)", "How **are** you? (Кандайсың?)", "My name **is** Anna. (Менин атым Анна)"]
+      },
+      "quiz": [
+        { "question": { "en": "You ___ my friend." }, "options": { "en": ["am", "is", "are"] }, "answer": { "en": "are" } },
+        { "question": { "en": "What ___ your name?" }, "options": { "en": ["am", "is", "are"] }, "answer": { "en": "is" } }
+      ]
+    },
+    {
+      "type": "primer",
+      "mediaType": "image",
+      "src": "images/formal-informal.png",
+      "text": {
+        "en": "Context is important! 'Hello' and 'Good morning' are good for any situation. 'Hi' or 'What's up?' are informal and best for friends.",
+        "ru": "Контекст важен! 'Hello' и 'Good morning' подходят для любой ситуации. 'Hi' или 'What's up?' — неформальные и лучше всего подходят для друзей.",
+        "kg": "Контекст маанилүү! 'Hello' жана 'Good morning' бардык жагдайларга ылайыктуу. 'Hi' же 'What's up?' — бейформал жана достор үчүн эң жакшы."
+      }
+    },
+    {
+      "type": "movie",
+      "title": {
+        "en": "Watch: A Short English Conversation",
+        "ru": "Смотреть: Короткий диалог на английском",
+        "kg": "Көрүү: Англисче кыскача диалог"
+      },
+      "src": "https://www.youtube.com/embed/WyBY5KoOf8g"
+    },
+    {
+      "type": "roleplay",
+      "prompt": {
+        "en": "You meet a teacher at your school in the morning. How do you greet them?",
+        "ru": "Вы встречаете учителя в школе утром. Как вы его поприветствуете?",
+        "kg": "Сиз эртең менен мектептен мугалимди жолуктурдуңуз. Кантип саламдашасыз?"
+      },
+      "options": {
+        "en": ["Hi!", "Good morning.", "What's up?"],
+        "ru": ["Привет!", "Доброе утро.", "Как дела?"],
+        "kg": ["Салам!", "Кутман таң.", "Кандай?"]
+      },
+      "correctOption": 1,
+      "feedback": {
+        "en": "Correct! 'Good morning' is a polite and appropriate greeting for a teacher.",
+        "ru": "Правильно! 'Доброе утро' — это вежливое и подходящее приветствие для учителя.",
+        "kg": "Туура! 'Кутман таң' — мугалим үчүн сылык жана ылайыктуу саламдашуу."
+      }
+    },
+    {
+      "type": "roleplaySequence",
+      "scenario": {
+        "en": "Challenge: First Day at a New Job",
+        "ru": "Задание: Первый день на новой работе",
+        "kg": "Тапшырма: Жаңы жумуштагы биринчи күн"
+      },
+      "scenes": [
+        {
+          "character": "You",
+          "prompt": { "en": "You see your new colleague for the first time. What do you say?", "ru": "Вы впервые видите своего нового коллегу. Что вы скажете?", "kg": "Жаңы кесиптешиңизди биринчи жолу көрүп жатасыз. Эмне дейсиз?" },
+          "options": [
+            { "text": { "en": "Good morning.", "ru": "Доброе утро.", "kg": "Кутман таң." }, "isCorrect": true },
+            { "text": { "en": "What's your name?", "ru": "Как вас зовут?", "kg": "Сиздин атыңыз ким?" }, "isCorrect": false, "feedback": { "en": "It's better to greet someone first before asking their name.", "ru": "Лучше сначала поздороваться, прежде чем спрашивать имя.", "kg": "Атын сураганга чейин алгач саламдашып алган жакшы." } },
+            { "text": { "en": "Hi.", "ru": "Привет.", "kg": "Салам." }, "isCorrect": false, "feedback": { "en": "'Hi' is a bit informal for a first meeting with a colleague. 'Good morning' is safer.", "ru": "'Привет' - немного неформально для первой встречи с коллегой. 'Доброе утро' - более безопасно.", "kg": "'Салам' кесиптеш менен биринчи жолугушуу үчүн бир аз бейформал. 'Кутман таң' ылайыктуураак." } }
+          ]
+        },
+        { "character": "Aibek", "avatar": "images/aibek.png", "dialogue": { "en": "Oh, good morning! I'm Aibek. How are you?", "ru": "О, доброе утро! Я Айбек. Как вы?", "kg": "О, кутман таң! Мен Айбек. Кандайсыз?" } },
+        {
+          "character": "You",
+          "prompt": { "en": "How do you respond?", "ru": "Как вы ответите?", "kg": "Кантип жооп бересиз?" },
+          "options": [
+            { "text": { "en": "My name is...", "ru": "Меня зовут...", "kg": "Менин атым..." }, "isCorrect": false, "feedback": { "en": "Good, but he asked 'How are you?' first. It's polite to answer his question.", "ru": "Хорошо, но он сначала спросил 'Как вы?'. Вежливо будет ответить на его вопрос.", "kg": "Жакшы, бирок ал адегенде 'Кандайсыз?' деп сурады. Анын суроосуна жооп берүү сылыктыкка жатат." } },
+            { "text": { "en": "I'm fine, thank you. And you?", "ru": "Спасибо, хорошо. А вы?", "kg": "Рахмат, жакшы. Сизчи?" }, "isCorrect": true },
+            { "text": { "en": "Goodbye.", "ru": "До свидания.", "kg": "Кош болуңуз." }, "isCorrect": false, "feedback": { "en": "This would end the conversation too early!", "ru": "Это завершит разговор слишком рано!", "kg": "Бул сүйлөшүүнү өтө эрте бүтүрүп коёт!" } }
+          ]
+        },
+        { "character": "Aibek", "avatar": "images/aibek.png", "dialogue": { "en": "I'm doing well, thanks for asking! So, what's your name?", "ru": "У меня все отлично, спасибо, что спросили! Итак, как вас зовут?", "kg": "Менде баары жакшы, сураганыңыз үчүн рахмат! А сиздин атыңыз ким?" } },
+        {
+          "character": "You",
+          "prompt": { "en": "Now introduce yourself.", "ru": "Теперь представьтесь.", "kg": "Эми өзүңүздү тааныштырыңыз." },
+          "options": [
+            { "text": { "en": "I am fine.", "ru": "Я в порядке.", "kg": "Мен жакшы." }, "isCorrect": false, "feedback": { "en": "He is asking for your name now, not how you are.", "ru": "Он сейчас спрашивает ваше имя, а не как у вас дела.", "kg": "Ал азыр сиздин атыңызды сурап жатат, абалыңызды эмес." } },
+            { "text": { "en": "And you?", "ru": "А вы?", "kg": "Сизчи?" }, "isCorrect": false, "feedback": { "en": "You already asked that. Now it's time to give your name.", "ru": "Вы это уже спрашивали. Теперь время назвать своё имя.", "kg": "Сиз муну сурагансыз. Эми өз атыңызды айтууга убакыт келди." } },
+            { "text": { "en": "My name is [Your Name]. Nice to meet you.", "ru": "Меня зовут [Ваше Имя]. Приятно познакомиться.", "kg": "Менин атым [Сиздин атыңыз]. Таанышканыма кубанычтамын." }, "isCorrect": true }
+          ]
+        },
+        { "character": "Aibek", "avatar": "images/aibek.png", "dialogue": { "en": "Nice to meet you too! Well, I have to get to a meeting. See you later!", "ru": "Мне тоже приятно познакомиться! Что ж, мне нужно на встречу. Увидимся!", "kg": "Мага да таанышканыма кубанычтамын! Макул, мен жыйынга барышым керек. Көрүшкөнчө!" } }
+      ]
+    },
+    {
+      "type": "audioLesson",
+      "title": { "en": "Saying Goodbye", "ru": "Как прощаться", "kg": "Коштошуу" },
+      "items": [
+        { "word": { "en": "Goodbye" }, "translation": { "en": "Kosh bol", "ru": "До свидания", "kg": "Кош бол" } },
+        { "word": { "en": "Bye" }, "translation": { "en": "Kosh (informal)", "ru": "Пока (неформально)", "kg": "Кош (бейформал)" } },
+        { "word": { "en": "See you later" }, "translation": { "en": "Körüshkönchö", "ru": "Увидимся позже", "kg": "Көрүшкөнчө" } }
+      ]
+    },
+    {
+      "type": "matchingGame",
+      "title": {
+        "en": "Final Practice: Farewells",
+        "ru": "Итоговая практика: Прощания",
+        "kg": "Акыркы көнүгүү: Коштошуулар"
+      },
+      "pairs": {
+        "en": [ ["Goodbye", "Kosh bol"], ["Bye", "Kosh (informal)"], ["See you later", "Körüshkönchö"] ],
+        "ru": [ ["Goodbye", "До свидания"], ["Bye", "Пока"], ["See you later", "Увидимся позже"] ],
+        "kg": [ ["Goodbye", "Кош бол"], ["Bye", "Кош (бейформал)"], ["See you later", "Көрүшкөнчө"] ]
+      }
+    },
+    {
+      "type": "mission",
+      "prompt": {
+        "en": "Your mission today: Greet one person in English! You can say 'Hello' or 'Good morning'.",
+        "ru": "Ваша миссия на сегодня: Поприветствуйте одного человека на английском! Вы можете сказать 'Hello' или 'Good morning'.",
+        "kg": "Сиздин бүгүнкү миссияңыз: Бир адам менен англисче саламдашыңыз! 'Hello' же 'Good morning' деп айтсаңыз болот."
+      }
+    },
+    {
+      "type": "reflection",
+      "prompt": {
+        "en": "How do you feel after this lesson? What was easy? What was difficult?",
+        "ru": "Как вы себя чувствуете после этого урока? Что было легко? Что было сложно?",
+        "kg": "Бул сабактан кийин өзүңүздү кандай сезип жатасыз? Эмне оңой болду? Эмне кыйын болду?"
+      }
+    }
+  ]
+}
