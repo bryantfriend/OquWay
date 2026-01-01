@@ -2,6 +2,7 @@
 import { auth } from '../firebase-init.js';
 import { signOut, onAuthStateChanged, getIdTokenResult } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import { setApiLocation, getAuthorizedLocations } from './api.js';
+import { LocationPickerModal } from './modals/LocationPickerModal.js';
 
 import * as ui from './ui.js';
 
@@ -26,9 +27,9 @@ class AccountingApp {
     this.logoutButton = document.getElementById('logoutBtn');
     this.currentTab = 'overview';
     this.loadedTabs = new Set();
-    
+
     // NEW LOCATION STATE
-    this.allLocations = []; 
+    this.allLocations = [];
     this.currentLocationId = localStorage.getItem('activeLocationId') || 'default';
     this.userRole = 'none';
   }
@@ -37,12 +38,12 @@ class AccountingApp {
    * Kicks off the application.
    * Sets up the authentication guard.
    */
-init() {
+  init() {
     // ----------------------------------------------------
     // ✨ FIX: Show Loader and Initial Text IMMEDIATELY
     // ----------------------------------------------------
     document.getElementById('loading-text').textContent = 'Authenticating and preparing system...';
-    document.getElementById('global-loading-overlay').classList.remove('hidden'); 
+    document.getElementById('global-loading-overlay').classList.remove('hidden');
     // ----------------------------------------------------
 
     onAuthStateChanged(auth, async (user) => {
@@ -55,47 +56,47 @@ init() {
         const tokenResult = await getIdTokenResult(user);
         const role = tokenResult.claims.role || 'none';
         const userLocationId = tokenResult.claims.locationId;
-        
+
         this.userRole = role;
-        
+
         // 🔐 PRIMARY SECURITY GUARD 🔐
         if (this.userRole !== 'admin' && this.userRole !== 'accountant' && this.userRole !== 'superAdmin') {
           this.showAccessDenied();
           return;
         }
-        
+
         // --- NEW LOCATION SETUP ---
         this.allLocations = await getAuthorizedLocations(this.userRole, userLocationId);
-        
+
         // Use user's claim location as the highest priority default
         let defaultLocation = userLocationId || this.currentLocationId || 'default';
-        
+
         // Ensure the selected location is in the list of authorized locations
         const activeLoc = this.allLocations.find(loc => loc.id === defaultLocation) || this.allLocations[0];
         this.currentLocationId = activeLoc.id;
-        
+
         setApiLocation(this.currentLocationId);
-        
+
         const initialLocationName = activeLoc.name || 'Default';
-        
+
         // FIX: Set the switcher up once using the finalized active location name
         this.setupLocationSwitcher(initialLocationName);
         // --- END LOCATION SETUP ---
 
         this.setupEventListeners();
-        
+
         // 3. Update the header location display (This must happen after setupLocationSwitcher)
         const headerLocationDisplay = document.getElementById('header-location-display');
         if (headerLocationDisplay) {
-             headerLocationDisplay.textContent = initialLocationName;
+          headerLocationDisplay.textContent = initialLocationName;
         }
 
         // The first content load (initOverview) will handle hiding the loader.
         this.loadTabContent(this.currentTab, true);
-        
+
         // 1. Init the floating button listener
         document.getElementById('floating-bug-btn')?.addEventListener('click', () => {
-            this.checkAndShowWelcome(true); 
+          this.checkAndShowWelcome(true);
         });
 
         // 2. Auto-show welcome (only if not seen)
@@ -111,124 +112,68 @@ init() {
   }
 
   /**
-   * --- NEW: Renders the Location Switcher UI ---
-   */
+     * --- NEW: Renders the Location Switcher UI ---
+     */
   setupLocationSwitcher(initialLocationName) {
-    const locationNameSpan = document.getElementById('current-location-name');
-    const locationDropdown = document.getElementById('location-dropdown');
-    const locationNameDisplay = document.getElementById('current-location-display'); 
+    const locationBtn = document.getElementById('location-selector-btn');
+    const locationText = document.getElementById('current-location-text');
+    const locationNameDisplay = document.getElementById('current-location-display');
 
-    // Update the main top-right display
-    if (locationNameDisplay) {
-        locationNameDisplay.textContent = initialLocationName;
-    }
-
-    // Populate dropdown with all authorized locations
-    locationDropdown.innerHTML = '';
-    this.allLocations.forEach(loc => {
-        const option = document.createElement('option');
-        option.value = loc.id;
-        option.textContent = loc.name;
-        // Pre-select the current active location in the dropdown
-        if (loc.id === this.currentLocationId) {
-            option.selected = true;
-        }
-        locationDropdown.appendChild(option);
-    });
-
-    // Event listener for dropdown change
-    locationDropdown.removeEventListener('change', this.handleLocationChange); // Prevent duplicate listeners
-    this.handleLocationChange = async (event) => {
-        const newLocationId = event.target.value;
-        const newLocationName = event.target.options[event.target.selectedIndex].textContent;
-
-        if (newLocationId === this.currentLocationId) return; // No change needed
-
-        this.currentLocationId = newLocationId;
-        setApiLocation(newLocationId); // Update the global API variable
-
-        // 🚨 FIX: Update the display immediately
-        if (locationNameSpan) {
-            locationNameSpan.textContent = newLocationName;
-        }
-        if (locationNameDisplay) { // <-- NEW: Update the top display as well
-            locationNameDisplay.textContent = newLocationName;
-        }
-
-        ui.showGlobalLoader(`Switching to ${newLocationName}...`);
-        
-        // 🚨 FIX: Force reload of the current tab's content
-        // This will trigger the tab's init function, which should re-fetch data based on the new ACTIVE_LOCATION_ID
-        // We also clear the loadedTabs set so it truly reloads.
-        this.loadedTabs.clear(); 
-        await this.loadTabContent(this.currentTab, true); // true = forceReload (though loadedTabs.clear() handles it)
-        
-        ui.hideGlobalLoader(); // Hide loader after content reloads
+    // Helper to update text
+    const updateDisplay = (name) => {
+      if (locationText) locationText.textContent = name;
+      if (locationNameDisplay) locationNameDisplay.textContent = name;
     };
-    locationDropdown.addEventListener('change', this.handleLocationChange);
 
-    // Initial display for the top-right text
-    if (locationNameSpan) {
-        locationNameSpan.textContent = initialLocationName;
-    }
+    updateDisplay(initialLocationName);
+
+    // Attach click listener
+    locationBtn?.addEventListener('click', () => {
+      const picker = new LocationPickerModal({
+        mode: 'global',
+        currentLocationId: this.currentLocationId,
+        onConfirm: async (newId) => {
+          if (newId === this.currentLocationId) return;
+
+          this.currentLocationId = newId;
+          setApiLocation(newId);
+
+          // Find new name
+          let newName = 'Unknown';
+          if (newId === 'all') {
+            newName = '🌍 All Locations';
+          } else {
+            const loc = this.allLocations.find(l => l.id === newId);
+            newName = loc ? loc.name : 'Unknown';
+          }
+
+          updateDisplay(newName);
+
+          ui.showGlobalLoader(`Switching to ${newName}...`);
+
+          // Force reload
+          this.loadedTabs.clear();
+          await this.loadTabContent(this.currentTab, true);
+
+          ui.hideGlobalLoader();
+        }
+      });
+      picker.show();
+    });
   }
+
+
 
   /**
-   * --- NEW: Modal for switching locations ---
-   */
-  showLocationSelectionModal() {
-      const modalContainer = document.getElementById('modal-container');
-      const locationButtonsHtml = this.allLocations.map(loc => `
-          <button class="loc-switch-btn btn-secondary py-2 px-4 rounded-md text-sm w-full ${loc.id === this.currentLocationId ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}" data-id="${loc.id}">
-              ${loc.name}
-          </button>
-      `).join('');
-
-      modalContainer.innerHTML = `
-          <div class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50">
-              <div class="bg-white rounded-lg shadow-2xl w-full max-w-md p-6 space-y-4">
-                  <h3 class="text-xl font-semibold">Switch Location</h3>
-                  <p class="text-sm text-gray-600">Select the facility you want to manage.</p>
-                  <div id="location-buttons-grid" class="grid grid-cols-2 gap-3">
-                      ${locationButtonsHtml}
-                  </div>
-                  <button id="close-modal-btn" class="btn-secondary w-full">Close</button>
-              </div>
-          </div>
-      `;
-
-      const closeModal = () => modalContainer.innerHTML = '';
-      modalContainer.querySelector('#close-modal-btn').addEventListener('click', closeModal);
-      
-      // Delegation for location selection
-      modalContainer.querySelector('#location-buttons-grid').addEventListener('click', (e) => {
-          const btn = e.target.closest('.loc-switch-btn');
-          if (btn) {
-              const newId = btn.dataset.id;
-              if (newId !== this.currentLocationId) {
-                  this.currentLocationId = newId;
-                  setApiLocation(newId);
-                  // Force full refresh of content and UI
-                  this.currentTab = 'overview'; // Reset tab to prevent errors if the old tab relied on old location data
-                  this.loadedTabs = new Set();
-                  this.setupLocationSwitcher(btn.textContent.trim().replace('▼', ''));
-                  this.loadTabContent(this.currentTab, true);
-                  closeModal();
-              }
-          }
-      });
-  }
-  
-/**
-   * --- UPDATED: Shows the Beta Welcome Screen ---
-   * This function is now set to always display upon load.
-   * @param {boolean} force - If true, show modal even if already seen.
-   */
- /**
-   * --- UPDATED: Shows the Beta Welcome Screen ---
-   * This function is now set to always display upon load.
-   * @param {boolean} force - If true, show modal even if already seen.
-   */
+     * --- UPDATED: Shows the Beta Welcome Screen ---
+     * This function is now set to always display upon load.
+     * @param {boolean} force - If true, show modal even if already seen.
+     */
+  /**
+    * --- UPDATED: Shows the Beta Welcome Screen ---
+    * This function is now set to always display upon load.
+    * @param {boolean} force - If true, show modal even if already seen.
+    */
   checkAndShowWelcome(force = false) {
     // Prevent duplicate modals (still needed if the bug button is double-clicked)
     if (document.getElementById('welcome-modal')) return;
@@ -236,7 +181,7 @@ init() {
     const welcomeModal = document.createElement('div');
     welcomeModal.id = 'welcome-modal';
     welcomeModal.className = "fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-[100] p-4 backdrop-blur-sm transition-opacity duration-300";
-    
+
     // Slightly different text if they clicked the bug button vs auto-welcome
     const titleText = force ? "Support & Bug Report" : "Welcome to OquWay Beta";
     const btnText = force ? "Close" : "I Understand – Let's Start!";
@@ -251,9 +196,9 @@ init() {
 
         <div class="p-6 space-y-4 overflow-y-auto flex-grow custom-scrollbar">
           <p class="text-gray-600 leading-relaxed">
-            ${force 
-              ? "Need help? Found a bug? Use the direct line below to contact the developer." 
-              : "You are one of the first users to access the new accounting system! Please check the latest changes below."}
+            ${force
+        ? "Need help? Found a bug? Use the direct line below to contact the developer."
+        : "You are one of the first users to access the new accounting system! Please check the latest changes below."}
           </p>
 
           <div class="bg-gray-50 border-l-4 border-gray-200 p-4 rounded-r-md">
@@ -321,7 +266,7 @@ init() {
     updatesToggle.addEventListener('click', () => {
       updatesContent.classList.toggle('hidden');
       // Rotate 90 degrees when open (not hidden)
-      toggleIcon.classList.toggle('rotate-90', !updatesContent.classList.contains('hidden')); 
+      toggleIcon.classList.toggle('rotate-90', !updatesContent.classList.contains('hidden'));
     });
 
     // Handle Close button
@@ -348,7 +293,7 @@ init() {
   handleTabClick(clickedTab) {
     const tabName = clickedTab.dataset.tab;
     if (this.currentTab === tabName) return;
-    
+
     this.currentTab = tabName;
 
     // Update UI
@@ -367,22 +312,22 @@ init() {
    */
   loadTabContent(tabName) {
     if (this.loadedTabs.has(tabName) && tabName !== 'overview') {
-       return;
+      return;
     }
-    
+
     // We get the user role from the instance variable (this.userRole)
     const userRole = this.userRole;
-    
+
     // 2. UPDATE THE SWITCH STATEMENT
     switch (tabName) {
-      case 'overview':    initOverview(); break;
-      case 'payments':    initPayments(); break;
-      case 'expenses':    initExpenses(); break;
-      case 'students':    initStudents(); break;
-      case 'teachers':    initTeachers(); break; 
-      case 'classes':     initClasses(); break;
-      case 'migration':   initMigration(userRole); break;
-      case 'settings':    renderSettings(); break;
+      case 'overview': initOverview(); break;
+      case 'payments': initPayments(); break;
+      case 'expenses': initExpenses(); break;
+      case 'students': initStudents(); break;
+      case 'teachers': initTeachers(); break;
+      case 'classes': initClasses(); break;
+      case 'migration': initMigration(userRole); break;
+      case 'settings': renderSettings(); break;
 
       default:
         console.warn(`No module found for tab: ${tabName}`);

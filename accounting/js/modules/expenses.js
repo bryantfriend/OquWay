@@ -31,19 +31,19 @@ async function render() {
   ui.showGlobalLoader('Loading expenses...');
   try {
     const { start, end } = api.getDateRange(state.timeRange, state.currentYear, state.currentMonth);
-    
+
     const [expenses, recurring, categories, salaries] = await Promise.all([
       api.getExpensesByDate(start, end),
       api.getRecurringBills(),
       api.getExpenseCategories(),
       api.getSalaries()
     ]);
-    
+
     state.expenses = expenses;
     state.recurring = recurring;
     state.categories = categories;
     state.salaries = salaries;
-    
+
     const headerHtml = createHeaderBar({
       currentMonth: state.currentMonth,
       currentYear: state.currentYear,
@@ -56,17 +56,17 @@ async function render() {
     const layoutHtml = createLayout(expenses, recurring, salaries);
 
     container.innerHTML = headerHtml + topBarHtml + statCardsHtml + layoutHtml;
-    
+
     attachHeaderEvents('#tab-expenses', state, {
       onMonthChange: (m, y) => { state.currentMonth = m; state.currentYear = y; render(); },
       onRangeChange: (r) => { state.timeRange = r; render(); },
       onReload: async () => { await render(); ui.showToast('✅ Refreshed!'); },
     });
-    
+
     attachLocalEventListeners();
-    
+
     renderExpensesChart(expenses, recurring, salaries);
-    
+
   } catch (error) {
     console.error("Error rendering expenses tab:", error);
     container.innerHTML = `<p class="text-red-500 p-6">Error loading expenses data. ${error.message}</p>`;
@@ -95,7 +95,7 @@ function createStatCards(expenses, recurring, salaries) {
   const monthlyRecurring = recurring.reduce((sum, b) => sum + b.amount, 0);
   const monthlyFixed = monthlySalary + monthlyRecurring;
   const oneTimePeriod = expenses.reduce((sum, e) => sum + e.amount, 0);
-  
+
   const totalPeriod = (state.timeRange === 'yearly')
     ? (monthlyFixed * 12) + oneTimePeriod
     : monthlyFixed + oneTimePeriod;
@@ -121,7 +121,7 @@ function createLayout(expenses, recurring, salaries) {
           <h3 class="text-lg font-semibold">Staff Payroll</h3>
           <button id="add-salary-btn" class="card-header-btn" title="Add New Salary">+</button>
         </div>
-        <div id="salaries-table-container" class="flex-grow">
+        <div id="salaries-table-container" class="flex-grow overflow-x-auto">
           ${createSalariesTable(salaries)}
         </div>
       </div>
@@ -131,7 +131,7 @@ function createLayout(expenses, recurring, salaries) {
           <h3 class="text-lg font-semibold">Recurring Bills</h3>
           <button id="add-bill-btn" class="card-header-btn" title="Add Recurring Bill">+</button>
         </div>
-        <div id="recurring-table-container" class="flex-grow">
+        <div id="recurring-table-container" class="flex-grow overflow-x-auto">
           ${createRecurringBillsTable(recurring)}
         </div>
       </div>
@@ -148,7 +148,7 @@ function createLayout(expenses, recurring, salaries) {
             <h3 class="text-lg font-semibold">One-Time Expenses (Period)</h3>
             <button id="add-expense-btn" class="card-header-btn" title="Add One-Time Expense">+</button>
           </div>
-          <div id="expenses-table-container" class="flex-grow">
+          <div id="expenses-table-container" class="flex-grow overflow-x-auto">
             ${createOneTimeExpensesTable(expenses)}
           </div>
         </div>
@@ -168,7 +168,7 @@ function createSalariesTable(salaries) {
         <button id="add-salary-btn-empty" class="btn-secondary mt-4">Add First Salary</button>
       </div>`;
   }
-  
+
   const rows = salaries.map(s => `
     <tr class="hover:bg-gray-50">
       <td class="p-4 border-b">
@@ -182,7 +182,7 @@ function createSalariesTable(salaries) {
       </td>
     </tr>
   `).join('');
-  
+
   return `
     <table class="min-w-full">
       <thead class="bg-gray-50">
@@ -219,7 +219,7 @@ function createRecurringBillsTable(recurring) {
       </td>
     </tr>
   `).join('');
-  
+
   return `
     <table class="min-w-full">
       <thead class="bg-gray-50">
@@ -242,7 +242,7 @@ function createOneTimeExpensesTable(expenses) {
         <button id="add-expense-btn-empty" class="btn-secondary mt-4">Add First Expense</button>
       </div>`;
   }
-  
+
   const rows = expenses.map(e => `
     <tr class="hover:bg-gray-50">
       <td class="p-4 border-b">
@@ -261,7 +261,7 @@ function createOneTimeExpensesTable(expenses) {
       </td>
     </tr>
   `).join('');
-  
+
   return `
     <table class="min-w-full">
       <thead class="bg-gray-50">
@@ -300,8 +300,8 @@ function renderExpensesChart(expenses, recurring, salaries) {
   const labels = Object.keys(categoryTotals);
   const data = Object.values(categoryTotals);
   if (labels.length === 0) {
-     canvas.parentElement.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No expense data for this period.</div>';
-     return;
+    canvas.parentElement.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No expense data for this period.</div>';
+    return;
   }
   const colors = labels.map((_, i) => `hsl(${(i * 360 / labels.length) % 360}, 70%, 60%)`);
   if (state.chartInstance) state.chartInstance.destroy();
@@ -311,8 +311,8 @@ function renderExpensesChart(expenses, recurring, salaries) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { 
-        legend: { position: 'bottom', labels: { padding: 10, boxWidth: 12 } } 
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 10, boxWidth: 12 } }
       }
     }
   });
@@ -340,7 +340,7 @@ function attachLocalEventListeners() {
 
     const editBill = e.target.closest('.edit-bill-btn');
     if (editBill) handleEditItem(editBill.dataset.id, 'bill');
-    
+
     const editSalary = e.target.closest('.edit-salary-btn');
     if (editSalary) handleEditItem(editSalary.dataset.id, 'salary');
 
@@ -350,7 +350,7 @@ function attachLocalEventListeners() {
 
     const deleteBill = e.target.closest('.delete-bill-btn');
     if (deleteBill) handleDeleteItem(deleteBill.dataset.id, 'bill');
-    
+
     const deleteSalary = e.target.closest('.delete-salary-btn');
     if (deleteSalary) handleDeleteItem(deleteSalary.dataset.id, 'salary');
 
@@ -430,15 +430,16 @@ function handleEditItem(id, type) {
         await api.saveSalary(data, id);
         ui.showToast('Salary updated!', 'success');
         await render();
-      } catch (e) { console.error(e); ui.showToast('Update failed.', 'error'); } 
+      } catch (e) { console.error(e); ui.showToast('Update failed.', 'error'); }
       finally { ui.hideGlobalLoader(); }
     });
   } else {
-    let item = (type === 'expense') 
+    let item = (type === 'expense')
       ? state.expenses.find(e => e.id === id)
       : state.recurring.find(b => b.id === id);
     if (!item) return;
-    const modalData = { ...item, 
+    const modalData = {
+      ...item,
       description: item.description || item.name,
       isRecurring: type === 'recurring'
     };
@@ -446,7 +447,7 @@ function handleEditItem(id, type) {
       ui.showGlobalLoader('Updating expense...');
       try {
         if (data.isRecurring) {
-          if (type === 'expense') { 
+          if (type === 'expense') {
             await api.addRecurringBill(data);
             await api.deleteExpense(id);
           } else {
@@ -490,7 +491,7 @@ async function handleDeleteItem(id, type) {
     }
     ui.showToast('Item deleted.', 'success');
     await render();
-  } catch(e) {
+  } catch (e) {
     console.error(e);
     ui.showToast('Failed to delete item.', 'error');
   } finally {
@@ -505,16 +506,16 @@ async function handleDeleteItem(id, type) {
  */
 function _renderModalList(title, items, nameField, amountField) {
   if (items.length === 0) return '';
-  
+
   const total = items.reduce((sum, item) => sum + (item[amountField] || 0), 0);
-  
+
   const rows = items.map(item => `
     <li class="flex justify-between items-center py-2 px-3">
       <span class="text-sm text-gray-700">${item[nameField]}</span>
       <span class="text-sm font-medium text-red-600">${formatCurrency(item[amountField])}</span>
     </li>
   `).join('');
-  
+
   return `
     <div>
       <h4 class="text-md font-semibold text-gray-700 border-b pb-2 mb-2">${title}</h4>
@@ -536,7 +537,7 @@ function showExpenseDetailModal(type) {
   const modalContainer = document.getElementById('modal-container');
   let title = 'Expense Details';
   let contentHtml = '';
-  
+
   const salaryList = _renderModalList('Staff Payroll', state.salaries, 'name', 'salary');
   const billList = _renderModalList('Recurring Bills', state.recurring, 'name', 'amount');
   const oneTimeList = _renderModalList('One-Time Expenses (Period)', state.expenses, 'description', 'amount');
@@ -562,7 +563,7 @@ function showExpenseDetailModal(type) {
       </div>
     `;
   }
-  
+
   modalContainer.innerHTML = `
     <div class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4">
       <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg">
@@ -576,7 +577,7 @@ function showExpenseDetailModal(type) {
       </div>
     </div>
   `;
-  
+
   modalContainer.querySelector('#close-modal-btn').addEventListener('click', () => {
     modalContainer.innerHTML = '';
   });

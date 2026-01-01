@@ -2,6 +2,7 @@
 import * as api from '../api.js';
 import * as ui from '../ui.js';
 import { StudentModal } from '../modals/StudentModal.js';
+import { LocationPickerModal } from '../modals/LocationPickerModal.js';
 import { renderPaymentModal, renderLessonLogModal } from '../modals.js';
 import { exportToCSV, printTable, formatCurrency, debounce } from '../utils.js';
 import { Timestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
@@ -15,7 +16,7 @@ let state = {
   filters: {
     status: 'active',
     class: 'all',
-    teacher: 'all', 
+    teacher: 'all',
     search: '',
   },
   sort: {
@@ -38,32 +39,32 @@ async function render() {
   ui.showGlobalLoader('Loading students...');
   try {
     const [students, classes, teachers] = await Promise.all([
-      api.getUsersByRole('student', true), 
+      api.getUsersByRole('student', true),
       api.getClasses(),
-      api.getUsersByRole('teacher') 
+      api.getUsersByRole('teacher')
     ]);
 
     const updatedStudents = await resetOverdueMonthlyStudents(students);
-    state.students = updatedStudents; 
+    state.students = updatedStudents;
     state.classes = classes;
-    state.teachers = teachers.sort((a,b) => a.name.localeCompare(b.name)); 
+    state.teachers = teachers.sort((a, b) => a.name.localeCompare(b.name));
 
     applyFiltersAndSort();
-    
-    const topBarHtml = createTopBar(state.classes, state.teachers); 
+
+    const topBarHtml = createTopBar(state.classes, state.teachers);
     const tableHtml = createStudentsTable(state.filteredStudents, state.classes, state.teachers);
 
     container.innerHTML = `
       ${topBarHtml}
-      <div id="students-table-container" class="bg-white rounded-lg shadow-md overflow-hidden">
+      <div id="students-table-container" class="bg-white rounded-lg shadow-md overflow-hidden overflow-x-auto">
         ${tableHtml}
       </div>
     `;
-    
+
     attachPageEventListeners();
     attachTableEventListeners();
     updateSortIcons();
-    
+
   } catch (error) {
     console.error("Error rendering students tab:", error);
     container.innerHTML = `<p class="text-red-500 p-6">Error loading students.</p>`;
@@ -75,7 +76,7 @@ async function render() {
 /**
  * Creates the top bar with new class and teacher filters
  */
-function createTopBar(classes, teachers) { 
+function createTopBar(classes, teachers) {
   const sortedClasses = [...classes].sort((a, b) => {
     const nameA = (a.displayName || a.name).toLowerCase();
     const nameB = (b.displayName || b.name).toLowerCase();
@@ -84,7 +85,7 @@ function createTopBar(classes, teachers) {
     return 0;
   });
 
-  const classOptions = sortedClasses.map(c => 
+  const classOptions = sortedClasses.map(c =>
     `<option value="${c.id}">${c.displayName || c.name}</option>`
   ).join('');
 
@@ -133,7 +134,7 @@ function createTopBar(classes, teachers) {
 /**
  * Creates the student table with sortable headers
  */
-function createStudentsTable(students, classes, teachers) { 
+function createStudentsTable(students, classes, teachers) {
   const rows = students.map(s => {
     const { status, pill } = getPaymentStatus(s);
     if (!s.active && status === 'archived') {
@@ -145,14 +146,14 @@ function createStudentsTable(students, classes, teachers) {
     const studentClass = classes.find(c => c.id === s.classId);
     let className = 'N/A';
     let schedule = 'N/A';
-    let teacherName = 'N/A'; 
+    let teacherName = 'N/A';
     if (studentClass) {
       className = studentClass.displayName || studentClass.name;
       const teacher = teachers.find(t => t.id === studentClass.teacherId);
       if (teacher) {
         teacherName = teacher.name;
       }
-      
+
       const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
       schedule = (studentClass.days || [])
         .sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b))
@@ -179,6 +180,7 @@ function createStudentsTable(students, classes, teachers) {
           ${s.active !== false ? `
             <button class="add-payment-btn table-action-btn" data-id="${s.id}" title="Add Payment">💵</button>
             <button class="log-lesson-btn table-action-btn" data-id="${s.id}" title="Log Lessons">📋</button>
+            <button class="change-location-btn table-action-btn" data-id="${s.id}" title="Change Location">📍</button>
             <button class="edit-student-btn table-action-btn" data-id="${s.id}" title="Edit Student">✏️</button>
             <button class="archive-student-btn table-action-btn" data-id="${s.id}" title="Archive Student">🗃️</button>
           ` : `
@@ -231,11 +233,11 @@ function applyFiltersAndSort() {
   if (classId !== 'all') {
     tempStudents = tempStudents.filter(s => s.classId === classId);
   }
-  
+
   // 3. Filter by Teacher
   if (teacherId !== 'all') {
     tempStudents = tempStudents.filter(s => {
-      if (!s.classId) return false; 
+      if (!s.classId) return false;
       const studentClass = state.classes.find(c => c.id === s.classId);
       return studentClass?.teacherId === teacherId;
     });
@@ -244,7 +246,7 @@ function applyFiltersAndSort() {
   // 4. Filter by Search
   if (search.length > 1) {
     const searchTerm = search.toLowerCase();
-    tempStudents = tempStudents.filter(s => 
+    tempStudents = tempStudents.filter(s =>
       s.name.toLowerCase().includes(searchTerm) ||
       s.phone?.includes(searchTerm)
     );
@@ -322,7 +324,7 @@ function getPaymentStatus(student) {
     const lastPay = student.lastPaymentDate.toDate();
     const nextDueDate = new Date(lastPay.getFullYear(), lastPay.getMonth(), lastPay.getDate() + 30);
     const today = new Date();
-    
+
     if (today > nextDueDate) {
       return { status: 'due', pill: ui.createStatusPill(`Due (since ${nextDueDate.toLocaleDateString()})`, 'unpaid') };
     } else {
@@ -353,7 +355,7 @@ function getPaymentStatus(student) {
 function attachPageEventListeners() {
   container.querySelector('#addStudentBtn')?.addEventListener('click', handleAddStudent);
   container.querySelector('#printStudentsBtn')?.addEventListener('click', handlePrint);
-  
+
   container.querySelector('#importStudentsBtn')?.addEventListener('click', () => {
     showImportModal(state.classes, render);
   });
@@ -381,11 +383,14 @@ function attachTableEventListeners() {
 
     const archiveBtn = e.target.closest('.archive-student-btn');
     if (archiveBtn) handleArchiveStudent(archiveBtn.dataset.id);
-    
+
     const restoreBtn = e.target.closest('.restore-student-btn');
     if (restoreBtn) handleRestoreStudent(restoreBtn.dataset.id);
+
+    const locationBtn = e.target.closest('.change-location-btn');
+    if (locationBtn) handleChangeLocation(locationBtn.dataset.id);
   });
-  
+
   const thead = container.querySelector('table thead');
   thead?.addEventListener('click', e => {
     const sortableHeader = e.target.closest('.sortable');
@@ -411,17 +416,17 @@ function handleAddStudent() {
 
         // 1. Save the new student
         const newUserId = await api.saveUser(studentData, null);
-        
+
         // 2. Check if we also have a pending class to create
         if (pendingClass) {
-            // 2a. Add the new student's ID to the pending class
-            pendingClass.students = [newUserId];
-            
-            // 2b. Save the new class
-            const newClassId = await api.saveClass(pendingClass);
-            
-            // 2c. Update the student with the new class ID
-            await api.saveUser({ classId: newClassId }, newUserId);
+          // 2a. Add the new student's ID to the pending class
+          pendingClass.students = [newUserId];
+
+          // 2b. Save the new class
+          const newClassId = await api.saveClass(pendingClass);
+
+          // 2c. Update the student with the new class ID
+          await api.saveUser({ classId: newClassId }, newUserId);
 
         } else if (studentData.classId) {
           // This handles the original flow (if they just selected an existing class)
@@ -429,14 +434,14 @@ function handleAddStudent() {
         }
 
         ui.showToast('Student added successfully!', 'success');
-        await render(); 
+        await render();
       } catch (error) {
         console.error(error);
         ui.showToast('Failed to add student.', 'error');
       } finally {
         ui.hideGlobalLoader();
       }
-  }
+    }
   );
   modal.show();
 }
@@ -445,57 +450,57 @@ function handleAddStudent() {
  * --- UPDATED: Now handles creating NEW classes during an edit ---
  */
 function handleEditStudent(studentId) {
-    const student = state.students.find(s => s.id === studentId);
-    if (!student) {
-        console.error("Edit FAILED: Student not found for ID:", studentId);
-        return;
-    }
-    
-    const oldClassId = student.classId || null;
+  const student = state.students.find(s => s.id === studentId);
+  if (!student) {
+    console.error("Edit FAILED: Student not found for ID:", studentId);
+    return;
+  }
 
-    const modal = new StudentModal(
-      student, 
-      state.classes,
-      state.students,
-      state.teachers,
-      async (saveData, studentId) => {
-        ui.showGlobalLoader('Updating student...');
-        try {
-          const { studentData, pendingClass } = saveData; 
-          
-          // 1. Check if we need to create a NEW class first
-          if (pendingClass) {
-              pendingClass.students = [studentId];
-              const newClassId = await api.saveClass(pendingClass);
-              studentData.classId = newClassId; // Assign new ID to the student data
-          }
+  const oldClassId = student.classId || null;
 
-          // 2. Save the student updates (including the new classId from step 1 or selection)
-          await api.saveUser(studentData, studentId); // THIS ENSURES classID IS SAVED
+  const modal = new StudentModal(
+    student,
+    state.classes,
+    state.students,
+    state.teachers,
+    async (saveData, studentId) => {
+      ui.showGlobalLoader('Updating student...');
+      try {
+        const { studentData, pendingClass } = saveData;
 
-          const newClassId = studentData.classId || null;
-          
-          // 3. Manage Class Lists (Add/Remove student from class arrays)
-          if (oldClassId && oldClassId !== newClassId) {
-            await api.updateClassStudents(oldClassId, studentId, 'remove');
-          }
-          
-          if (newClassId && newClassId !== oldClassId) {
-            await api.updateClassStudents(newClassId, studentId, 'add');
-          }
-          
-          ui.showToast('Student updated!', 'success');
-          await render();
-
-        } catch (error) {
-          console.error("SAVE FAILED!", error);
-          ui.showToast('Failed to update student. See console.', 'error');
-        } finally {
-          ui.hideGlobalLoader();
+        // 1. Check if we need to create a NEW class first
+        if (pendingClass) {
+          pendingClass.students = [studentId];
+          const newClassId = await api.saveClass(pendingClass);
+          studentData.classId = newClassId; // Assign new ID to the student data
         }
+
+        // 2. Save the student updates (including the new classId from step 1 or selection)
+        await api.saveUser(studentData, studentId); // THIS ENSURES classID IS SAVED
+
+        const newClassId = studentData.classId || null;
+
+        // 3. Manage Class Lists (Add/Remove student from class arrays)
+        if (oldClassId && oldClassId !== newClassId) {
+          await api.updateClassStudents(oldClassId, studentId, 'remove');
+        }
+
+        if (newClassId && newClassId !== oldClassId) {
+          await api.updateClassStudents(newClassId, studentId, 'add');
+        }
+
+        ui.showToast('Student updated!', 'success');
+        await render();
+
+      } catch (error) {
+        console.error("SAVE FAILED!", error);
+        ui.showToast('Failed to update student. See console.', 'error');
+      } finally {
+        ui.hideGlobalLoader();
       }
-    );
-    modal.show();
+    }
+  );
+  modal.show();
 }
 
 function handleAddPayment(studentId) {
@@ -527,9 +532,9 @@ async function handleLogLessons(studentId) {
       api.getActivePaymentsForStudent(studentId),
       api.getLessonsForStudent(studentId, new Date().getFullYear(), new Date().getMonth())
     ]);
-    
+
     ui.hideGlobalLoader();
-    
+
     renderLessonLogModal(student, state.teachers, state.classes, payments, lessons);
 
   } catch (error) {
@@ -545,7 +550,7 @@ async function handleArchiveStudent(studentId) {
     ui.showGlobalLoader('Archiving...');
     try {
       await api.archiveUser(studentId);
-      
+
       if (student.classId) {
         await api.updateClassStudents(student.classId, studentId, 'remove');
       }
@@ -567,17 +572,17 @@ async function handleRestoreStudent(studentId) {
     ui.showGlobalLoader('Restoring...');
     try {
       await api.restoreUser(studentId);
-      
+
       if (student.classId) {
         await api.updateClassStudents(student.classId, studentId, 'add');
       }
 
       ui.showToast('Student restored.', 'success');
       await render();
-    } catch (error) { 
+    } catch (error) {
       console.error(error);
       ui.showToast('Failed to restore.', 'error');
-    } finally { 
+    } finally {
       ui.hideGlobalLoader();
     }
   }
@@ -588,7 +593,7 @@ function handleFilterChange() {
   state.filters.class = container.querySelector('#classFilterSelect').value;
   state.filters.teacher = container.querySelector('#teacherFilterSelect').value;
   state.filters.search = container.querySelector('#studentSearchInput').value;
-  
+
   applyFiltersAndSort();
   refreshTable();
 }
@@ -600,7 +605,7 @@ function handleSort(field) {
     state.sort.field = field;
     state.sort.direction = 'asc';
   }
-  
+
   applyFiltersAndSort();
   refreshTable();
 }
@@ -618,7 +623,7 @@ function refreshTable() {
   const tableHtml = createStudentsTable(state.filteredStudents, state.classes, state.teachers);
   document.getElementById('students-table-container').innerHTML = tableHtml;
   updateSortIcons();
-  attachTableEventListeners(); 
+  attachTableEventListeners();
 }
 
 /**
@@ -626,20 +631,20 @@ function refreshTable() {
  */
 async function resetOverdueMonthlyStudents(students) {
   const today = new Date();
-  today.setHours(0, 0, 0, 0); 
+  today.setHours(0, 0, 0, 0);
   const studentsToUpdate = [];
 
   for (const student of students) {
     if (student.active && student.paymentModel === 'monthly' && student.lastPaymentDate) {
-      
+
       const lastPay = student.lastPaymentDate.toDate();
       const nextDueDate = new Date(lastPay);
       nextDueDate.setDate(nextDueDate.getDate() + 30);
-      nextDueDate.setHours(0, 0, 0, 0); 
+      nextDueDate.setHours(0, 0, 0, 0);
 
       if (today > nextDueDate) {
         const newOwed = student.tuitionTotal || 0;
-        
+
         if (student.tuitionOwed !== newOwed || student.tuitionPaid !== 0) {
           studentsToUpdate.push({
             id: student.id,
@@ -648,7 +653,7 @@ async function resetOverdueMonthlyStudents(students) {
               tuitionPaid: 0,
             }
           });
-          
+
           student.tuitionOwed = newOwed;
           student.tuitionPaid = 0;
         }
@@ -658,8 +663,38 @@ async function resetOverdueMonthlyStudents(students) {
 
   if (studentsToUpdate.length > 0) {
     console.log(`Resetting tuition for ${studentsToUpdate.length} overdue student(s).`);
-    await api.batchUpdateUsers(studentsToUpdate); 
+    await api.batchUpdateUsers(studentsToUpdate);
   }
-  
+
   return students;
+}
+
+function handleChangeLocation(studentId) {
+  const student = state.students.find(s => s.id === studentId);
+  if (!student) return;
+
+  new LocationPickerModal({
+    mode: 'assign',
+    title: `Assign Location for ${student.name}`,
+    currentLocationId: student.locationId,
+    onConfirm: async (newLocationId) => {
+      ui.showGlobalLoader('Updating location...');
+      try {
+        if (student.classId) {
+          const confirmChange = confirm("⚠️ Warning: This student is assigned to a class. Changing their location might make them invisible to that class's teacher. Are you sure?");
+          if (!confirmChange) return;
+        }
+
+        await api.saveUser({ locationId: newLocationId }, studentId);
+        student.locationId = newLocationId;
+        ui.showToast('Location updated!', 'success');
+        await render();
+      } catch (e) {
+        console.error(e);
+        ui.showToast('Failed to update location', 'error');
+      } finally {
+        ui.hideGlobalLoader();
+      }
+    }
+  }).show();
 }

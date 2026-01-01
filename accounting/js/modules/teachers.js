@@ -3,6 +3,7 @@ import * as api from '../api.js';
 import * as ui from '../ui.js';
 import { createDayTimeSelector, getDayTimeData, initDayTimeSelector } from './dayTimeSelector.js';
 import { formatCurrency, debounce } from '../utils.js';
+import { LocationPickerModal } from '../modals/LocationPickerModal.js';
 
 // Module state
 let state = {
@@ -13,8 +14,8 @@ let state = {
   lessons: [],
   loggedPaymentPackages: [],
   config: {},
-  startDate: null, 
-  endDate: null,  
+  startDate: null,
+  endDate: null,
   currentView: 'list',
   selectedTeacher: null,
   // Note: selectedTeacherStats is no longer needed in state as we attach stats to the teacher object directly
@@ -85,7 +86,7 @@ function createTopBar(startDate, endDate) {
 async function render() {
   if (!container) return;
   ui.showGlobalLoader('Loading teachers...');
-  
+
   try {
     const start = state.startDate;
     const end = state.endDate;
@@ -98,14 +99,14 @@ async function render() {
       api.getLessonsByDate(start, end),
       api.getPaymentsByDate(start, end)
     ]);
-    
+
     // Update raw data in state
     state.students = students;
     state.classes = classes;
     state.config = config || { centerSplit: 0.5, socialFund: 5000 };
     state.lessons = lessons;
     state.monthlyPayments = monthlyPayments;
-    
+
     const loggedPaymentIds = [...new Set(lessons.map(l => l.paymentId).filter(Boolean))];
     const loggedPaymentPackages = await api.getPaymentsByIds(loggedPaymentIds);
     state.loggedPaymentPackages = loggedPaymentPackages;
@@ -113,22 +114,22 @@ async function render() {
     // --- 🚀 OPTIMIZATION: Pre-calculate stats for ALL teachers once ---
     // This prevents lag when sorting or rendering the list
     state.teachers = teachersData.map(t => {
-        const stats = _computeTeacherStats(t);
-        return { ...t, stats }; // Attach stats directly to teacher object
+      const stats = _computeTeacherStats(t);
+      return { ...t, stats }; // Attach stats directly to teacher object
     });
 
     if (state.currentView === 'detail') {
       const teacherId = state.selectedTeacher?.id;
       // Find the teacher in our updated state (which has the fresh stats)
       const teacher = state.teachers.find(t => t.id === teacherId);
-      
+
       if (teacher) {
-          state.selectedTeacher = teacher;
-          await renderDetailView(teacher, teacher.stats, start, end);
+        state.selectedTeacher = teacher;
+        await renderDetailView(teacher, teacher.stats, start, end);
       } else {
-          // Fallback if teacher was deleted or not found
-          state.currentView = 'list';
-          render();
+        // Fallback if teacher was deleted or not found
+        state.currentView = 'list';
+        render();
       }
     } else {
       applyListSort();
@@ -165,7 +166,7 @@ function renderListView(teachers, startDate, endDate) {
 function createTeacherTable(teachers) {
   const rows = teachers.map(t => {
     const stats = _computeTeacherStats(t);
-    
+
     // --- Mode Logic ---
     let modeBadge = '';
     if (t.teachingMode === 'online') modeBadge = '<span class="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">Online</span>';
@@ -225,7 +226,7 @@ function attachListListeners() {
       render();
       return;
     }
-    
+
     const archiveBtn = e.target.closest('.archive-teacher-btn');
     if (archiveBtn) {
       handleArchiveTeacher(archiveBtn.dataset.id);
@@ -247,12 +248,12 @@ function attachTopBarListeners() {
   const handleDateChange = () => {
     const newStartDate = new Date(startDateInput.value);
     const newEndDate = new Date(endDateInput.value);
-    
-    newEndDate.setHours(23, 59, 59, 999); 
+
+    newEndDate.setHours(23, 59, 59, 999);
 
     state.startDate = newStartDate;
     state.endDate = newEndDate;
-    
+
     render();
   };
 
@@ -261,8 +262,8 @@ function attachTopBarListeners() {
 
   container.querySelector('#add-teacher-btn')?.addEventListener('click', () => {
     state.currentView = 'detail';
-    state.selectedTeacher = null; 
-    render(); 
+    state.selectedTeacher = null;
+    render();
   });
 }
 
@@ -273,7 +274,7 @@ function attachTopBarListeners() {
 async function renderDetailView(teacher, stats, startDate, endDate) {
   const isNew = !teacher;
   const teacherId = teacher?.id;
-  
+
   container.innerHTML = `
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-2xl font-semibold">${isNew ? 'Add New Teacher' : `Profile: ${teacher.name}`}</h2>
@@ -296,7 +297,7 @@ async function renderDetailView(teacher, stats, startDate, endDate) {
       </div>
     </div>
   `;
-  
+
   const scheduleContainer = container.querySelector('#teacher-schedule-component');
   if (scheduleContainer) {
     const scheduleData = {
@@ -305,7 +306,7 @@ async function renderDetailView(teacher, stats, startDate, endDate) {
     };
     initDayTimeSelector(scheduleContainer, scheduleData);
   }
-  
+
   attachDetailListeners(teacherId, startDate, endDate);
 }
 
@@ -340,7 +341,10 @@ function renderTeacherProfile(teacher) {
 
   return `
     <div class="bg-white rounded-lg shadow-md">
-      <h3 class="text-lg font-semibold p-4 border-b">Profile</h3>
+      <div class="flex justify-between items-center p-4 border-b">
+        <h3 class="text-lg font-semibold">Profile</h3>
+        ${(teacher && teacher.id) ? `<button id="change-location-btn" class="text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 px-3 py-1.5 rounded-full border border-gray-300 transition flex items-center gap-1 font-medium">📍 Change Location</button>` : ''}
+      </div>
       <div class="p-4 space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -415,18 +419,18 @@ function renderTeacherSchedule(teacher) {
 }
 
 function renderWeeklyTimetable(teacher, stats) {
-  if (!teacher) return ''; 
+  if (!teacher) return '';
 
   const teacherDays = teacher.days || [];
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const timetableHtml = days.map(day => {
     const isAvailable = teacherDays.includes(day);
-    
+
     // Find classes on this day
     const classesForDay = stats.assignedClasses
       .filter(c => c.days.includes(day))
-      .sort((a, b) => (a.dayTimes[day] || '').localeCompare(b.dayTimes[day])); 
+      .sort((a, b) => (a.dayTimes[day] || '').localeCompare(b.dayTimes[day]));
 
     const classCardsHtml = classesForDay.map(cls => {
       const time = cls.dayTimes[day] || 'Unscheduled';
@@ -468,7 +472,7 @@ function renderTeacherPayroll(teacher, stats) {
   if (!teacher) return '<div class="bg-white rounded-lg shadow-md p-4"><h3 class="text-lg font-semibold">Payroll</h3><p class="text-gray-500">Save the teacher profile first to enable payroll.</p></div>';
 
   const { payrollDue, calculationHtml } = stats;
-  
+
   return `
     <div class="bg-white rounded-lg shadow-md">
       <h3 class="text-lg font-semibold p-4 border-b">Payroll (This Period)</h3>
@@ -494,13 +498,35 @@ function attachDetailListeners(teacherId, startDate, endDate) {
   container.querySelector('#back-to-list-btn')?.addEventListener('click', () => {
     state.currentView = 'list';
     state.selectedTeacher = null;
-    render(); 
+    render();
   });
-  
+
   container.querySelector('#print-report-btn')?.addEventListener('click', () => {
     handlePrintReport(state.selectedTeacher, state.selectedTeacher.stats, startDate, endDate);
   });
-  
+
+  container.querySelector('#change-location-btn')?.addEventListener('click', () => {
+    new LocationPickerModal({
+      mode: 'assign',
+      title: `Assign Location for ${state.selectedTeacher.name}`,
+      currentLocationId: state.selectedTeacher.locationId,
+      onConfirm: async (newLocationId) => {
+        ui.showGlobalLoader('Updating location...');
+        try {
+          await api.saveUser({ locationId: newLocationId }, teacherId);
+          state.selectedTeacher.locationId = newLocationId;
+          ui.showToast('Location updated!', 'success');
+          await render();
+        } catch (e) {
+          console.error(e);
+          ui.showToast('Failed to update location', 'error');
+        } finally {
+          ui.hideGlobalLoader();
+        }
+      }
+    }).show();
+  });
+
   container.querySelector('#teacherSalaryType')?.addEventListener('change', (e) => {
     const hourlyFields = container.querySelector('#hourly-rate-fields');
     hourlyFields.classList.toggle('hidden', e.target.value !== 'hourly');
@@ -523,12 +549,12 @@ function attachDetailListeners(teacherId, startDate, endDate) {
     ui.showGlobalLoader('Saving...');
     try {
       const newTeacherId = await api.saveUser(data, teacherId);
-      if (!teacherId) { 
+      if (!teacherId) {
         state.selectedTeacher = { id: newTeacherId, ...data };
         state.currentView = 'detail';
       }
       ui.showToast('Profile saved!', 'success');
-      await render(); 
+      await render();
     } catch (e) { console.error(e); ui.showToast('Save failed', 'error'); } finally { ui.hideGlobalLoader(); }
   });
 
@@ -538,7 +564,7 @@ function attachDetailListeners(teacherId, startDate, endDate) {
       days: scheduleData.days,
       dayTimes: scheduleData.dayTimes
     };
-    
+
     ui.showGlobalLoader('Saving schedule...');
     try {
       await api.saveUser(data, teacherId);
@@ -546,7 +572,7 @@ function attachDetailListeners(teacherId, startDate, endDate) {
       await render();
     } catch (e) { console.error(e); ui.showToast('Save failed', 'error'); } finally { ui.hideGlobalLoader(); }
   });
-  
+
   container.querySelector('#mark-paid-btn')?.addEventListener('click', async () => {
     if (!teacherId) return;
     if (confirm(`Mark payroll as paid for ${state.selectedTeacher.name}? This will reset their hours to 0.`)) {
@@ -554,7 +580,7 @@ function attachDetailListeners(teacherId, startDate, endDate) {
       try {
         await api.markPayrollPaid(teacherId);
         ui.showToast('Payroll marked as paid!', 'success');
-        await render(); 
+        await render();
       } catch (e) { console.error(e); ui.showToast('Save failed', 'error'); } finally { ui.hideGlobalLoader(); }
     }
   });
@@ -578,11 +604,11 @@ function attachDetailListeners(teacherId, startDate, endDate) {
 async function handleArchiveTeacher(teacherId) {
   const teacher = state.teachers.find(t => t.id === teacherId);
   if (!teacher) return;
-  
+
   if (confirm(`Are you sure you want to archive ${teacher.name}? They will be hidden from the list.`)) {
     ui.showGlobalLoader('Archiving...');
     try {
-      await api.archiveUser(teacherId); 
+      await api.archiveUser(teacherId);
       ui.showToast('Teacher archived.', 'success');
       await render(); // Refresh the list
     } catch (e) {
@@ -596,9 +622,9 @@ async function handleArchiveTeacher(teacherId) {
 
 function showClassModal(cls) {
   const modalContainer = document.getElementById('modal-container');
-  
+
   const students = (cls.students || []).map(id => state.students.find(s => s.id === id)).filter(Boolean);
-  
+
   const studentsHtml = students.length ? students.map(s => `
     <li class="flex justify-between items-center p-2 hover:bg-gray-50">
       <span>${s.name}</span>
@@ -639,7 +665,7 @@ function showClassModal(cls) {
       </div>
     </div>
   `;
-  
+
   modalContainer.querySelector('#close-modal-btn').addEventListener('click', () => {
     modalContainer.innerHTML = '';
   });
@@ -653,21 +679,21 @@ function _computeTeacherStats(teacher) {
   if (!teacher) return { payrollDue: 0, calculationHtml: '', classCount: 0, totalStudents: 0, totalRevenueGenerated: 0, reportData: {} };
 
   const stats = {};
-  
+
   // --- ✨ NEW LOGIC: Check if teacher pays social fund ---
   // Default to true if property is missing
-  const paysSocialFund = teacher.paysSocialFund !== false; 
+  const paysSocialFund = teacher.paysSocialFund !== false;
   const configSocialFund = state.config.socialFund || 5000;
-  
+
   // If unchecked, deduction is 0. Otherwise, use config value.
   const actualDeduction = paysSocialFund ? configSocialFund : 0;
 
-  stats.reportData = { 
-    lessons: [], 
-    simplePayments: [], 
+  stats.reportData = {
+    lessons: [],
+    simplePayments: [],
     socialFund: actualDeduction // <-- Use calculated value
   };
-  
+
   const socialFund = stats.reportData.socialFund;
   const splitRate = state.config.centerSplit || 0.5;
 
@@ -676,14 +702,14 @@ function _computeTeacherStats(teacher) {
     stats.totalRevenueGenerated = (teacher.hourlyRate || 0) * (teacher.totalHours || 0);
     stats.teacherShare = stats.totalRevenueGenerated;
     stats.payrollDue = stats.teacherShare - socialFund;
-    
+
     // ... (Calculation HTML for hourly omitted for brevity, logic same as before) ...
     stats.calculationHtml = `<div class="text-gray-500">Hourly calculation view.</div>`; // Placeholder if needed
-    
+
     stats.assignedClasses = state.classes.filter(c => c.teacherId === teacher.id);
     stats.classCount = stats.assignedClasses.length;
     stats.totalStudents = stats.assignedClasses.reduce((sum, c) => sum + (c.students?.length || 0), 0);
-    
+
     return stats;
   }
 
@@ -701,11 +727,11 @@ function _computeTeacherStats(teacher) {
   });
 
   const touchedPaymentIds = new Set(state.lessons.map(l => l.paymentId));
-  
+
   // --- 2a. Calculate Lesson-Based Share ---
   lessonsByThisTeacher.forEach(lesson => {
     const paymentPackage = state.loggedPaymentPackages.find(p => p.id === lesson.paymentId);
-    
+
     if (paymentPackage && paymentPackage.lessonCount > 0) {
       const revenueBasis = paymentPackage.amountNet || paymentPackage.amountGross || 0;
       const perLessonValue = revenueBasis / paymentPackage.lessonCount;
@@ -715,13 +741,13 @@ function _computeTeacherStats(teacher) {
 
       const student = state.students.find(s => s.id === lesson.studentId);
       stats.reportData.lessons.push({
-          // SAFE DATE CHECK
-          date: lesson.date.toDate ? lesson.date.toDate() : new Date(lesson.date),
-          studentName: student?.name || 'Unknown Student',
-          paymentAmount: paymentPackage.amountGross,
-          lessonCount: paymentPackage.lessonCount,
-          perLessonValue: perLessonValue,
-          teacherShare: teacherShareForLesson
+        // SAFE DATE CHECK
+        date: lesson.date.toDate ? lesson.date.toDate() : new Date(lesson.date),
+        studentName: student?.name || 'Unknown Student',
+        paymentAmount: paymentPackage.amountGross,
+        lessonCount: paymentPackage.lessonCount,
+        perLessonValue: perLessonValue,
+        teacherShare: teacherShareForLesson
       });
     }
   });
@@ -737,7 +763,7 @@ function _computeTeacherStats(teacher) {
   });
 
   const simpleSplitPayments = state.monthlyPayments.filter(p => simpleSplitStudentIds.has(p.studentId));
-  
+
   simpleSplitPayments.forEach(p => {
     const revenue = p.amountNet || p.amountGross || 0;
     const teacherShareForPayment = revenue * (1 - splitRate);
@@ -746,11 +772,11 @@ function _computeTeacherStats(teacher) {
 
     const student = state.students.find(s => s.id === p.studentId); // ✅ FIXED: Use 'p', not 'lesson'
     stats.reportData.simplePayments.push({
-        // SAFE DATE CHECK (p.date is typically already a Date object from api.js)
-        date: (p.date && p.date.toDate) ? p.date.toDate() : (p.date || new Date()), 
-        studentName: student?.name || 'Unknown Student',
-        paymentAmount: p.amountGross,
-        teacherShare: teacherShareForPayment
+      // SAFE DATE CHECK (p.date is typically already a Date object from api.js)
+      date: (p.date && p.date.toDate) ? p.date.toDate() : (p.date || new Date()),
+      studentName: student?.name || 'Unknown Student',
+      paymentAmount: p.amountGross,
+      teacherShare: teacherShareForPayment
     });
   });
 
@@ -760,10 +786,10 @@ function _computeTeacherStats(teacher) {
   stats.totalRevenueGenerated = lessonBasedRevenue + simpleSplitRevenue;
   stats.teacherShare = totalTeacherShare;
   stats.payrollDue = stats.teacherShare - socialFund;
-  
+
   let classBreakdownHtml = stats.assignedClasses.map(cls => {
-      // ... (Class breakdown logic kept simple for brevity, same as before) ...
-      return `<div class="flex justify-between text-xs"><span class="text-gray-500">${cls.name}</span></div>`;
+    // ... (Class breakdown logic kept simple for brevity, same as before) ...
+    return `<div class="flex justify-between text-xs"><span class="text-gray-500">${cls.name}</span></div>`;
   }).join('');
 
   stats.calculationHtml = `
@@ -791,9 +817,9 @@ function applyListSort() {
 
   state.teachers.sort((a, b) => {
     // Use pre-calculated stats
-    const statsA = a.stats; 
+    const statsA = a.stats;
     const statsB = b.stats;
-    
+
     let valA, valB;
     switch (field) {
       case 'name':
@@ -819,7 +845,7 @@ function applyListSort() {
       default:
         return 0;
     }
-    
+
     if (valA < valB) return -1 * dir;
     if (valA > valB) return 1 * dir;
     return 0;
@@ -833,7 +859,7 @@ function handleListSort(field) {
     state.sort.field = field;
     state.sort.direction = 'asc';
   }
-  
+
   applyListSort();
   // Pass the current dates to re-render list correctly
   renderListView(state.teachers.filter(t => t.active !== false), state.startDate, state.endDate);
@@ -852,12 +878,12 @@ function updateListSortIcons() {
 
 function handlePrintReport(teacher, stats, startDate, endDate) {
   const reportHtml = generateReportHtml(teacher, stats, startDate, endDate);
-  
+
   const printWindow = window.open('', '_blank');
   printWindow.document.write(reportHtml);
   printWindow.document.close();
   printWindow.focus();
-  
+
   setTimeout(() => {
     printWindow.print();
   }, 500);
@@ -875,7 +901,7 @@ function generateReportHtml(teacher, stats, startDate, endDate) {
       <td class="num">${formatCurrency(item.teacherShare)}</td>
     </tr>
   `).join('');
-  
+
   const simpleRows = reportData.simplePayments.map(item => `
     <tr>
       <td>${item.date.toLocaleDateString()}</td>

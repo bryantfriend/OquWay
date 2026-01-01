@@ -37,18 +37,18 @@ async function render() {
   try {
     const month = state.timeRange === 'yearly' ? null : state.currentMonth;
     const { start, end } = api.getDateRange(state.timeRange, state.currentYear, month);
-    
+
     state.payments = await api.getPaymentsByDate(start, end);
-    
-    applySort(); 
-    
+
+    applySort();
+
     const headerHtml = createHeaderBar({
       currentMonth: state.currentMonth,
       currentYear: state.currentYear,
       timeRange: state.timeRange,
       showReload: true,
     });
-    
+
     const topBarHtml = `
       <div class="mb-6 flex justify-between items-center gap-4">
         <h2 class="text-2xl font-semibold">Payment Log</h2>
@@ -59,7 +59,7 @@ async function render() {
         </div>
       </div>
     `;
-    
+
     const chartHtml = `
       <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <h3 class="text-lg font-semibold mb-4">Incoming Payments (${state.timeRange})</h3>
@@ -70,20 +70,20 @@ async function render() {
     `;
 
     const tableHtml = createPaymentsTable(state.filteredPayments);
-    
+
     container.innerHTML = headerHtml + topBarHtml + chartHtml + tableHtml;
-    
+
     attachHeaderEvents('#tab-payments', state, {
       onMonthChange: (m, y) => { state.currentMonth = m; state.currentYear = y; render(); },
       onRangeChange: (r) => { state.timeRange = r; render(); },
       onReload: async () => { await render(); ui.showToast('✅ Refreshed!'); },
     });
-    
+
     attachPageEventListeners(); // ✨ RENAMED
     attachTableEventListeners(); // ✨ NEW
     renderPaymentsChart(state.payments);
     updateSortIcons();
-    
+
   } catch (error) {
     console.error("Error rendering payments tab:", error);
     container.innerHTML = `<p class="text-red-500 p-6">Error loading payments.</p>`;
@@ -116,7 +116,7 @@ function createPaymentsTable(payments) {
   `).join('');
 
   return `
-    <div id="payments-table-container" class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div id="payments-table-container" class="bg-white rounded-lg shadow-md overflow-hidden overflow-x-auto">
       <table id="payments-table" class="min-w-full">
         <thead class="bg-gray-50">
           <tr>
@@ -169,7 +169,7 @@ function renderPaymentsChart(payments) {
 function attachPageEventListeners() {
   container.querySelector('#exportCsvBtn')?.addEventListener('click', handleExport);
   container.querySelector('#printPaymentsBtn')?.addEventListener('click', handlePrint);
-  
+
   container.querySelector('#add-payment-btn')?.addEventListener('click', () => {
     renderPaymentModal(null, state.classes, async (paymentData) => {
       ui.showGlobalLoader('Recording payment...');
@@ -224,7 +224,7 @@ function handleEditPayment(paymentId) {
   const onSave = async (id, updatedData) => {
     ui.showGlobalLoader('Updating payment...');
     try {
-      await api.updatePayment(id, updatedData);  
+      await api.updatePayment(id, updatedData);
       ui.showToast('Payment updated!');
       await render();
     } catch (e) {
