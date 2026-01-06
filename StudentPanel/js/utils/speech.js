@@ -71,12 +71,40 @@ export function speakWithProfile(text, profile = "female_en_soft", avatarEl = nu
   // --- Select best voice ---
   const voices = window.speechSynthesis.getVoices();
   if (voices.length) {
-    const langMatch = voices.find(v => v.lang.toLowerCase().startsWith(utter.lang));
-    const genderMatch = voices.find(v =>
-      (profile.includes("female") && v.name.toLowerCase().includes("female")) ||
-      (profile.includes("male") && v.name.toLowerCase().includes("male"))
-    );
-    utter.voice = genderMatch || langMatch || voices[0];
+    // 1. Filter by language
+    const langVoices = voices.filter(v => v.lang.toLowerCase().startsWith(utter.lang.toLowerCase().split('-')[0]));
+
+    // 2. Define priority keywords for "High Quality"
+    const highQualKeywords = ["google", "natural", "premium", "enhanced", "online"];
+
+    // 3. Helper to score voices
+    const scoreVoice = (v) => {
+      let score = 0;
+      const name = v.name.toLowerCase();
+
+      // Quality
+      if (highQualKeywords.some(k => name.includes(k))) score += 10;
+
+      // Gender match (if profile specifies)
+      const isMale = name.includes("male") && !name.includes("female");
+      const isFemale = name.includes("female");
+
+      if (profile.includes("female") && isFemale) score += 5;
+      if (profile.includes("male") && isMale) score += 5;
+
+      // Exact locale match bonus
+      if (v.lang === utter.lang) score += 2;
+
+      return score;
+    };
+
+    // 4. Sort and pick best
+    langVoices.sort((a, b) => scoreVoice(b) - scoreVoice(a));
+
+    utter.voice = langVoices[0] || voices[0];
+
+    // Debug log to verify selection
+    // console.log(`Selected voice for ${profile}:`, utter.voice.name);
   }
 
   // --- Avatar mouth animation ---

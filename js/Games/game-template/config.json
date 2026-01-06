@@ -1,7 +1,0 @@
-// js/games/science-experiment/config.json
-{
-  "id": "science-experiment",
-  "icon": "🧪",
-  "titleKey": "scienceExperimentTitle",
-  "descriptionKey": "scienceExperimentPrompt"
-}

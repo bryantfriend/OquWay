@@ -1,59 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Module Editor</title>
-  
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <!-- Google Fonts: Inter & Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Quill Rich Text Editor -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
   <link rel="stylesheet" href="./styles.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
   <script type="module" src="./CourseCreatorModules.js"></script>
-</head>
-<body class="bg-gray-100">
-  <div class="max-w-5xl mx-auto p-6">
+  <style>
+    /* Device Frame Styles */
+    .device-frame-common {
+      position: relative;
+      background: white;
+      transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      margin: 2rem auto;
+      overflow: hidden;
+    }
 
+    /* Phone (Mobile) */
+    .device-frame-phone {
+      width: 375px;
+      height: 812px;
+      border: 12px solid #1f2937;
+      /* gray-800 */
+      border-radius: 40px;
+    }
+
+    .device-frame-phone::before {
+      /* Notch */
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 24px;
+      background: #1f2937;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      z-index: 50;
+    }
+
+    /* Tablet */
+    .device-frame-tablet {
+      width: 768px;
+      height: 1024px;
+      border: 12px solid #1f2937;
+      border-radius: 24px;
+    }
+
+    /* No notch for tablet usually, maybe a camera dot */
+    .device-frame-tablet::before {
+      /* Camera Dot */
+      content: '';
+      position: absolute;
+      top: 6px;
+      /* Inside border area visually? No, border is outside box model if box-sizing: content-box, but usually border-box. */
+      /* Actually with border-box, border is inside width. */
+      /* Let's just use top border area or z-index overlay */
+    }
+
+    /* Desktop (Full) */
+    .device-frame-desktop {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      margin: 0;
+    }
+
+    /* Scrollbar override for inside frames */
+    .device-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .device-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 h-screen flex flex-col overflow-hidden text-gray-800 font-sans">
+
+  <!-- ================= DASHBOARD VIEW ================= -->
+  <div id="dashboardView" class="max-w-6xl mx-auto p-8 w-full flex-1 overflow-y-auto">
     <!-- Header -->
-    <div class="flex justify-between items-start mb-4">
+    <div class="flex justify-between items-center mb-8">
       <div>
-        <h1 id="courseName" class="text-2xl font-bold">Loading Course...</h1>
-        <p id="courseLanguages" class="text-sm text-gray-600 mt-1"></p>
+        <h1 id="courseName" class="text-3xl font-bold text-gray-900 tracking-tight">Loading...</h1>
+        <p id="courseLanguages" class="text-sm text-gray-500 mt-1 font-medium"></p>
       </div>
 
-      <button id="backBtn"
-              class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition">
-        ← Back to Courses
-      </button>
+      <div class="flex gap-3">
+        <button id="previewCourseBtn"
+          class="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-50 hover:border-gray-300 transition shadow-sm flex items-center gap-2">
+          <i class="fas fa-play text-blue-600"></i> Preview Course
+        </button>
+        <button id="backBtn"
+          class="bg-gray-800 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-900 transition shadow-sm">
+          ← Back to Courses
+        </button>
+      </div>
     </div>
 
-
     <!-- Module List -->
-    <div id="modulesList" class="space-y-4">
-      <p class="text-gray-600">Loading modules...</p>
+    <div id="modulesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <p class="text-gray-500 italic">Loading modules...</p>
     </div>
 
     <!-- Add Module -->
-    <div class="mt-6">
+    <div class="mt-8 flex gap-4">
       <button id="addModuleBtn"
-              class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-        ➕ Add New Module
+        class="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center gap-2">
+        <i class="fas fa-plus"></i> New Module
       </button>
       <button id="importModuleBtn"
-              class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition">
-        📥 Import Module from JSON
-      </button>       
-      <button id="importHelpBtn"
-              class="bg-gray-300 text-gray-800 px-3 py-2 rounded hover:bg-gray-400 transition"
-              title="Show JSON Import Instructions">
+        class="bg-white border border-gray-200 text-gray-700 px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-50 transition shadow-sm flex items-center gap-2">
+        <i class="fas fa-file-import text-purple-500"></i> Import JSON
+      </button>
+    </div>
+  </div>
 
-        ❓
-      </button>      
+  <!-- ================= EDITOR VIEW ================= -->
+  <div id="editorView" class="hidden flex-1 flex flex-col h-full bg-gray-50">
+
+    <!-- Top Bar -->
+    <div class="h-16 bg-white border-b flex items-center justify-between px-6 shadow-sm z-30 relative">
+      <div class="flex items-center gap-6">
+        <button id="closeEditorBtn" class="text-gray-400 hover:text-gray-800 transition">
+          <i class="fas fa-arrow-left text-lg"></i>
+        </button>
+
+        <div class="flex flex-col">
+          <h2 id="editorModuleName" class="font-bold text-gray-800 text-lg leading-tight">Module Editor</h2>
+          <div id="saveStatus" class="text-xs text-gray-400 font-medium">Saved</div>
+        </div>
+
+        <div class="h-8 w-px bg-gray-200 mx-2"></div>
+
+        <div id="trackTabs" class="flex gap-2">
+          <!-- Tabs injected here -->
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Focus Mode Toggle -->
+        <button id="focusModeBtn" class="text-gray-400 hover:text-blue-600 p-2 rounded transition"
+          title="Toggle Focus Mode">
+          <i class="fas fa-expand-alt"></i>
+        </button>
+
+        <div class="h-6 w-px bg-gray-200 mx-1"></div>
+
+        <button id="editorPreviewBtn"
+          class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-black transition shadow-lg shadow-gray-300 flex items-center gap-2">
+          <i class="fas fa-play text-green-400"></i> Preview
+        </button>
+      </div>
     </div>
 
+    <!-- Main Workspace -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+      <!-- LEFT PANEL: Structure -->
+      <div id="structurePanel"
+        class="w-72 bg-white border-r flex flex-col z-20 transition-all duration-300 transform translate-x-0">
+        <div
+          class="p-3 border-b bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider flex justify-between items-center">
+          <span>Structure</span>
+          <span class="text-[10px] bg-gray-200 px-1.5 rounded">DRAG</span>
+        </div>
+        <div id="structureTree" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+          <!-- Tree items -->
+        </div>
+        <div class="p-3 border-t bg-gray-50">
+          <button id="addPageBtn"
+            class="w-full py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-blue-300 hover:text-blue-600 transition shadow-sm dashed-border">
+            + Add Page
+          </button>
+        </div>
+      </div>
+
+      <!-- CENTER PANEL: Canvas -->
+      <div id="canvasPanel" class="flex-1 bg-gray-100 overflow-hidden relative flex flex-col">
+        <!-- Canvas JS injects structure here or into canvasPage -->
+        <div id="canvasPage" class="w-full h-full"></div>
+      </div>
+
+      <!-- RIGHT PANEL: Inspector -->
+      <div id="inspectorPanel"
+        class="w-80 bg-white border-l flex flex-col z-20 transition-all duration-300 transform translate-x-0">
+        <div class="p-3 border-b bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          Properties
+        </div>
+        <div id="inspectorContent" class="flex-1 overflow-y-auto p-5 custom-scrollbar">
+          <!-- Forms -->
+        </div>
+      </div>
+
+    </div>
   </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Template Picker Modal (NEW) -->
+  <div id="templatePickerModal"
+    class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden">
+      <div class="p-6 border-b flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800">Choose an Experience</h2>
+          <p class="text-gray-500">Start with a proven learning structure.</p>
+        </div>
+        <button id="closeTemplateModalBtn" class="text-gray-400 hover:text-gray-800 text-2xl">&times;</button>
+      </div>
+      <div id="templateGrid"
+        class="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-50">
+        <!-- Templates Injected Here -->
+      </div>
+    </div>
+  </div>
+
   <!-- Import Instructions Modal -->
-  <div id="importHelpModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4">
+  <div id="importHelpModal"
+    class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-full overflow-y-auto">
       <div class="flex justify-between items-center p-4 border-b">
         <h3 class="text-xl font-semibold">📥 JSON Import Instructions</h3>
@@ -69,29 +258,34 @@
       </div>
     </div>
   </div>
-  <div id="addStepModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4">
+
+  <!-- Block Picker / Add Step Modal (Reused/Repurposed) -->
+  <div id="addStepModal"
+    class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-full overflow-y-auto">
       <div class="flex justify-between items-center p-4 border-b">
-        <h3 class="text-xl font-semibold">Select a Step Type</h3>
+        <h3 class="text-xl font-semibold">Select a Block</h3>
         <button id="closeModalBtn" class="text-gray-500 hover:text-gray-800">&times;</button>
       </div>
       <div class="p-4">
-        <input id="stepSearchInput" 
-               class="border p-2 rounded w-full mb-4" 
-               placeholder="Search for a step type...">
-        
+        <input id="stepSearchInput" class="border p-2 rounded w-full mb-4" placeholder="Search for a block type...">
+
         <div id="stepOptionsGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          </div>
+        </div>
       </div>
     </div>
-  </div>     
-  <div id="importModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4">
+  </div>
+
+  <!-- Import JSON Modal -->
+  <div id="importModal"
+    class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
       <div class="p-4 border-b">
         <h3 class="text-xl font-semibold">Import Module from JSON</h3>
       </div>
       <div class="p-4">
-        <textarea id="jsonImportData" class="w-full h-64 border rounded p-2 font-mono text-sm" placeholder="Paste your module JSON here..."></textarea>
+        <textarea id="jsonImportData" class="w-full h-64 border rounded p-2 font-mono text-sm"
+          placeholder="Paste your module JSON here..."></textarea>
       </div>
       <div class="flex justify-end p-4 border-t bg-gray-50">
         <button id="cancelImportBtn" class="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancel</button>
@@ -100,4 +294,5 @@
     </div>
   </div>
 </body>
+
 </html>

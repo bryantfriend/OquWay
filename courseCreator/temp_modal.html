@@ -1,0 +1,24 @@
+<!-- Template Picker Modal (New) -->
+<div id="templatePickerModal"
+    class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div class="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
+            <div>
+                <h3 class="text-2xl font-bold text-gray-800">Choose an Experience</h3>
+                <p class="text-gray-500">Start with a proven learning structure.</p>
+            </div>
+            <button id="closeTemplateModalBtn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+        </div>
+
+        <div class="p-6 overflow-y-auto bg-gray-100 flex-1">
+            <div id="templateList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Templates rendered via JS -->
+            </div>
+        </div>
+
+        <div class="p-4 border-t bg-gray-50 flex justify-end">
+            <button class="text-gray-500 hover:text-gray-700 underline text-sm mr-4">Import from JSON</button>
+            <button class="text-gray-500 hover:text-gray-700 underline text-sm">Create Blank</button>
+        </div>
+    </div>
+</div>

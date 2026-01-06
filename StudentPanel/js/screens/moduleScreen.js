@@ -1,7 +1,9 @@
 // js/moduleScreen.js
 import { navigateTo } from "../router.js";
 import { db } from "../firebase-init.js"; // Import Firestore db
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js"; // Import Firestore functions
+import { doc, getDoc, updateDoc, setDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+import { speak, stopSpeech, speakWithProfile } from "../utils/speech.js";
+import { auth } from "../firebase-init.js";
 
 let currentPartIndex = 0;
 let moduleParts = [];
@@ -34,7 +36,7 @@ export async function renderModuleScreen(container) {
   moduleMeta = { courseTitle: "", moduleId: moduleId, titleRaw: null };
 
   // This function is now rewritten to load from Firestore
-  await loadModuleFromFirestore(courseId, moduleId); 
+  await loadModuleFromFirestore(courseId, moduleId);
 
   document.addEventListener("oquway:languageChanged", onLanguageChangedOncePerScreen);
 }
@@ -51,11 +53,14 @@ async function loadModuleFromFirestore(courseId, moduleId) {
 
   try {
     // --- NEW LOGIC: Get the specific module document from the subcollection ---
+    // Optimization: Start importing renderStep NOW, while DB fetches (browser will enable cache for subsequent import)
+    const _preloadRenderStep = import("../../../Shared/steps/renderStep.js");
+
     const moduleRef = doc(db, "courses", courseId, "modules", moduleId);
     const moduleSnap = await getDoc(moduleRef);
 
     if (!moduleSnap.exists()) {
-        throw new Error(`Module ${moduleId} not found in Firestore.`);
+      throw new Error(`Module ${moduleId} not found in Firestore.`);
     }
 
     const moduleData = moduleSnap.data();
@@ -95,13 +100,19 @@ async function renderCurrentPart() {
   if (!part.type || typeof part.type !== "string") { container.innerHTML = `<p class="text-red-600">Invalid step type.</p>`; return; }
 
   try {
-    const fileName = `render${capitalize(part.type)}.js`;
-    const mod = await import(`../steps/${fileName}`);
-    const renderer = mod.default || mod.render;
-    if (typeof renderer !== "function") {
-      throw new Error(`Renderer missing default export in ${fileName}`);
-    }
-    renderer(container, part);
+    // Unified Shared Renderer
+    const { renderStep } = await import("../../../Shared/steps/renderStep.js");
+
+    // Prepare Context Dependencies
+    const firebaseUtils = { doc, updateDoc, setDoc, getDoc, increment };
+    const speechUtils = { speak, stopSpeech, speakWithProfile };
+
+    await renderStep(container, part, {
+      db,
+      auth,
+      firebaseUtils,
+      speechUtils
+    });
   } catch (err) {
     console.error(`⚠️ Failed to render part type: ${part.type}`, err);
     container.innerHTML = `<p class="text-red-600">Unsupported or broken part: ${part.type}</p>`;

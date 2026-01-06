@@ -117,25 +117,23 @@ async function loadCourseModules(courseDocId) {
         </p>
 
         <div class="flex justify-center gap-2">
-          ${
-            completed
-              ? `<button disabled class="bg-gray-300 text-gray-600 px-4 py-1 rounded text-sm">
-                   Completed
+          ${completed
+          ? `<button class="start-btn bg-white border border-green-500 text-green-600 px-4 py-1 rounded text-sm hover:bg-green-50">
+                   Retake
                  </button>`
-              : `<button class="start-btn bg-green-600 text-white px-4 py-1 rounded text-sm">
+          : `<button class="start-btn bg-green-600 text-white px-4 py-1 rounded text-sm hover:bg-green-700">
                    Start
                  </button>`
-          }
+        }
         </div>
       `;
 
-      if (!completed) {
-        card.querySelector(".start-btn").addEventListener("click", () => {
-          localStorage.setItem("activeCourseDocId", courseDocId);
-          localStorage.setItem("activeModuleId", moduleId);
-          navigateTo("moduleScreen");
-        });
-      }
+      // Always add listener
+      card.querySelector(".start-btn").addEventListener("click", () => {
+        localStorage.setItem("activeCourseDocId", courseDocId);
+        localStorage.setItem("activeModuleId", moduleId);
+        navigateTo("moduleScreen");
+      });
 
       container.appendChild(card);
     }

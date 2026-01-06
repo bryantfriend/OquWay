@@ -1,0 +1,207 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    // 🔧 Helpers
+    function isSuperAdmin() {
+      return request.auth.token.role == 'superAdmin';
+    }
+    function isPlatformAdmin() {
+      return request.auth.token.role == 'platformAdmin';
+    }
+    function isSchoolAdmin() {
+      return request.auth.token.role == 'schoolAdmin';
+    }
+    function isCourseCreator() {
+      return request.auth.token.role == 'courseCreator';
+    }
+    function isAccountant() {
+      return request.auth.token.role == 'accountant';
+    }
+    function isTeacher() {
+      return request.auth.token.role == 'teacher';
+    }
+    function user() {
+      return exists(/databases/$(db)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(db)/documents/users/$(request.auth.uid))
+        : null;
+    }
+    function sameSchool() {
+      return user() != null && resource.data.schoolId == user().data.schoolId;
+    }
+
+    // --- ADMIN ROLES HELPER (FOR ACCOUNTING) ---
+    function isAccountingAdmin() {
+      return request.auth != null && (
+        isSuperAdmin() ||
+        isPlatformAdmin() ||
+        isSchoolAdmin() ||
+        isAccountant()
+      );
+    }
+
+    // 👤 USERS
+    match /users/{uid} {
+      allow read, get, list: if
+        // 1. Allow the user to read their own profile (essential for claims)
+        request.auth.uid == uid ||
+        // 2. Allow any Accounting Admin to read ANY user document
+        isAccountingAdmin() ||
+        // 3. Allow Teachers to read students in their classes (existing logic)
+        (isTeacher() && resource.data.classId in user().data.classIds); 
+
+      // Allow admins to create new users and allow both admins and user to update profile
+      allow update, create: if isAccountingAdmin() || request.auth.uid == uid;
+      
+      allow delete: if isSuperAdmin() || isPlatformAdmin(); 
+      
+      match /modules_completed/{moduleId} {
+        allow read: if request.auth.uid == uid
+                        || isSuperAdmin()
+                        || isPlatformAdmin()
+                        || isSchoolAdmin();
+        allow write: if request.auth.uid == uid;
+      }
+    }
+
+  // 📍 LOCATIONS
+    match /locations/{locId} {
+      allow read: if true;
+      allow write: if isSuperAdmin() || isPlatformAdmin();
+
+      // 🧾 EXPENSE CATEGORIES (subcollection)
+      match /expense_categories/{categoryId} {
+        allow read, list, create, update, delete: if isAccountingAdmin();
+      }
+
+      // 📚 CLASSES (subcollection)
+      // --- ADD THIS BLOCK ---
+      match /classes/{classId} {
+          // Allow accountants/admins to read and write classes
+          allow read, list, create, update, delete: if isAccountingAdmin();
+      }
+    }
+
+
+    // 📚 CLASSES
+    match /classes/{classId} {
+      allow read: if true;
+      allow write: if isSuperAdmin()
+                  || isPlatformAdmin()
+                  || (isSchoolAdmin() && sameSchool());
+    }
+
+    // 🧠 CLASS TEMPLATES
+    match /classTemplates/{templateId} {
+      allow read: if isSuperAdmin() || isPlatformAdmin() || isSchoolAdmin();
+      allow write: if isSuperAdmin() || isPlatformAdmin() || (isSchoolAdmin() && sameSchool());
+    }
+
+    // 📘 COURSES
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if isSuperAdmin() || isPlatformAdmin() || isCourseCreator();
+
+      match /modules/{moduleId} {
+        allow read: if true;
+        allow write: if isSuperAdmin() || isPlatformAdmin() || isCourseCreator();
+      }
+    }
+    
+    // 🧩 SYSTEM STEP TYPES (Cloud Code)
+    match /system_step_types/{stepId} {
+      allow read: if true;
+      allow write: if isSuperAdmin() || isPlatformAdmin() || isCourseCreator();
+    }
+
+    // 🏷 STEP METADATA (Tags)
+    match /step_metadata/{stepId} {
+      allow read: if true;
+      allow write: if isSuperAdmin() || isPlatformAdmin() || isCourseCreator();
+    }
+    
+    // 👥 CUSTOMERS
+    match /customers/{customerId} {
+      allow read, list: if isAccountingAdmin();
+      allow create: if isAccountingAdmin();
+      allow update: if isAccountingAdmin();
+      allow delete: if isSuperAdmin() || isPlatformAdmin();
+    }
+
+
+    // 🔐 PERMISSIONS
+    match /permissions/{permId} {
+      allow read, write: if isSuperAdmin() || isPlatformAdmin();
+    }
+
+    // ⚙️ SETTINGS
+    match /config/{docId} {
+      allow read: if request.auth != null;
+      allow write: if isAccountingAdmin();
+    }
+    match /fees/{docId} {
+      allow read: if request.auth != null;
+      allow write: if isAccountingAdmin();
+    }
+    
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isSuperAdmin() || isPlatformAdmin();
+    }
+    
+    // ---
+    // --- ACCOUNTING COLLECTIONS ---
+    // ---
+    
+    // 💰 PAYMENTS
+    match /payments/{payId} {
+      // Use the accounting helper
+      allow read, write: if isAccountingAdmin();
+    }
+
+    // 💸 EXPENSES
+    match /expenses/{expenseId} {
+      // Use the accounting helper
+      allow read, write: if isAccountingAdmin();
+    }
+
+    // 📄 SUBSCRIPTIONS
+    match /subscriptions/{subId} {
+      allow read, write: if isSuperAdmin() || isAccountant();
+    }
+
+    // 🛒 STORE PURCHASES
+    match /store_purchases/{purchaseId} {
+      allow read: if isSuperAdmin() || isAccountant() || isSchoolAdmin();
+      allow write: if isSuperAdmin() || isAccountant();
+    }
+
+    // 📊 AUDIT LOGS
+    match /audit_logs/{logId} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
+    // 🧾 RECURRING BILLS
+    match /recurring_bills/{billId} {
+      // Use the accounting helper
+      allow read, list, create, update, delete: if isAccountingAdmin();
+
+      match /history/{entryId} {
+        allow read, write: if isAccountingAdmin();
+      }
+    }
+    
+    // 💵 SALARIES
+    match /salaries/{salaryId} {
+      // Use the same accounting helper
+      allow read, list, create, update, delete: if isAccountingAdmin();
+    }
+    
+    // 📋 LESSON LOG
+    match /lesson_log/{lessonId} {
+      // Allow accountants/admins to read and write lesson logs
+      allow read, write: if isAccountingAdmin();
+    }
+  }
+}

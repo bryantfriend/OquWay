@@ -16,7 +16,40 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
+function isAllowedRole(role) {
+  return (
+    role === "superAdmin" ||
+    role === "platformAdmin" ||
+    role === "courseCreator"
+  );
+}
 
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  try {
+    const token = await user.getIdTokenResult(true);
+    const role = token.claims?.role;
+
+    if (!isAllowedRole(role)) {
+      alert("User not authorized to access Course Creator.");
+      await signOut(auth);
+      window.location.href = "login.html";
+      return;
+    }
+
+    // ✅ Authorized → continue loading page
+    loadCourses();
+
+  } catch (err) {
+    console.error("Auth check failed", err);
+    await signOut(auth);
+    window.location.href = "login.html";
+  }
+});
 
 const searchInput = document.getElementById("searchInput");
 const statusFilter = document.getElementById("statusFilter");
@@ -31,6 +64,7 @@ const saveLangModalBtn = document.getElementById("saveLangModalBtn");
 
 let allCourses = [];
 let activeCourseForLangEdit = null;
+let currentLang = "en";
 
 // --- NEW: Central Language Configuration ---
 // This is the master list of all languages your platform supports.
@@ -201,7 +235,7 @@ function renderCourseCard(course) {
   card.querySelector(".previewBtn").addEventListener("click", () => {
     window.open(`CoursePlayer.html?courseId=${course.id}`, '_blank');
   });
-  
+
   card.querySelector(".settingsBtn").addEventListener("click", () => {
     openCourseSettingsModal(course);
   });

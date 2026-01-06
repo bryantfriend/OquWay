@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Oqu Way - Step Type Editor</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Dependencies -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+    <!-- Quill Rich Text Editor -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .code-editor {
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* CustomScrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Device Frame Styles (Shared) */
+        .device-frame-common {
+            position: relative;
+            background: white;
+            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            margin: 2rem auto;
+            overflow: hidden;
+        }
+
+        /* Phone (Mobile) */
+        .device-frame-phone {
+            width: 375px;
+            height: 812px;
+            /* Fixed height for preview, or min-height? */
+            /* For Step Editor, we might want height to be fluid or fixed? 
+               Usually phones have fixed ratio. Let's use fixed for "Phone Look". */
+            border: 12px solid #1f2937;
+            border-radius: 40px;
+        }
+
+        .device-frame-phone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 24px;
+            background: #1f2937;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            z-index: 50;
+        }
+
+        /* Tablet */
+        .device-frame-tablet {
+            width: 768px;
+            height: 1024px;
+            border: 12px solid #1f2937;
+            border-radius: 24px;
+        }
+
+        /* Desktop (Full) */
+        .device-frame-desktop {
+            width: 100%;
+            height: 100%;
+            /* Fill container */
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 h-screen flex flex-col overflow-hidden text-gray-800">
+
+    <!-- MAIN LAYOUT: FLEX ROW -->
+    <div class="flex-1 flex overflow-hidden">
+
+        <!-- LEFT PANEL: Step Types List -->
+        <div class="w-72 bg-gray-50 border-r flex flex-col z-20 shadow-sm relative">
+            <!-- Header -->
+            <div
+                class="p-3 border-b bg-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider flex justify-between items-center">
+                <span>Step Types</span>
+                <a href="CourseCreator.html" class="text-blue-600 hover:text-blue-800" title="Back to Courses"><i
+                        class="fas fa-home"></i></a>
+            </div>
+
+            <!-- Actions -->
+            <div class="p-3 border-b bg-white space-y-2">
+                <button id="newStepTypeBtn"
+                    class="w-full bg-blue-600 text-white rounded py-2 text-xs font-bold uppercase tracking-wide hover:bg-blue-700 shadow-sm transition">
+                    + New Step Type
+                </button>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-gray-400"><i
+                            class="fas fa-search"></i></span>
+                    <input type="text" id="searchSteps" placeholder="Search..."
+                        class="w-full pl-8 p-1.5 border rounded text-sm bg-gray-50 focus:bg-white transition outline-none focus:ring-1 focus:ring-blue-400">
+                </div>
+            </div>
+
+            <!-- List -->
+            <div id="stepTypeList" class="flex-1 overflow-y-auto p-2 space-y-1">
+                <!-- Injected Items -->
+            </div>
+        </div>
+
+        <!-- CENTER PANEL: Configuration Editor -->
+        <div class="flex-1 flex flex-col min-w-0 bg-white relative z-10 shadow-xl">
+
+            <!-- EMPTY STATE OVERLAY -->
+            <div id="editor-empty"
+                class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-gray-50 z-50">
+                <div class="text-6xl mb-4 opacity-20">⚙️</div>
+                <p class="font-medium">Select a Step Type to edit</p>
+            </div>
+
+            <!-- Top Bar -->
+            <div class="h-16 bg-white border-b flex items-center justify-between px-6 shadow-sm shrink-0 z-20 relative">
+                <div class="flex items-center gap-4">
+                    <div class="flex flex-col">
+                        <h2 id="current-step-title" class="text-lg font-bold text-gray-800 leading-tight">Step Editor
+                        </h2>
+                        <div class="flex items-center gap-2 text-xs text-gray-500">
+                            <span class="font-mono bg-gray-100 px-1 rounded" id="current-step-id">--</span>
+                            <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span id="version-badge">v1.0.0</span>
+                        </div>
+                    </div>
+                    <span id="status-badge"
+                        class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-100 text-yellow-700 border border-yellow-200">Draft</span>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div id="validation-msg"
+                        class="text-xs text-red-500 font-bold hidden flex items-center animate-pulse"><i
+                            class="fas fa-exclamation-circle mr-1"></i> Invalid Config</div>
+                    <button id="save-btn"
+                        class="text-gray-600 hover:text-blue-600 px-4 py-1.5 rounded text-sm font-medium transition disabled:opacity-50 border border-transparent hover:border-gray-200">
+                        <i class="fas fa-save mr-1"></i> Save
+                    </button>
+                    <button id="publish-btn"
+                        class="bg-gray-900 text-white px-4 py-1.5 rounded text-sm font-bold shadow-sm hover:bg-black transition disabled:opacity-50 flex items-center gap-2">
+                        <i class="fas fa-rocket"></i> Publish
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable Content -->
+            <!-- ROW WRAPPER (Horizontal) -->
+            <div class="flex-1 flex overflow-hidden">
+                <!-- FORM COLUMN (Scrollable) -->
+                <div class="flex-1 overflow-y-auto p-8 bg-gray-50/50">
+                    <div class="max-w-5xl mx-auto space-y-6">
+
+                        <!-- Metadata Card -->
+                        <div class="bg-white border rounded-lg shadow-sm p-6 relative group hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-4">
+                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Metadata</h3>
+                                <button id="manage-tags-btn"
+                                    class="text-xs text-blue-600 hover:text-blue-800 font-medium opacity-0 group-hover:opacity-100 transition">
+                                    Edit Tags
+                                </button>
+                            </div>
+                            <div id="active-tags-list" class="flex flex-wrap gap-2 text-sm text-gray-600">
+                                <span class="italic text-gray-400">No tags.</span>
+                            </div>
+                        </div>
+
+                        <!-- TABS -->
+                        <div class="flex border-b border-gray-200">
+                            <button id="tab-config"
+                                class="px-6 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600 focus:outline-none">Configuration</button>
+                            <button id="tab-schema"
+                                class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none">Schema</button>
+                            <button id="tab-code"
+                                class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none flex items-center gap-2">
+                                <i class="fas fa-code"></i> Code <span
+                                    class="text-[10px] bg-blue-100 text-blue-600 px-1 rounded hidden"
+                                    id="cloud-badge">CLOUD</span>
+                            </button>
+                        </div>
+
+                        <!-- PANEL: CONFIG -->
+                        <div id="panel-config" class="bg-white border rounded-b-lg shadow-sm p-6 min-h-[400px]">
+                            <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-4 border-b pb-2">
+                                Default Configuration</h3>
+                            <div id="config-form-container">
+                                <!-- SchemaForm Renders Here -->
+                            </div>
+                        </div>
+
+                        <!-- PANEL: SCHEMA -->
+                        <div id="panel-schema"
+                            class="hidden bg-white border rounded-b-lg shadow-sm overflow-hidden min-h-[400px]">
+                            <div class="px-6 py-4 border-b bg-gray-50/50 flex justify-between items-center">
+                                <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wider">Editor Schema
+                                    JSON</h3>
+                            </div>
+                            <textarea id="schema-json-editor"
+                                class="w-full h-96 p-4 text-xs font-mono code-editor bg-gray-900 text-green-400 focus:outline-none transition resize-y"
+                                spellcheck="false"></textarea>
+                        </div>
+
+                        <!-- PANEL: CODE -->
+                        <div id="panel-code"
+                            class="hidden bg-white border rounded-b-lg shadow-sm overflow-hidden min-h-[400px]">
+                            <div class="px-6 py-4 border-b bg-gray-50/50 flex justify-between items-center">
+                                <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wider">Javascript
+                                    Source</h3>
+                                <div id="code-actions" class="hidden">
+                                    <span class="text-xs text-yellow-600 mr-2"><i
+                                            class="fas fa-exclamation-triangle"></i> Advanced Mode</span>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <textarea id="code-editor"
+                                    class="w-full h-[600px] p-4 text-xs font-mono code-editor bg-[#1e1e1e] text-[#d4d4d4] focus:outline-none transition resize-y leading-relaxed"
+                                    spellcheck="false"></textarea>
+                                <div id="code-overlay"
+                                    class="absolute inset-0 bg-gray-100/90 flex flex-col items-center justify-center z-10 hidden">
+                                    <i class="fas fa-lock text-4xl text-gray-400 mb-2"></i>
+                                    <p class="text-gray-500 font-medium">This is a Built-in Step.</p>
+                                    <p class="text-xs text-gray-400">Source code is read-only locally.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- RIGHT PANEL: Live Preview -->
+                <div id="preview-pane-wrapper"
+                    class="w-[450px] bg-gray-100 border-l flex flex-col shrink-0 z-20 shadow-2xl">
+                    <!-- Header -->
+                    <div
+                        class="p-3 border-b bg-white text-xs font-bold text-gray-600 uppercase tracking-wider flex justify-between items-center shadow-sm z-10">
+                        <span>Live Preview</span>
+                        <div class="flex gap-1">
+                            <!-- Responsive Controls -->
+                            <button
+                                class="resize-preview-btn p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-blue-600 transition"
+                                data-width="375px" title="Mobile"><i class="fas fa-mobile-alt"></i></button>
+                            <button
+                                class="resize-preview-btn p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-blue-600 transition"
+                                data-width="768px" title="Tablet"><i class="fas fa-tablet-alt"></i></button>
+                            <button
+                                class="resize-preview-btn p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-blue-600 transition"
+                                data-width="100%" title="Full Width"><i class="fas fa-desktop"></i></button>
+
+                            <div class="w-px h-4 bg-gray-300 mx-1"></div>
+
+                            <button id="refresh-preview"
+                                class="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-blue-600 transition"
+                                title="Refresh"><i class="fas fa-sync-alt"></i></button>
+                            <button id="fullscreen-btn"
+                                class="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-blue-600 transition"
+                                title="Fullscreen"><i class="fas fa-expand"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Toolbar -->
+                    <div class="px-3 py-2 bg-gray-50 border-b flex gap-2 overflow-x-auto">
+                        <input type="text" id="seed-input" placeholder="Seed (e.g. 123)"
+                            class="bg-white border text-gray-600 text-xs rounded px-2 py-1 w-full focus:ring-1 focus:ring-blue-400 outline-none">
+                    </div>
+
+                    <!-- Canvas -->
+                    <div
+                        class="flex-1 overflow-y-auto p-4 flex flex-col items-center bg-gray-200 shadow-inner relative">
+                        <!-- Wrapper for resizing -->
+                        <div id="preview-sizer"
+                            class="w-full transition-all duration-300 ease-in-out flex flex-col items-center">
+                            <div id="preview-container"
+                                class="bg-white shadow-xl w-full rounded-2xl overflow-hidden min-h-[600px] border border-gray-300/50 relative">
+                                <!-- Preview Renders Here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= MODALS ================= -->
+
+        <!-- Tag Picker Modal -->
+        <div id="tagPickerModal"
+            class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+            <div
+                class="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col max-h-[80vh] border border-gray-200">
+                <div class="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                    <h3 class="font-bold text-gray-700">Manage Tags</h3>
+                    <button id="closeTagPickerBtn"
+                        class="text-gray-400 hover:text-gray-700 transition text-xl">&times;</button>
+                </div>
+
+                <div class="p-4 flex gap-2 border-b bg-white">
+                    <input id="newTagInput" type="text" placeholder="New tag..."
+                        class="flex-1 border p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 focus:bg-white transition">
+                    <button id="addNewTagBtn"
+                        class="bg-blue-600 text-white px-4 py-1 rounded text-sm font-bold shadow-sm hover:bg-blue-700 transition">
+                        Add
+                    </button>
+                </div>
+
+                <div id="tagPickerList" class="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50/30">
+                    <p class="text-gray-400 text-center italic text-xs">Loading tags...</p>
+                </div>
+
+                <div class="p-4 border-t bg-gray-50 rounded-b-xl flex justify-end">
+                    <button id="confirmTagsBtn"
+                        class="bg-gray-800 text-white px-6 py-2 rounded shadow-lg hover:bg-black transition font-bold text-sm">
+                        Done
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script -->
+        <script type="module" src="StepTypeEditor.js"></script>
+
+</body>
+
+</html>

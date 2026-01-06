@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Course Manager</title>
@@ -10,28 +11,30 @@
   <!-- Script -->
   <script type="module" src="./CourseCreator.js"></script>
 </head>
+
 <body class="bg-gray-100">
   <div class="max-w-5xl mx-auto p-6">
 
     <!-- Header with Add Course button -->
     <div class="flex justify-between items-center mb-4">
-      <h1 class="text-2xl font-bold">📘 Course Manager</h1>
-      <button id="logoutBtn"
-        class="text-sm text-red-600 underline">
-        Logout
-      </button>
-      
-      <button id="addCourseBtn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-        ➕ Add Course
-      </button>
+      <div class="flex items-center gap-4">
+        <h1 class="text-2xl font-bold">📘 Course Manager</h1>
+        <a href="StepTypeEditor.html"
+          class="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded hover:bg-blue-100 border border-blue-200 font-semibold transition">🧩
+          Step Editor</a>
+      </div>
 
+      <div class="flex items-center gap-4">
+        <button id="logoutBtn" class="text-sm text-red-600 underline hover:text-red-800">Logout</button>
+        <button id="addCourseBtn"
+          class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition shadow-sm">➕ Add
+          Course</button>
+      </div>
     </div>
 
     <!-- Search + Status Filter -->
     <div class="flex items-center gap-2 mb-4">
-      <input id="searchInput"
-             class="border p-2 flex-1 rounded"
-             placeholder="Search courses..." />
+      <input id="searchInput" class="border p-2 flex-1 rounded" placeholder="Search courses..." />
       <select id="statusFilter" class="border p-2 rounded">
         <option value="active">Active</option>
         <option value="archived">Archived</option>
@@ -45,17 +48,18 @@
 
   </div>
   <div id="languagesModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
-    <div class="p-4 border-b">
-      <h3 class="text-xl font-semibold">Edit Course Languages</h3>
-    </div>
-    <div id="languagesModalBody" class="p-4 max-h-96 overflow-y-auto">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+      <div class="p-4 border-b">
+        <h3 class="text-xl font-semibold">Edit Course Languages</h3>
       </div>
-    <div class="flex justify-end p-4 border-t bg-gray-50">
-      <button id="closeLangModalBtn" class="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancel</button>
-      <button id="saveLangModalBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+      <div id="languagesModalBody" class="p-4 max-h-96 overflow-y-auto">
+      </div>
+      <div class="flex justify-end p-4 border-t bg-gray-50">
+        <button id="closeLangModalBtn" class="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancel</button>
+        <button id="saveLangModalBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+      </div>
     </div>
   </div>
-</div>
 </body>
+
 </html>
