@@ -1,24 +1,8 @@
 /**
  * Registry.js
  * Central registration for all Step Types.
+ * NOW CLOUD-NATIVE: Fetches all types from Firestore.
  */
-import MultiplicationGameStep from './MultiplicationGameStep.js';
-import MatchingGameStep from './MatchingGameStep.js';
-import LetterRacingGameStep from './LetterRacingGameStep.js';
-// Content Steps
-import PrimerStep from './PrimerStep.js';
-import MovieStep from './MovieStep.js';
-import AudioLessonStep from './AudioLessonStep.js';
-// Sim/Input Steps
-import DialogueStep from './DialogueStep.js';
-import RoleplayStep from './RoleplayStep.js';
-import RoleplaySequenceStep from './RoleplaySequenceStep.js';
-import ReflectionStep from './ReflectionStep.js';
-import IntentCheckStep from './IntentCheckStep.js';
-import MissionStep from './MissionStep.js';
-import FillInTheBlankStep from './FillInTheBlankStep.js';
-import GrammarMiniStep from './GrammarMiniStep.js';
-// import TemplateStep from './TemplateStep.js';
 
 // import { db } from '../../courseCreator/firebase-init.js'; // REMOVED dependency
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
@@ -47,25 +31,9 @@ export const Registry = {
                 console.warn("Registry.init() called without DB instance. Cloud steps checks might fail if not already set.");
             }
 
-            // 1. Register Built-ins
-            this.register(MultiplicationGameStep);
-            this.register(MatchingGameStep);
-            this.register(LetterRacingGameStep);
-
-            this.register(PrimerStep);
-            this.register(MovieStep);
-            this.register(AudioLessonStep);
-
-            this.register(DialogueStep);
-            this.register(RoleplayStep);
-            this.register(ReflectionStep);
-            this.register(IntentCheckStep);
-            this.register(MissionStep);
-            this.register(RoleplaySequenceStep);
-            this.register(FillInTheBlankStep);
-            this.register(GrammarMiniStep);
-            this.register(GrammarMiniStep);
-            // this.register(TemplateStep); // Removed per user request
+            // 1. Register Built-ins (None left! All Cloud now)
+            // If there are any absolutely required local Steps (e.g. a bootstrap step), import/register here.
+            // For now, we assume ALL are valid in cloud.
 
             // 2. Fetch Cloud Steps (Only if DB is available)
             if (this.db) {
