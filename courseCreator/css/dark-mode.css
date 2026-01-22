@@ -1,0 +1,63 @@
+
+/* --- DARK MODE EDITOR OVERRIDES --- */
+
+/* Only apply these styles when inside the dark mode editor view */
+#editorView input[type="text"],
+#editorView input[type="number"],
+#editorView textarea,
+#editorView select {
+  background-color: #1e293b; /* slate-800 */
+  border-color: #334155; /* slate-700 */
+  color: #e2e8f0; /* slate-200 */
+}
+
+#editorView input:focus,
+#editorView textarea:focus,
+#editorView select:focus {
+  border-color: #6366f1; /* indigo-500 */
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  background-color: #0f172a; /* slate-900 */
+}
+
+#editorView ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+#editorView ::-webkit-scrollbar-track {
+  background: #0f172a; /* slate-900 */
+}
+
+#editorView ::-webkit-scrollbar-thumb {
+  background: #334155; /* slate-700 */
+  border-radius: 3px;
+}
+
+#editorView ::-webkit-scrollbar-thumb:hover {
+  background: #475569; /* slate-600 */
+}
+
+/* Field Labels in Dark Mode */
+#editorView label {
+  color: #94a3b8; /* slate-400 */
+}
+
+/* Quill Editor Dark Mode Tweaks */
+#editorView .ql-toolbar {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+#editorView .ql-container {
+  background-color: #0f172a;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+#editorView .ql-stroke {
+  stroke: #cbd5e1;
+}
+#editorView .ql-fill {
+  fill: #cbd5e1;
+}
+#editorView .ql-picker {
+  color: #cbd5e1;
+}

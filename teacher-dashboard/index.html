@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard | Gamified</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cosmic: {
+                            950: '#090918',
+                            900: '#101026',
+                            800: '#1B1B3A',
+                            700: '#26264E',
+                        },
+                        game: {
+                            gold: '#FFD700',
+                            silver: '#C0C0C0',
+                            bronze: '#CD7F32',
+                            neonBlue: '#00F0FF',
+                            neonPink: '#FF0099',
+                            neonGreen: '#39FF14',
+                            neonPurple: '#BC13FE'
+                        }
+                    },
+                    fontFamily: {
+                        header: ['Fredoka', 'sans-serif'],
+                        body: ['Quicksand', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neon-blue': '0 0 10px #00F0FF, 0 0 20px rgba(0, 240, 255, 0.4)',
+                        'neon-pink': '0 0 10px #FF0099, 0 0 20px rgba(255, 0, 153, 0.4)',
+                        'card-3d': '0 5px 0px rgba(0,0,0,0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #090918;
+            color: white;
+            font-family: 'Quicksand', sans-serif;
+            overflow: hidden;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        .font-heading {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* Background Grid Animation */
+        .bg-grid {
+            background-size: 50px 50px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            animation: panGrid 60s linear infinite;
+        }
+
+        @keyframes panGrid {
+            from {
+                background-position: 0 0;
+            }
+
+            to {
+                background-position: 50px 50px;
+            }
+        }
+
+        /* Glassmorphism */
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* 3D Counters */
+        .counter-3d {
+            background: linear-gradient(to bottom, #2a2a50, #1a1a30);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 3px solid rgba(0, 0, 0, 0.5);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-cosmic-950 text-white h-screen flex relative">
+
+    <!-- Moving Grid BG -->
+    <div class="absolute inset-0 bg-grid z-0 pointer-events-none"></div>
+
+    <!-- Sidebar (Compact) -->
+    <aside
+        class="w-20 lg:w-64 bg-cosmic-900 border-r border-white/5 flex flex-col z-10 glass-panel transition-all duration-300">
+        <!-- Brand -->
+        <div
+            class="h-18 flex items-center justify-center lg:justify-start lg:px-6 gap-3 border-b border-white/5 shrink-0 py-3">
+            <div class="relative group cursor-pointer">
+                <div
+                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-game-neonPurple to-game-neonBlue flex items-center justify-center shadow-neon-blue group-hover:scale-110 transition">
+                    <span class="text-lg">🚀</span>
+                </div>
+            </div>
+            <span
+                class="text-xl font-heading font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-game-neonBlue hidden lg:block">OquWay</span>
+        </div>
+
+        <!-- Live Status (Compressed) -->
+        <div class="p-3 border-b border-white/5 shrink-0">
+            <div class="flex gap-2 justify-center lg:justify-start">
+                <div class="flex-1 bg-game-neonGreen/10 rounded-lg p-2 text-center border border-game-neonGreen/20">
+                    <div class="text-lg font-black text-game-neonGreen leading-none" id="count-active">0</div>
+                    <div class="text-[8px] font-bold text-gray-400 uppercase hidden lg:block">Active</div>
+                </div>
+                <div class="flex-1 bg-game-neonPink/10 rounded-lg p-2 text-center border border-game-neonPink/20">
+                    <div class="text-lg font-black text-game-neonPink leading-none" id="count-idle">0</div>
+                    <div class="text-[8px] font-bold text-gray-400 uppercase hidden lg:block">Idle</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compact Student List -->
+        <div id="sidebar-student-list" class="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-none hidden lg:block">
+            <!-- List items via JS -->
+        </div>
+
+        <!-- Nav -->
+        <nav class="p-2 space-y-1 shrink-0">
+            <a href="#"
+                class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 bg-white/5 rounded-lg text-white font-bold border border-white/5 hover:bg-white/10 transition group">
+                <span class="text-lg group-hover:scale-110 transition">📊</span> <span
+                    class="hidden lg:block text-sm">Dashboard</span>
+            </a>
+            <a href="#"
+                class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg font-bold transition group">
+                <span class="text-lg group-hover:scale-110 transition">🏆</span> <span
+                    class="hidden lg:block text-sm">Leaderboard</span>
+            </a>
+        </nav>
+
+        <div class="p-3 border-t border-white/5 shrink-0">
+            <button id="logout-btn"
+                class="w-full py-2 rounded-lg bg-red-600/80 hover:bg-red-600 font-bold text-white text-xs shadow-lg transition flex items-center justify-center gap-2">
+                <span>🚪</span> <span class="hidden lg:block">Exit</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 z-10 relative h-screen overflow-hidden">
+
+        <!-- Header (Compact) -->
+        <header class="h-18 px-6 py-3 flex items-center justify-between z-20 shrink-0">
+            <!-- Module Progress -->
+            <div
+                class="flex-1 max-w-2xl glass-panel rounded-xl p-1.5 flex items-center gap-4 relative overflow-hidden shadow-neon-blue">
+                <!-- Glow Aura -->
+                <div class="absolute inset-0 bg-game-neonPurple/20 blur-xl"></div>
+
+                <div class="relative z-10 flex items-center gap-2 pl-2">
+                    <div
+                        class="w-8 h-8 rounded-full bg-gradient-to-br from-game-neonBlue to-purple-600 flex items-center justify-center text-white shadow-lg font-bold text-xs ring-2 ring-white/20">
+                        M
+                    </div>
+                </div>
+
+                <div class="flex-1 relative z-10 pr-2">
+                    <div class="flex justify-between items-center mb-0.5 px-0.5">
+                        <select id="module-select"
+                            class="bg-transparent font-heading font-bold text-sm text-white focus:outline-none cursor-pointer">
+                            <option value="photosynthesis">Photosynthesis Module</option>
+                            <option value="demo">Demo Mode</option>
+                        </select>
+                        <div class="flex items-center gap-1 text-game-gold drop-shadow-md">
+                            <span class="animate-spin-slow">✨</span>
+                            <span class="font-black text-lg">85%</span>
+                        </div>
+                    </div>
+                    <!-- Bar -->
+                    <div class="h-2.5 bg-cosmic-900 rounded-full border border-white/10 relative overflow-hidden">
+                        <div
+                            class="absolute inset-0 opacity-50 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')]">
+                        </div>
+                        <div
+                            class="h-full bg-gradient-to-r from-game-neonBlue via-game-neonPurple to-game-neonPink w-[85%] relative transition-all duration-1000">
+                            <div class="absolute inset-0 bg-white/30 animate-[shimmer_1.5s_infinite]"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Context Menu (Teacher) -->
+            <div class="flex items-center gap-3 ml-6">
+                <button
+                    class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition border border-white/10">
+                    <span class="text-xl">🔔</span>
+                </button>
+                <button id="settings-btn"
+                    class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition border border-white/10">
+                    <span class="text-xl">⚙️</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Body Content (Fixed Layout) -->
+        <div class="flex-1 flex overflow-hidden px-6 pb-2 gap-6">
+
+            <!-- CENTER: Scrollable Student Grid -->
+            <div class="flex-1 flex flex-col min-h-0">
+                <div id="student-grid"
+                    class="flex-1 overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 pb-20 scrollbar-thin content-start">
+                    <!-- Student Cards injected here -->
+                </div>
+            </div>
+
+            <!-- RIGHT: Static Widgets Stack -->
+            <div class="w-80 flex flex-col gap-4 shrink-0 h-full overflow-y-auto no-scrollbar pb-20">
+
+                <!-- 1. Class Insights -->
+                <div class="glass-panel p-4 rounded-2xl relative overflow-hidden shrink-0">
+                    <h3 class="font-heading font-bold text-sm mb-3 flex items-center gap-2 text-gray-300">
+                        📊 Class Insights
+                    </h3>
+
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <div class="bg-cosmic-800/50 rounded-lg p-1.5 text-center border border-white/5">
+                            <div class="text-[9px] text-gray-400 uppercase font-bold">Avg Score</div>
+                            <div class="text-lg font-black text-game-neonGreen">82%</div>
+                        </div>
+                        <div class="bg-cosmic-800/50 rounded-lg p-1.5 text-center border border-white/5">
+                            <div class="text-[9px] text-gray-400 uppercase font-bold">Avg Time</div>
+                            <div class="text-lg font-black text-white">14m</div>
+                        </div>
+                        <div class="bg-cosmic-800/50 rounded-lg p-1.5 text-center border border-white/5">
+                            <div class="text-[9px] text-gray-400 uppercase font-bold">Hints</div>
+                            <div class="text-lg font-black text-game-neonPink">12</div>
+                        </div>
+                    </div>
+
+                    <!-- Trouble Spot -->
+                    <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-center gap-3">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400 font-bold text-lg animate-pulse">
+                            ⚠️</div>
+                        <div class="flex-1">
+                            <div class="font-bold text-white text-xs mb-1">Trouble: Cell Resp.</div>
+                            <div class="w-full bg-cosmic-950 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-gradient-to-r from-red-600 to-orange-500 w-[58%] h-full rounded-full">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Trend Graph -->
+                <div class="glass-panel p-4 rounded-2xl shrink-0 h-48 flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-heading font-bold text-sm text-gray-300">📈 Activity Trend</h3>
+                    </div>
+                    <div class="flex-1 relative w-full" id="graph-container"></div>
+                </div>
+
+                <!-- 3. Leaderboard -->
+                <div class="glass-panel p-4 rounded-2xl flex-1 min-h-0 flex flex-col">
+                    <h3 class="font-heading font-bold text-sm mb-3 flex items-center gap-2 text-gray-300">
+                        🏆 Leaderboard
+                    </h3>
+                    <div id="leaderboard-list" class="space-y-2 overflow-y-auto pr-1 scrollbar-thin flex-1">
+                        <!-- Injected -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Sticky Bottom Feed -->
+        <div
+            class="absolute bottom-4 left-6 right-6 h-12 glass-panel rounded-full flex items-center px-4 overflow-hidden z-30 shadow-2xl border border-white/20">
+            <div
+                class="bg-game-neonPurple text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider mr-4 shrink-0 shadow-lg">
+                LIVE FEED
+            </div>
+            <div id="activity-feed" class="flex items-center gap-6 overflow-x-auto no-scrollbar mask-gradient w-full">
+                <!-- Log -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal (Uses Game Panel style) -->
+    <div id="student-modal"
+        class="fixed inset-0 bg-cosmic-950/80 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="glass-panel rounded-3xl w-full max-w-2xl m-4 shadow-neon-blue border border-white/10"
+            id="student-modal-content">
+            <!-- Header -->
+            <div
+                class="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-game-neonPurple/10 to-transparent rounded-t-3xl">
+                <div class="flex items-center gap-5">
+                    <img id="modal-avatar" src="assets/default-avatar.png"
+                        class="w-16 h-16 rounded-full border-4 border-game-neonBlue shadow-[0_0_15px_rgba(0,240,255,0.5)] object-cover bg-cosmic-800">
+                    <div>
+                        <h2 id="modal-name" class="text-2xl font-heading font-bold text-white tracking-wide">Student
+                            Name</h2>
+                        <div id="modal-status"
+                            class="text-game-neonGreen font-bold flex items-center gap-2 mt-1 text-sm">
+                            <span class="w-2 h-2 rounded-full bg-game-neonGreen animate-pulse"></span> Active now
+                        </div>
+                    </div>
+                </div>
+                <button id="close-modal-btn" class="text-gray-400 hover:text-white p-2 transition hover:rotate-90">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-8 overflow-y-auto max-h-[60vh] space-y-8 scrollbar-thin">
+
+                <!-- Current Step Card -->
+                <div
+                    class="bg-cosmic-800 p-6 rounded-2xl border border-white/10 relative overflow-hidden group shadow-inner">
+                    <span
+                        class="text-xs font-bold text-game-neonBlue uppercase tracking-widest mb-2 block relative z-10">Current
+                        Mission</span>
+                    <div class="flex justify-between items-end mb-4 relative z-10">
+                        <h3 class="text-xl font-heading font-bold text-white max-w-md" id="modal-current-step">...</h3>
+                        <span
+                            class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-game-neonBlue to-white"
+                            id="modal-score">0%</span>
+                    </div>
+                    <div class="w-full bg-cosmic-950 rounded-full h-4 relative z-10 border border-white/10">
+                        <div id="modal-progress-bar"
+                            class="bg-gradient-to-r from-game-neonBlue to-game-neonPink h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(0,240,255,0.4)] w-0 relative">
+                            <div class="absolute inset-0 bg-white/30 animate-[shimmer_1s_infinite]"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History List -->
+                <div>
+                    <h3 class="font-heading font-bold text-lg mb-4 flex items-center gap-2">
+                        <span>📜</span> Mission Log
+                    </h3>
+                    <ul id="modal-history-list" class="space-y-3"></ul>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-6 border-t border-white/10 flex justify-end bg-black/10 rounded-b-3xl">
+                <button id="close-modal-btn-2"
+                    class="px-6 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-bold transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal"
+        class="fixed inset-0 bg-cosmic-950/80 hidden flex items-center justify-center z-50 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div
+            class="glass-panel rounded-3xl w-full max-w-md m-4 shadow-neon-blue border border-white/10 transform scale-95 transition-transform duration-300 p-6 relative">
+            <h2 class="text-2xl font-heading font-bold text-white mb-4">⚙️ Dashboard Settings</h2>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                    <span class="text-gray-300 font-bold">Sound Effects</span>
+                    <div class="w-12 h-6 bg-game-neonGreen rounded-full relative cursor-pointer">
+                        <div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-md"></div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                    <span class="text-gray-300 font-bold">Dark Mode</span>
+                    <div class="w-12 h-6 bg-game-neonGreen rounded-full relative cursor-pointer">
+                        <div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-md"></div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                    <span class="text-gray-300 font-bold">Notifications</span>
+                    <div class="w-12 h-6 bg-gray-600 rounded-full relative cursor-pointer">
+                        <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button id="close-settings-btn"
+                    class="px-6 py-2 bg-gradient-to-r from-game-neonBlue to-purple-600 hover:shadow-neon-blue text-white rounded-xl font-bold transition">Done</button>
+            </div>
+        </div>
+
+        <script type="module" src="./js/dashboardView.js"></script>
+
+</body>
+
+</html>

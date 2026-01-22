@@ -1,6 +1,7 @@
 
 import { store } from "../Store.js";
 import { Registry } from "../../Shared/steps/Registry.js";
+import { resolveLocalized } from "../../Shared/steps/utils.js";
 
 export class StructurePanel {
     constructor(containerId) {
@@ -177,7 +178,7 @@ export class StructurePanel {
         const icon = this.getBlockIcon(step.type);
 
         // Display Name Strategy
-        let displayName = step.title;
+        let displayName = resolveLocalized(step.title); // FIX: Resolve localized title
         if (!displayName || displayName === step.type) {
             displayName = Engine ? Engine.displayName : this.formatStepType(step.type);
         }

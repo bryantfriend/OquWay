@@ -1,8 +1,9 @@
 /**
  * BaseStep.js
- * Interface definition for all Step Types.
- * (Previously BaseEngine)
+ * Foundation contract for all OquWay Step Types
+ * Enforces structure, quality baselines, and safe lifecycle behavior
  */
+
 export default class BaseStep {
     constructor() {
         if (new.target === BaseStep) {
@@ -10,88 +11,161 @@ export default class BaseStep {
         }
     }
 
-    /**
-     * Unique ID for this step type (e.g., 'multiplicationGame', 'chatReflection')
-     */
+    /* ======================================================
+       REQUIRED METADATA (ENFORCED)
+    ====================================================== */
+
     static get id() {
         throw new Error("Step must define static get id()");
     }
 
-    /**
-     * Semantic Version of this step implementation
-     */
     static get version() {
         return "1.0.0";
     }
 
-    // --- Metadata for Editor/Picker ---
-    static get displayName() { return this.id; }
-    static get description() { return "No description available."; }
-    static get category() { return "misc"; } // content, input, assessment, game, simulation
-    static get tags() { return []; }
+    static get displayName() {
+        return this.id;
+    }
 
-    // New: Allow steps to define their own recommended next steps
-    static get suggestedNextSteps() { return null; }
+    static get description() {
+        return "No description provided.";
+    }
+
+    static get category() {
+        return "misc";
+    }
+
+    static get tags() {
+        return [];
+    }
 
     /**
-     * Validates the configuration object against the schema constraints.
-     * @param {Object} config 
-     * @returns {Object} { valid: boolean, errors: [] }
+     * Indicates whether this step requires student-only runtime
+     * (games, quizzes, interactions).
+     * Editors may render placeholders instead of calling render().
      */
-    static validateConfig(config) {
-        // Implement custom validation logic here
-        // Return { valid: false, errors: [{ field: 'key', message: 'Error' }] }
+    static get isInteractive() {
+        return false;
+    }
+
+    /* ======================================================
+       CONFIG CONTRACT (STRICT)
+    ====================================================== */
+
+    static get defaultConfig() {
+        throw new Error("Step must define static get defaultConfig()");
+    }
+
+    /* ======================================================
+       EXPERIENCE CONTRACT (STRICT)
+    ====================================================== */
+
+    static get experienceContract() {
+        return {
+            requires: ["completionSignal"],
+            recommends: []
+        };
+    }
+
+    /**
+     * Default validation logic.
+     * Returns { valid: boolean, errors: [] }
+     */
+    static validateConfig(config = {}) {
         return { valid: true, errors: [] };
     }
 
+    /* ======================================================
+       COMPLETION GUARD (CORE MECHANIC)
+    ====================================================== */
+
+    static createCompletionGuard(onComplete) {
+        let completed = false;
+
+        return (payload = { success: true }) => {
+            if (completed) {
+                console.warn(
+                    `[BaseStep] ${this.id} attempted to signal completion twice. Ignored.`
+                );
+                return;
+            }
+            completed = true;
+
+            if (typeof onComplete === "function") {
+                onComplete(payload);
+            } else {
+                console.warn(
+                    `[BaseStep] ${this.id} finished, but no onComplete handler was provided.`
+                );
+            }
+        };
+    }
+
+    /* ======================================================
+       RENDER CONTRACT (STRICT)
+    ====================================================== */
+
+    static assertRenderArgs({ container }) {
+        if (!container || !(container instanceof HTMLElement)) {
+            throw new Error("render() requires a valid container HTMLElement");
+        }
+    }
+
     /**
-     * Renders the player UI into the container.
-     * @param {Object} params
-     * @param {HTMLElement} params.container - The DOM element to render into
-     * @param {Object} params.config - The specific configuration for this instance
-     * @param {Object} params.context - Global context (user, courseId, etc.)
-     * @param {Function} params.onComplete - Callback when step is finished (optional)
+     * Renders the step UI.
+     * @param {HTMLElement} container - DOM element to render into
+     * @param {Object} config - Step configuration (defaultConfig or saved data)
+     * @param {Object} context - Runtime context
+     * @param {boolean} context.commit - If true, completion should be persisted. If false, completion is simulated.
+     * @param {Function} onComplete - Callback when step is completed.
      */
     static render({ container, config, context, onComplete }) {
-        container.innerHTML = `<div class="p-4 text-red-500">Render method not implemented for ${this.id}</div>`;
+        this.assertRenderArgs({ container });
+
+        container.innerHTML = `
+            <div class="p-6 text-red-600 bg-red-50 border border-red-200 rounded">
+                <strong>${this.displayName}</strong><br/>
+                Render method not implemented.
+            </div>
+        `;
+
+        // Fallback: Check for legacy renderPlayer (static)
+        if (typeof this.renderPlayer === 'function') {
+            container.innerHTML = this.renderPlayer(
+                config,
+                context?.lang || 'en'
+            );
+            return;
+        }
+
+        // Safety check for instance renderPlayer
+        try {
+            const instance = new this();
+            if (typeof instance.renderPlayer === 'function') {
+                container.innerHTML = instance.renderPlayer(
+                    context?.lang || 'en'
+                );
+                console.warn(
+                    `[BaseStep] ${this.id} uses instance renderPlayer(). Please upgrade to static render().`
+                );
+                return;
+            }
+        } catch (e) { }
+
+        console.error(`[BaseStep] ${this.id} must implement static render()`);
     }
 
-    /**
-     * Renders the interactive preview (player view) of the step.
-     * @param {string} lang - Language code
-     * @returns {string} HTML string of the player view
-     */
-    renderPlayer(lang = 'en') {
-        return `<div class="p-8 text-center border rounded bg-gray-50">
-            <h3 class="font-bold text-gray-500">${this.constructor.displayName || 'Step Preview'}</h3>
-            <p>Player preview not implemented.</p>
-        </div>`;
-    }
+    /* ======================================================
+       CLEANUP SAFETY
+    ====================================================== */
 
-    // Static wrapper if we want to call it directly
-    static renderPlayer(data, lang = 'en') {
-        return `<div class="p-10 text-center text-gray-400 border-2 border-dashed rounded-lg bg-white">
-            <div class="text-4xl mb-4">👀</div>
-            <h2 class="text-xl font-bold text-gray-600">Preview Mode</h2>
-            <p>Visualization for <b>${this.displayName}</b> is coming soon.</p>
-       </div>`;
-    }
-
-    /**
-     * Generates a new instance data object (randomized content) based on config.
-     * This is called when a student starts the step, or when 'rolling' new content.
-     * @param {Object} config 
-     * @returns {Object} Instance data
-     */
-    static generateInstance(config) {
-        return {};
-    }
-
-    /**
-     * Cleanup any event listeners or timers.
-     * @param {HTMLElement} container 
-     */
     static destroy(container) {
-        // Optional cleanup
+        if (container && typeof container.cleanup === "function") {
+            try {
+                container.cleanup();
+            } catch (e) {
+                console.warn(`[BaseStep] ${this.id} cleanup failed`, e);
+            }
+        }
     }
 }

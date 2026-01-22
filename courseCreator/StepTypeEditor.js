@@ -1,10 +1,58 @@
-import { Registry } from '../Shared/steps/Registry.js';
+import { Registry } from './js/engines/Registry.js';
 import { SchemaForm } from './js/components/SchemaForm.js';
 import { db } from "./firebase-init.js";
 import { doc, onSnapshot, setDoc, addDoc, collection, getDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+import { PreviewManager } from './StepEditor/modules/PreviewManager.js';
 
 // Auto-register & Async Init
-const initPromise = Registry.init(db);
+const initPromise = Promise.resolve(Registry.init());
+
+function getActiveCourseLanguages() {
+    try {
+        const raw = localStorage.getItem("activeCourseLanguages");
+        const langs = JSON.parse(raw);
+        if (Array.isArray(langs) && langs.length) return langs;
+    } catch (e) { }
+    return ['en'];
+}
+const classLanguages = getActiveCourseLanguages();
+
+function updateExperiencePanel(Engine) {
+    if (!Engine?.experience) return;
+
+    document.getElementById('exp-device').textContent =
+        Engine.experience.device ?? 'Auto';
+
+    document.getElementById('exp-theme').textContent =
+        Engine.experience.theme ?? 'Default';
+
+    document.getElementById('exp-motion').textContent =
+        Engine.experience.motion === false ? 'Disabled' : 'Enabled';
+
+    document.getElementById('exp-a11y').textContent =
+        Engine.experience.a11y ?? 'Standard';
+}
+
+// Init CodeMirror helpers if needed (Logic for init was also removed, let's put it back)
+let cmEditor = null;
+setTimeout(() => {
+    const txtArea = document.getElementById('code-editor');
+    if (txtArea) {
+        cmEditor = CodeMirror.fromTextArea(txtArea, {
+            mode: "javascript",
+            theme: "dracula",
+            lineNumbers: true,
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            foldGutter: true,
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            extraKeys: { "Ctrl-Space": "autocomplete" }
+        });
+        cmEditor.setSize("100%", "600px");
+    }
+}, 100);
+
+// DOM Elements
 
 // DOM Elements
 const stepTypeList = document.getElementById('stepTypeList');
@@ -13,10 +61,12 @@ const currentTitle = document.getElementById('current-step-title');
 const currentId = document.getElementById('current-step-id');
 const configContainer = document.getElementById('config-form-container');
 const schemaEditor = document.getElementById('schema-json-editor');
-const codeEditor = document.getElementById('code-editor'); // New
-const codeOverlay = document.getElementById('code-overlay'); // New
-const cloudBadge = document.getElementById('cloud-badge'); // New
+// const codeEditor = document.getElementById('code-editor'); // Replaced by CodeMirror
+const codeOverlay = document.getElementById('code-overlay');
+const cloudBadge = document.getElementById('cloud-badge');
+const codeActions = document.getElementById('code-actions'); // For Format Button
 
+// Preview & Experience Elements
 const previewContainer = document.getElementById('preview-container');
 const versionBadge = document.getElementById('version-badge');
 const validationMsg = document.getElementById('validation-msg');
@@ -24,10 +74,19 @@ const saveBtn = document.getElementById('save-btn');
 const publishBtn = document.getElementById('publish-btn');
 const seedInput = document.getElementById('seed-input');
 
+// Initialize Preview Manager
+const previewManager = new PreviewManager(
+    previewContainer,
+    document.getElementById('experience-overlay'),
+    seedInput
+);
+
 // TABS
 const tabConfig = document.getElementById('tab-config');
 const tabSchema = document.getElementById('tab-schema');
 const tabCode = document.getElementById('tab-code');
+const tabExperience = document.getElementById('tab-experience');
+const panelExperience = document.getElementById('panel-experience');
 const panelConfig = document.getElementById('panel-config');
 const panelSchema = document.getElementById('panel-schema');
 const panelCode = document.getElementById('panel-code');
@@ -78,33 +137,45 @@ function initGlobalTagSync() {
 initGlobalTagSync();
 
 // --- TAB SWITCHING ---
-function switchTab(tabId) {
-    // Reset classes
-    [tabConfig, tabSchema, tabCode].forEach(t => {
-        t.classList.remove('border-b-2', 'border-blue-500', 'text-blue-600');
-        t.classList.add('text-gray-500');
+const tabs = {
+    config: { tab: tabConfig, panel: panelConfig },
+    schema: { tab: tabSchema, panel: panelSchema },
+    code: { tab: tabCode, panel: panelCode },
+    experience: { tab: tabExperience, panel: panelExperience }
+};
+
+function switchTab(tabKey) {
+    Object.values(tabs).forEach(({ tab, panel }) => {
+        if (tab) {
+            tab.classList.remove('border-b-2', 'border-blue-500', 'text-blue-600');
+            tab.classList.add('text-gray-500');
+        }
+        if (panel) panel.classList.add('hidden');
     });
-    [panelConfig, panelSchema, panelCode].forEach(p => p.classList.add('hidden'));
 
-    // Activate
-    const activeTab = document.getElementById(tabId);
-    const activePanel = document.getElementById(tabId.replace('tab-', 'panel-'));
+    const active = tabs[tabKey];
+    if (!active) return;
 
-    activeTab.classList.remove('text-gray-500');
-    activeTab.classList.add('border-b-2', 'border-blue-500', 'text-blue-600');
-    activePanel.classList.remove('hidden');
+    active.tab.classList.remove('text-gray-500');
+    active.tab.classList.add('border-b-2', 'border-blue-500', 'text-blue-600');
+    active.panel.classList.remove('hidden');
 }
 
-tabConfig.onclick = () => switchTab('tab-config');
-tabSchema.onclick = () => switchTab('tab-schema');
-tabCode.onclick = () => switchTab('tab-code');
-
+tabConfig.onclick = () => switchTab('config');
+tabSchema.onclick = () => switchTab('schema');
+tabCode.onclick = () => {
+    switchTab('code');
+    if (cmEditor) setTimeout(() => cmEditor.refresh(), 50);
+};
+tabExperience.onclick = () => switchTab('experience');
 
 // 1. Initialize List
 async function renderList() {
     await initPromise; // Wait for registry
+    const steps = Registry.getAll();
+    console.log(`[StepTypeEditor] Rendering ${steps.length} steps:`, steps.map(s => s.id));
     stepTypeList.innerHTML = '';
-    Registry.getAll().forEach(Engine => {
+    steps.forEach(Engine => {
         const item = document.createElement('div');
         item.className = "p-3 rounded hover:bg-blue-50 cursor-pointer border border-transparent hover:border-blue-100 transition flex justify-between items-center";
 
@@ -134,14 +205,30 @@ async function selectStepType(id) {
     versionBadge.textContent = 'v' + Engine.version;
 
     // Load Data
-    currentConfig = { ...Engine.defaultConfig };
-    const schema = Engine.editorSchema;
+    currentConfig = (Engine.defaultConfig && typeof Engine.defaultConfig === 'object')
+        ? structuredClone(Engine.defaultConfig)
+        : (Engine.editorSchema ? generateDefaultFromSchema(Engine.editorSchema) : {});
+    const schema = Engine.editorSchema || {};
 
     // Render Config Form (SchemaForm V2)
-    currentSchemaForm = new SchemaForm(configContainer, schema, currentConfig, (newData) => {
-        currentConfig = newData;
-        validateAndPreview(Engine);
+
+
+    currentSchemaForm = new SchemaForm(configContainer);
+    currentSchemaForm.render({
+        schema,
+        value: currentConfig,
+        onChange: (newData) => {
+            currentConfig = newData;
+            validateAndPreview(Engine);
+        },
+        context: {
+            languages: classLanguages,
+            className: 'Test Course',
+            moduleName: 'Test Module'
+        }
     });
+
+
 
     // Render Schema JSON
     schemaEditor.value = JSON.stringify(schema, null, 2);
@@ -156,23 +243,41 @@ async function selectStepType(id) {
     if (Engine.isCloud) {
         cloudBadge.classList.remove('hidden');
         codeOverlay.classList.add('hidden');
-        // Fetch source code
-        // We assume we have it in memory or fetch it? 
-        // Registry doesn't store the raw string by default in memory unless we change it.
-        // Let's fetch it freshly.
+        codeActions.classList.remove('hidden'); // Show Actions
+
+        // Add Format Button if not present
+        if (!document.getElementById('format-code-btn')) {
+            const btn = document.createElement('button');
+            btn.id = 'format-code-btn';
+            btn.className = "text-xs text-blue-600 hover:text-blue-800 font-bold mr-4 px-2 py-1 rounded hover:bg-blue-50 transition";
+            btn.innerHTML = '<i class="fas fa-magic mr-1"></i> Format Code';
+            btn.onclick = () => {
+                if (cmEditor) {
+                    const clean = js_beautify(cmEditor.getValue(), { indent_size: 4 });
+                    cmEditor.setValue(clean);
+                }
+            };
+            codeActions.insertBefore(btn, codeActions.firstChild);
+        }
+
         try {
             const docSnap = await getDoc(doc(db, "system_step_types", Engine.cloudId));
             if (docSnap.exists()) {
-                codeEditor.value = docSnap.data().code;
+                if (cmEditor) cmEditor.setValue(docSnap.data().code);
             }
         } catch (e) { console.error(e); }
-        codeEditor.readOnly = false;
+        if (cmEditor) cmEditor.setOption("readOnly", false);
     } else {
         cloudBadge.classList.add('hidden');
         codeOverlay.classList.remove('hidden');
-        codeEditor.value = "// Read Mode Only\n// Source available in local codebase.";
-        codeEditor.readOnly = true;
+        codeActions.classList.add('hidden');
+        if (cmEditor) {
+            cmEditor.setValue("// Read Mode Only\n// Source available in local codebase.");
+            cmEditor.setOption("readOnly", true);
+        }
     }
+    updateExperiencePanel(Engine);
+
 }
 
 function setupTagsSync(stepId) {
@@ -194,6 +299,19 @@ function setupTagsSync(stepId) {
         }
         renderActiveTags();
     });
+}
+
+function generateDefaultFromSchema(schema) {
+    const fresh = {};
+    if (schema.fields) {
+        schema.fields.forEach(f => {
+            if (f.default !== undefined) fresh[f.key] = f.default;
+            else if (f.type === 'array' || f.type === 'list') fresh[f.key] = [];
+            else if (f.type === 'object') fresh[f.key] = {};
+            else fresh[f.key] = "";
+        });
+    }
+    return fresh;
 }
 
 function renderActiveTags() {
@@ -258,7 +376,14 @@ function renderTagPickerList() {
 
 function validateAndPreview(Engine) {
     // 1. Validate
-    const result = Engine.validateConfig(currentConfig);
+    const rawResult = Engine.validateConfig
+        ? Engine.validateConfig(currentConfig)
+        : { valid: true, errors: [] };
+
+    // Resilience: Normalize to object
+    const result = (typeof rawResult === 'object' && rawResult !== null)
+        ? rawResult
+        : { valid: !!rawResult, errors: rawResult ? [] : [{ message: 'Configuration is invalid' }] };
 
     if (!result.valid) {
         // Show Errors
@@ -275,37 +400,16 @@ function validateAndPreview(Engine) {
         saveBtn.disabled = false;
         publishBtn.disabled = false;
         if (currentSchemaForm) currentSchemaForm.highlightErrors([]);
-    }
 
-    // 2. Update Preview
-    updatePreview(Engine);
-}
-
-function updatePreview(Engine) {
-    if (!Engine) Engine = Registry.get(selectedEngineId);
-    if (!Engine) return;
-
-    // Clear
-    previewContainer.innerHTML = '';
-
-    const seed = seedInput.value || null;
-
-    try {
-        Engine.render({
-            container: previewContainer,
-            config: currentConfig,
-            context: { mode: 'preview', seed: seed }, // Pass seed
-            onComplete: (res) => console.log("Step Complete:", res)
-        });
-    } catch (e) {
-        previewContainer.innerHTML = `<div class="text-red-500 text-sm p-4">Error rendering preview: ${e.message}</div>`;
-        console.error(e);
+        // 2. Update Preview via Manager
+        previewManager.render(Engine, currentConfig);
     }
 }
 
 // Global Listeners
-document.getElementById('refresh-preview').onclick = () => updatePreview();
-seedInput.addEventListener('change', () => updatePreview());
+document.getElementById('refresh-preview').onclick = () => previewManager.refresh();
+// seedInput listener handled by PreviewManager
+
 
 // Tag Management Listeners
 manageTagsBtn.onclick = openTagPicker;
@@ -371,38 +475,13 @@ if (fullscreenBtn && previewPaneWrapper) {
 
 
 // Responsive Preview Logic
-const previewSizer = document.getElementById('preview-sizer');
-// We need to target the CONTAINER inside the sizer if we want to apply frame classes.
-// In Canvas.js we used a separate 'preview-frame' div. 
-// In HTML here, preview-sizer WRAPS preview-container.
-// We should apply the class to ... `preview-container`? 
-// No, `preview-container` IS the white box. 
-// So let's apply the classes to `preview-container` directly.
-
-const previewContainerLink = document.getElementById('preview-container'); // This is the inner box
-// Wait, in StepTypeEditor.html:
-// <div id="preview-sizer">
-//   <div id="preview-container" class="bg-white shadow-xl ...">
-// </div>
-// We can apply .device-frame-phone etc to preview-container, BUT we need to remove the default utilities that conflict (w-full, border, etc.)
-// Or we can toggle them.
-
 const resizeButtons = document.querySelectorAll('.resize-preview-btn');
 
 resizeButtons.forEach(btn => {
     btn.onclick = () => {
         const mode = btn.dataset.width === '375px' ? 'phone' : (btn.dataset.width === '768px' ? 'tablet' : 'desktop');
 
-        // Reset base classes
-        previewContainerLink.className = "bg-white shadow-xl overflow-hidden relative flex flex-col transition-all duration-300 mx-auto";
-
-        if (mode === 'phone') {
-            previewContainerLink.classList.add('device-frame-common', 'device-frame-phone');
-        } else if (mode === 'tablet') {
-            previewContainerLink.classList.add('device-frame-common', 'device-frame-tablet');
-        } else {
-            previewContainerLink.classList.add('device-frame-desktop', 'w-full', 'min-h-[600px]', 'border', 'border-gray-200', 'rounded-xl');
-        }
+        previewManager.setDeviceMode(mode);
 
         // Visual feedback
         resizeButtons.forEach(b => b.classList.remove('text-blue-600', 'bg-blue-50'));
@@ -429,22 +508,33 @@ export default class ${id} extends window.CourseEngine.BaseStep {
     static get description() { return 'New Cloud Step'; }
 
     static get editorSchema() {
-        return {
-            fields: [
-                { key: "message", label: "Message", type: "text", default: "Hello World" }
-            ]
-        };
+      return {};
     }
 
     static get defaultConfig() {
         return { message: "Hello from Cloud!" };
     }
 
-    static render({ container, config }) {
+    static render({ container, config = {}, context = {}, onComplete }) {
+        const isEditing = context?.mode === 'editor' || context?.mode === 'preview';
+        const lang = context.language || 'en';
+        const title = config.title?.[lang] || config.title?.en || 'Step';
+
+        if (isEditing) {
+            container.innerHTML = \`<div class="p-6 rounded-xl bg-white shadow-sm border-2 border-dashed text-center text-gray-400">
+                <div class="text-3xl mb-2">✨</div>
+                <div class="text-lg font-bold text-gray-600">\${title}</div>
+                <div class="text-xs mt-1">Preview Mode</div>
+            </div>\`;
+            return;
+        }
+
         container.innerHTML = \`<div class="p-4 text-center">
-            <h1 class="text-2xl font-bold">\${config.message}</h1>
-            <p class="text-gray-500">I am a Cloud Step!</p>
+            <h1 class="text-2xl font-bold">\${title}</h1>
+            <p class="text-gray-500">Player Placeholder</p>
         </div>\`;
+        
+        if(onComplete) setTimeout(() => onComplete({success:true}), 1000);
     }
 }`;
 
@@ -483,19 +573,48 @@ saveBtn.onclick = async () => {
             return;
         }
 
-        const newCode = codeEditor.value;
+        const newCode = cmEditor ? cmEditor.getValue() : "";
+
+        // UX: Show saving state
+        const originalText = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Saving...';
+
         try {
+            // 1. Save to Firestore
             const docRef = doc(db, "system_step_types", Engine.cloudId || Engine.id);
             await setDoc(docRef, {
                 code: newCode,
                 updatedAt: new Date().toISOString()
             }, { merge: true });
 
-            alert("✅ Code Saved! Reloading to apply changes...");
-            window.location.reload();
+            // 2. Hot Reload in Registry (In-Memory)
+            await Registry.reloadCloudStep(Engine.cloudId, newCode);
+
+            // 3. Success Feedback
+            saveBtn.innerHTML = '<i class="fas fa-check mr-1"></i> Saved!';
+            saveBtn.classList.remove('text-gray-600');
+            saveBtn.classList.add('text-green-600', 'border-green-200', 'bg-green-50');
+
+            // 4. Update Preview immediately
+            const NewEngine = Registry.get(selectedEngineId); // Get fresh class
+            if (NewEngine) {
+                validateAndPreview(NewEngine);
+            }
+
+            // 5. Reset Button after delay
+            setTimeout(() => {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+                saveBtn.classList.remove('text-green-600', 'border-green-200', 'bg-green-50');
+                saveBtn.classList.add('text-gray-600');
+            }, 2000);
+
         } catch (err) {
             console.error(err);
-            alert("Failed to save code.");
+            alert("Failed to save code: " + err.message);
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
         }
 
     } else {
@@ -508,6 +627,64 @@ saveBtn.onclick = async () => {
         alert("Configuration Validated (Local Preview Only). Use 'Publish' to version.");
     }
 };
+const saveSchemaBtn = document.getElementById('save-schema-btn');
+
+if (saveSchemaBtn) {
+    saveSchemaBtn.onclick = async () => {
+        const Engine = Registry.get(selectedEngineId);
+        if (!Engine || !Engine.isCloud) {
+            alert("Schema can only be saved for cloud steps.");
+            return;
+        }
+
+        let parsedSchema;
+        try {
+            parsedSchema = JSON.parse(schemaEditor.value);
+        } catch (err) {
+            alert("❌ Invalid JSON schema.\n\n" + err.message);
+            return;
+        }
+
+        // OPTIONAL: light sanity check
+        if (!parsedSchema.fields && !parsedSchema.groups) {
+            alert("Schema must contain `fields` or `groups`.");
+            return;
+        }
+
+        try {
+            // 🔥 SAVE SCHEMA TO FIRESTORE
+            await setDoc(
+                doc(db, "system_step_types", Engine.cloudId),
+                {
+                    schema: parsedSchema,
+                    updatedAt: new Date().toISOString()
+                },
+                { merge: true }
+            );
+
+            // 🔁 HOT-APPLY SCHEMA LOCALLY
+            Engine.editorSchema = parsedSchema;
+
+            // 🔄 REBUILD CONFIG FORM
+            currentSchemaForm = new SchemaForm(
+                configContainer,
+                parsedSchema,
+                currentConfig,
+                (newData) => {
+                    currentConfig = newData;
+                    validateAndPreview(Engine);
+                }
+            );
+
+            alert("✅ Schema saved and applied.");
+
+        } catch (err) {
+            console.error(err);
+            alert("Failed to save schema.");
+        }
+    };
+}
+
 
 publishBtn.onclick = async () => {
     const Engine = Registry.get(selectedEngineId);
@@ -519,7 +696,7 @@ publishBtn.onclick = async () => {
     }
 
     // Optional: Prompt for version bump? For now just mark status.
-    if (!confirm(`Publish '${Engine.displayName}'? This will make the latest code live for all courses.`)) return;
+    if (!confirm(`Publish '${Engine.displayName}' ? This will make the latest code live for all courses.`)) return;
 
     try {
         publishBtn.disabled = true;
@@ -542,11 +719,13 @@ publishBtn.onclick = async () => {
     }
 };
 
-// Start
-renderList();
+(async () => {
+    await initPromise;
+    renderList();
 
-// Select first
-const all = Registry.getAll();
-if (all.length > 0) selectStepType(all[0].id);
+    const all = Registry.getAll();
+    if (all.length > 0) selectStepType(all[0].id);
+})();
+
 
 

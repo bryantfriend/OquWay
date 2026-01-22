@@ -2,8 +2,32 @@
 import { navigateTo } from "../router.js";
 import { db } from "../firebase-init.js"; // Import Firestore db
 import { doc, getDoc, updateDoc, setDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-import { speak, stopSpeech, speakWithProfile } from "../utils/speech.js";
 import { auth } from "../firebase-init.js";
+
+// -- Speech Initialization (Bridge to Shared Engine) --
+const getSpeech = () => window.CourseEngine?.speech;
+
+function stopSpeech() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  document.querySelectorAll(".avatar-talking").forEach(el => el.classList.remove("avatar-talking"));
+}
+
+function speak(text, lang) {
+  const engine = getSpeech();
+  if (engine) engine.speak(text, lang);
+}
+
+function speakWithProfile(text, profile = "female_en_soft", avatarEl = null) {
+  stopSpeech();
+  const lang = profile.includes("_") ? profile.split("_")[1] || "en" : getLang();
+
+  // For now, we use the engine's standard speak, but we could add profile-specific rate/pitch if needed.
+  speak(text, lang);
+
+  if (avatarEl) {
+    animateAvatarMouth(avatarEl, profile.includes("soft") ? 1 : 1.2, { onend: null }); // Mock utter for now
+  }
+}
 
 let currentPartIndex = 0;
 let moduleParts = [];
@@ -92,26 +116,117 @@ function updateProgress() {
   if (backBtn) { backBtn.textContent = currentPartIndex === 0 ? "Back to Course" : "Back"; }
 }
 
+// Timer state
+let stepTimer = null;
+let stepTimeLeft = 60;
+
+function resetNextButtonState() {
+  const nextBtn = document.getElementById("nextPartBtn");
+  if (!nextBtn) return;
+
+  // Disable initially
+  nextBtn.disabled = true;
+  nextBtn.classList.add("opacity-50", "cursor-not-allowed");
+  nextBtn.classList.remove("bg-blue-600", "hover:bg-blue-700");
+  nextBtn.classList.add("bg-gray-400"); // Greyed out look
+
+  if (stepTimer) clearInterval(stepTimer);
+  stepTimeLeft = 60;
+
+  updateTimerText(nextBtn);
+
+  // Start Countdown
+  stepTimer = setInterval(() => {
+    stepTimeLeft--;
+    if (stepTimeLeft <= 0) {
+      enableNextButton();
+    } else {
+      updateTimerText(nextBtn);
+    }
+  }, 1000);
+}
+
+function updateTimerText(btn) {
+  if (currentPartIndex >= moduleParts.length - 1) {
+    btn.textContent = `Finish (${stepTimeLeft}s)`;
+  } else {
+    btn.textContent = `Next (${stepTimeLeft}s)`;
+  }
+}
+
+function enableNextButton() {
+  const nextBtn = document.getElementById("nextPartBtn");
+  if (!nextBtn) return;
+
+  if (stepTimer) clearInterval(stepTimer);
+  stepTimer = null;
+
+  nextBtn.disabled = false;
+  nextBtn.classList.remove("opacity-50", "cursor-not-allowed", "bg-gray-400");
+  nextBtn.classList.add("bg-blue-600", "hover:bg-blue-700");
+
+  const isLast = currentPartIndex >= moduleParts.length - 1;
+  nextBtn.textContent = isLast ? "Finish" : "Next";
+}
+
 async function renderCurrentPart() {
   const container = document.getElementById("moduleContent");
   if (!container) return;
+
+  // Reset Button & Timer Logic
+  resetNextButtonState();
+
+  // Listen for Step Completion (Early Unlock)
+  // Remove old listener if any? Actually container innerHTML rewrite clears listeners on children, 
+  // but we attach to container. Better to use "once" or manage specific handler.
+  // Since we replace container content, bubbling events from OLD children are gone.
+  // But we need to attach listener to container (parent).
+  // Problem: if I attach generic listener, it might duplicate.
+  // Solution: Assign `onstepcomplete` handler or similar, or just re-add listener safely.
+
+  // Cleanest: pass onComplete callback directly to renderStep if possible, 
+  // BUT renderStep uses Engine.render which triggers event.
+  // So we listen for event.
+
+  container.onstepcomplete = (e) => {
+    console.log("✅ Step Completed Early!", e.detail);
+    enableNextButton();
+  };
+  // We need to bridge the CustomEvent to this handler property manually or just addEventListener
+  // Since `container` persists (it's a div in renderModuleScreen), listeners pile up if we use addEventListener.
+  // Let's use a wrapper or recreate container slightly?
+  // Or just:
+
   const part = moduleParts[currentPartIndex];
   if (!part) { container.innerHTML = `<p>No more content.</p>`; return; }
-  if (!part.type || typeof part.type !== "string") { container.innerHTML = `<p class="text-red-600">Invalid step type.</p>`; return; }
+
+  // Clear previous content (removes old children firing events)
+  container.innerHTML = "Loading step...";
+
+  // Re-attach listener specifically for this render cycle
+  // Actually, bubbling events are caught by container. 
+  // Let's just listen on the wrapper for the duration of this part.
+  const stepWrapper = document.createElement('div');
+  stepWrapper.className = "w-full h-full";
+  stepWrapper.addEventListener('step-complete', () => enableNextButton());
+
+  container.innerHTML = '';
+  container.appendChild(stepWrapper);
+
+  if (!part.type || typeof part.type !== "string") { stepWrapper.innerHTML = `<p class="text-red-600">Invalid step type.</p>`; return; }
 
   try {
-    // Unified Shared Renderer
     const { renderStep } = await import("../../../Shared/steps/renderStep.js");
 
-    // Prepare Context Dependencies
     const firebaseUtils = { doc, updateDoc, setDoc, getDoc, increment };
     const speechUtils = { speak, stopSpeech, speakWithProfile };
 
-    await renderStep(container, part, {
+    await renderStep(stepWrapper, part, {
       db,
       auth,
       firebaseUtils,
-      speechUtils
+      speechUtils,
+      commit: true // Enable persistence for student attempts
     });
   } catch (err) {
     console.error(`⚠️ Failed to render part type: ${part.type}`, err);
@@ -120,6 +235,9 @@ async function renderCurrentPart() {
 }
 
 async function handleNextPart() {
+  const nextBtn = document.getElementById("nextPartBtn");
+  if (nextBtn && nextBtn.disabled) return; // Prevent clicks if disabled
+
   if (currentPartIndex >= moduleParts.length - 1) {
     try {
       await markModuleCompletedSafe();

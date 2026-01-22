@@ -1,15 +1,16 @@
 import { Registry } from "./Registry.js";
-import { resolveLocalized } from "./utils.js"; // Import from utils to avoid circular dep
+import { resolveLocalized } from "./utils.js";
 
-// Ensure Registry is initialized (Async check inside renderStep)
-// Registry.init(); // Moved inside
-
-// Export resolveLocalized from here as well for backward compatibility if needed, 
-// though direct import from utils is preferred.
 export { resolveLocalized };
 
 // --- Core Step Renderer ---
 export async function renderStep(container, stepData, extraContext = {}) {
+    // 🔥 MOVE cleanup logic HERE (container exists now)
+    if (container.cleanup) {
+        try { container.cleanup(); } catch (e) { console.warn(e); }
+        container.cleanup = null;
+    }
+
     // Ensure Registry is ready (including Cloud steps)
     await Registry.init(extraContext.db);
 
@@ -31,26 +32,33 @@ export async function renderStep(container, stepData, extraContext = {}) {
     }
 
     try {
-        // Render using Engine Interface
-        // Note: Engine.render expects { container, config, context, onComplete }
         const lang = (localStorage.getItem("language") || "en").toLowerCase();
 
-        // Prepare Context
         const context = {
-            lang: lang,
+            lang,
             ...extraContext,
             ...stepData._context
         };
 
-        // Call Static Render
+        if (typeof Engine.validateConfig === "function") {
+            const validation = Engine.validateConfig(stepData);
+            if (!validation.valid) {
+                console.warn(`[Step ${stepData.type}] Invalid config`, validation.errors);
+            }
+        }
+
         Engine.render({
             container,
-            config: stepData, // Pass the stepData as config
+            config: stepData,
             context,
             onComplete: (result) => {
                 console.log(`[Step ${stepData.type}] Completed:`, result);
-                // Trigger global event if needed
-                container.dispatchEvent(new CustomEvent('step-complete', { detail: result, bubbles: true }));
+                container.dispatchEvent(
+                    new CustomEvent("step-complete", {
+                        detail: result,
+                        bubbles: true
+                    })
+                );
             }
         });
 

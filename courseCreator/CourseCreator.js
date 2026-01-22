@@ -72,7 +72,7 @@ const allAvailableLanguages = {
   en: 'English',
   ru: 'Russian',
   kg: 'Kyrgyz',
-  cn: 'Chinese',
+  'zh-CN': 'Chinese', // Updated from 'cn'
   tr: 'Turkish',
   // Add more languages here in the future!
 };
@@ -222,7 +222,12 @@ function renderCourseCard(course) {
 
   card.querySelector(".manageBtn").addEventListener("click", () => {
     localStorage.setItem("activeCourseDocId", course.id);
+    localStorage.setItem(
+      "activeCourseLanguages",
+      JSON.stringify(course.languages || ['en'])
+    );
     window.location.href = "CourseCreatorModules.html";
+
   });
 
   // --- NEW: Event listener for the language button ---
@@ -252,7 +257,8 @@ function openLanguagesModal(course) {
   const currentLangs = course.languages || ['en'];
 
   for (const [code, name] of Object.entries(allAvailableLanguages)) {
-    const isChecked = currentLangs.includes(code);
+    const isChecked = currentLangs.includes(code) ||
+      (code === 'zh-CN' && (currentLangs.includes('cn') || currentLangs.includes('zh')));
     const checkboxHtml = `
       <label class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded">
         <input type="checkbox" value="${code}" class="form-checkbox h-5 w-5 text-blue-600" ${isChecked ? 'checked' : ''}>

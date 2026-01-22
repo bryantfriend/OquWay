@@ -3,7 +3,8 @@
 
 import { store } from "../Store.js";
 import { Registry } from "../../Shared/steps/Registry.js";
-import { SchemaForm } from "../js/components/SchemaForm.js";
+import FieldEngine from "../../Shared/FieldEngine.js";
+import { SchemaInference } from "../modules/SchemaInference.js";
 
 export class Inspector {
     constructor(containerId) {
@@ -59,32 +60,79 @@ export class Inspector {
             return;
         }
 
-        // Header
-        const header = document.createElement('div');
-        header.className = "mb-4 pb-4 border-b px-4 mt-4";
-        header.innerHTML = `
+        // Header Area (Dynamic)
+        const headerContainer = document.createElement('div');
+        headerContainer.className = "mb-4 border-b bg-white sticky top-0 z-20 transition-all";
+        headerContainer.style.minHeight = "80px"; // Reserve space
 
-            
-            <span class="text-xs font-bold text-gray-400 uppercase mt-4 block">Type Info</span>
-            <div class="font-semibold text-gray-800 text-xs">${Engine.displayName} <span class="text-gray-400 font-normal">(${step.type})</span></div>
-            <div class="text-xs text-gray-500">${Engine.description}</div>
+        // Default Content
+        const defaultHeader = document.createElement('div');
+        defaultHeader.id = "inspector-default-header";
+        defaultHeader.className = "px-4 py-4";
+        defaultHeader.innerHTML = `
+            <span class="text-xs font-bold text-gray-400 uppercase block">Type Info</span>
+            <div class="font-semibold text-gray-800 text-xs mt-1">${Engine.displayName} <span class="text-gray-400 font-normal">(${step.type})</span></div>
+            <div class="text-xs text-gray-500 mt-1 line-clamp-2">${Engine.description}</div>
         `;
-        this.contentContainer.appendChild(header);
 
+        // Toolbar Container (Hidden by default)
+        const toolbarContainer = document.createElement('div');
+        toolbarContainer.id = "inspector-toolbar";
+        toolbarContainer.className = "hidden"; // content injected by fields
 
+        headerContainer.appendChild(defaultHeader);
+        headerContainer.appendChild(toolbarContainer);
+        this.contentContainer.appendChild(headerContainer);
 
         // Form Container
         const formContainer = document.createElement('div');
-        formContainer.className = "px-4 pb-10 schema-form";
+        formContainer.className = "px-4 pb-20 schema-form";
         this.contentContainer.appendChild(formContainer);
 
-        // Render SchemaForm
-        // We pass the current step data (which effectively IS the config)
-        // Note: Engine.editorSchema describes the fields.
-        new SchemaForm(formContainer, Engine.editorSchema, step, (newData) => {
+        // ... (schema resolution same) ...
+        let schema;
+        if (Engine.editorSchema) {
+            schema = typeof Engine.editorSchema === 'function' ? Engine.editorSchema() : Engine.editorSchema;
+        } else {
+            schema = SchemaInference.infer(Engine.defaultConfig);
+        }
+
+        // ... (module title resolution same) ...
+        let moduleTitle = store.state.module.title;
+        if (typeof moduleTitle === 'object') {
+            moduleTitle = moduleTitle.en || Object.values(moduleTitle)[0] || 'Module';
+        }
+
+        // Context Helpers for Toolbar
+        const setToolbar = (contentElement) => {
+            defaultHeader.classList.add('hidden');
+            toolbarContainer.innerHTML = '';
+            toolbarContainer.appendChild(contentElement);
+            toolbarContainer.classList.remove('hidden');
+        };
+
+        const clearToolbar = () => {
+            toolbarContainer.classList.add('hidden');
+            toolbarContainer.innerHTML = '';
+            defaultHeader.classList.remove('hidden');
+        };
+
+        // Render FieldEngine
+        const context = {
+            courseId: store.state.courseId,
+            moduleId: store.state.moduleId,
+            languages: store.state.courseLanguages,
+            className: store.state.courseTitle || 'Course',
+            moduleName: moduleTitle || 'Module',
+            setToolbar, // EXPOSE TO FIELDS
+            clearToolbar, // EXPOSE TO FIELDS
+            FieldEngine // Inject Class to avoid circular deps in Fields
+        };
+
+        FieldEngine.render(formContainer, schema, step, (newData) => {
             // Live Auto-Save
             store.updateStep(stepId, newData);
-        }, store.state.courseLanguages);
+        }, context, stepId);
     }
 
     renderEmpty() {
@@ -172,9 +220,7 @@ export class Inspector {
     saveChanges(target) {
         if (!target) return;
 
-        if (store.state.selectedStepId) {
-            this.saveStepChange();
-        } else if (store.state.selectedTrackId) {
+        if (store.state.selectedTrackId) {
             if (target.dataset.target === 'track-title') {
                 store.updateTrackTitle(store.state.selectedTrackId, target.value);
             } else if (target.dataset.target === 'track-color') {
@@ -185,24 +231,6 @@ export class Inspector {
 
     // Public method, also called by external components
     saveBlockChange() {
-        this.saveStepChange();
-    }
-
-    saveStepChange() {
-        const stepId = store.state.selectedStepId;
-        if (!stepId) return;
-
-        const step = store.getStep(stepId);
-        if (!step) return;
-
-        const StepClass = stepClasses[step.type];
-        const stepInstance = new StepClass(step, store.state.courseLanguages);
-        const form = document.getElementById('inspector-form');
-
-        if (form) {
-            // We need to re-read the form data
-            const newData = stepInstance.saveFromForm(form);
-            store.updateStep(stepId, newData);
-        }
+        // No-op for now, as Steps save via FieldEngine callback
     }
 }

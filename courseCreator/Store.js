@@ -13,6 +13,7 @@ class Store {
             selectedStepId: null,
             // Global context
             courseLanguages: ['en'],
+            courseTitle: null,
         };
         this.subscribers = new Set();
         this.autosaveTimeout = null;
@@ -20,9 +21,10 @@ class Store {
 
     // --- ACTIONS ---
 
-    init(courseId, moduleId, moduleData, courseLanguages = ['en']) {
+    init(courseId, moduleId, moduleData, courseLanguages = ['en'], courseTitle = 'Course') {
         this.state.courseId = courseId;
         this.state.moduleId = moduleId;
+        this.state.courseTitle = courseTitle;
         this.state.module = this._ensureCompatibility(moduleData);
         this.state.courseLanguages = courseLanguages;
 
@@ -98,7 +100,7 @@ class Store {
     updateModuleTitle(newTitle) {
         this.state.module.title = newTitle;
         this._notify();
-        this._triggerAutosave();
+
     }
 
     // Track Methods
@@ -113,7 +115,7 @@ class Store {
         };
         this.state.module.tracks.push(newTrack);
         this._notify();
-        this._triggerAutosave();
+
         return newTrack;
     }
 
@@ -122,7 +124,7 @@ class Store {
         if (track) {
             track.title = title;
             this._notify();
-            this._triggerAutosave();
+
         }
     }
 
@@ -131,7 +133,7 @@ class Store {
         if (track) {
             track.color = color;
             this._notify();
-            this._triggerAutosave();
+
         }
     }
 
@@ -140,7 +142,7 @@ class Store {
         if (track) {
             track.mood = mood;
             this._notify();
-            this._triggerAutosave();
+
         }
     }
 
@@ -149,7 +151,7 @@ class Store {
         if (track) {
             track.intent = intent;
             this._notify();
-            this._triggerAutosave();
+
         }
     }
 
@@ -170,7 +172,7 @@ class Store {
         this.state.module.tracks.splice(idx + 1, 0, newTrack);
 
         this._notify();
-        this._triggerAutosave();
+
     }
 
     deleteTrack(trackId) {
@@ -185,14 +187,14 @@ class Store {
             this.selectTrack(this.state.module.tracks[0].id);
         } else {
             this._notify();
-            this._triggerAutosave();
+
         }
     }
 
     reorderTracks(newTracksArray) {
         this.state.module.tracks = newTracksArray;
         this._notify();
-        this._triggerAutosave();
+
     }
 
 
@@ -216,7 +218,7 @@ class Store {
         this.state.selectedStepId = stepData.id;
 
         this._notify();
-        this._triggerAutosave();
+
         return stepData;
     }
 
@@ -230,7 +232,7 @@ class Store {
         }
 
         this._notify();
-        this._triggerAutosave();
+
     }
 
     deleteStep(stepId) {
@@ -242,7 +244,7 @@ class Store {
             this.state.selectedStepId = null;
         }
         this._notify();
-        this._triggerAutosave();
+
     }
 
     reorderSteps(trackId, newStepsArray) {
@@ -250,7 +252,7 @@ class Store {
         if (!track) return;
         track.steps = newStepsArray;
         this._notify();
-        this._triggerAutosave();
+
     }
 
     moveStep(stepId, targetTrackId, newIndex) {
@@ -278,7 +280,7 @@ class Store {
         }
 
         this._notify();
-        this._triggerAutosave();
+
     }
 
 
@@ -342,38 +344,42 @@ class Store {
 
     // --- PERSISTENCE ---
 
-    _triggerAutosave() {
-        if (this.autosaveTimeout) clearTimeout(this.autosaveTimeout);
+    // --- PERSISTENCE ---
 
+    async save() {
+        if (!this.state.courseId || !this.state.moduleId) return;
+
+        // Visual Feedback
         const statusEl = document.getElementById('saveStatus');
         if (statusEl) statusEl.textContent = "Saving...";
+        // We can also use Toast if available globally or passed in
+        // import { Toast } from "./components/Toast.js"; // if needed, but Store usually logic only.
+        // We will rely on the caller or status element for now, or dispatch event.
 
-        this.autosaveTimeout = setTimeout(async () => {
-            try {
-                if (this.state.courseId && this.state.moduleId) {
+        try {
+            // Simple sync:
+            const flatSteps = [];
+            this.state.module.tracks.forEach(t => {
+                t.steps.forEach(s => {
+                    flatSteps.push(s);
+                });
+            });
 
-                    // Simple sync:
-                    const flatSteps = [];
-                    this.state.module.tracks.forEach(t => {
-                        t.steps.forEach(s => {
-                            flatSteps.push(s);
-                        });
-                    });
+            const dataToSave = {
+                tracks: this.state.module.tracks,
+                steps: flatSteps, // Keep 'steps' populated for the player!
+                title: this.state.module.title
+            };
 
-                    const dataToSave = {
-                        tracks: this.state.module.tracks,
-                        steps: flatSteps, // Keep 'steps' populated for the player!
-                        title: this.state.module.title
-                    };
+            await courseService.updateModule(this.state.courseId, this.state.moduleId, dataToSave);
 
-                    await courseService.updateModule(this.state.courseId, this.state.moduleId, dataToSave);
-                    if (statusEl) statusEl.textContent = "Saved";
-                }
-            } catch (err) {
-                console.error("Autosave failed", err);
-                if (statusEl) statusEl.textContent = "Error saving";
-            }
-        }, 1000);
+            if (statusEl) statusEl.textContent = "Saved";
+            return true;
+        } catch (err) {
+            console.error("Save failed", err);
+            if (statusEl) statusEl.textContent = "Error saving";
+            throw err;
+        }
     }
 
 }

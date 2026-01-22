@@ -53,6 +53,33 @@ if (!publishStatus && saveStatus) {
     saveStatus.parentNode.insertBefore(publishStatus, saveStatus);
 }
 
+// NEW: Manual Save Button
+let manualSaveBtn = document.getElementById("manualSaveBtn");
+if (!manualSaveBtn && closeEditorBtn) {
+    manualSaveBtn = document.createElement("button");
+    manualSaveBtn.id = "manualSaveBtn";
+    manualSaveBtn.className = "ml-4 bg-green-600 text-white px-4 py-1 rounded shadow hover:bg-green-700 font-bold text-sm tracking-wide";
+    manualSaveBtn.innerHTML = `<i class="fas fa-save mr-2"></i> SAVE`;
+    // Insert before Close button
+    closeEditorBtn.parentNode.insertBefore(manualSaveBtn, closeEditorBtn);
+
+    manualSaveBtn.onclick = async () => {
+        const originalText = manualSaveBtn.innerHTML;
+        manualSaveBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Saving...`;
+        manualSaveBtn.disabled = true;
+        try {
+            await store.save();
+            Toast.success("Saved successfully!");
+        } catch (err) {
+            console.error(err);
+            Toast.error("Failed to save.");
+        } finally {
+            manualSaveBtn.innerHTML = originalText;
+            manualSaveBtn.disabled = false;
+        }
+    };
+}
+
 // Context for Block Picker
 let activeBlockPickerContext = {
     pageId: null,
@@ -112,6 +139,23 @@ async function init() {
     // Feature: Command Palette (Self-initializing listener)
     new CommandPalette();
 
+    // Feature: Structure Panel Toggle
+    const structureCollapseBtn = document.getElementById('structureCollapseBtn');
+    const structurePanel = document.getElementById('structurePanel');
+    if (structureCollapseBtn && structurePanel) {
+        structureCollapseBtn.addEventListener('click', () => {
+            structurePanel.classList.toggle('w-72');
+            structurePanel.classList.toggle('w-0');
+            structurePanel.classList.toggle('border-r');
+            structurePanel.classList.toggle('opacity-0');
+            // Also hide children to prevent overflow
+            const children = structurePanel.children;
+            for (let child of children) {
+                if (child !== structurePanel.firstElementChild) child.classList.toggle('hidden');
+            }
+        });
+    }
+
     // Setup Global Event Listeners for Component Interaction
     setupGlobalListeners();
 }
@@ -139,14 +183,44 @@ function setupGlobalListeners() {
         handleGlobalFormAction(e.detail.originalEvent);
     });
 
-    // 3. Global Keyboard Shortcuts
-    document.addEventListener('keydown', (e) => {
+    // 3. Inspector Fullscreen Toggle (Animation)
+    document.addEventListener('toggle-inspector-fullscreen', (e) => {
+        const { isFullscreen } = e.detail;
+        const structurePanel = document.getElementById('structurePanel');
+        const canvasPanel = document.getElementById('canvasPanel');
+        const inspectorPanel = document.getElementById('inspectorPanel');
+
+        if (isFullscreen) {
+            // Slide/Fade out Left and Center
+            structurePanel.classList.add('-translate-x-full', 'w-0', 'border-0', 'opacity-0', 'p-0');
+            canvasPanel.classList.add('hidden'); // Simplify: remove from flow
+
+            // Expand Right
+            inspectorPanel.classList.remove('w-80', 'border-l');
+            inspectorPanel.classList.add('w-full');
+        } else {
+            // Restore
+            structurePanel.classList.remove('-translate-x-full', 'w-0', 'border-0', 'opacity-0', 'p-0');
+            canvasPanel.classList.remove('hidden');
+
+            // Restore Right
+            inspectorPanel.classList.add('w-80', 'border-l');
+            inspectorPanel.classList.remove('w-full');
+        }
+    });
+
+    // 4. Global Keyboard Shortcuts
+    document.addEventListener('keydown', async (e) => {
         // Save: Ctrl + S / Cmd + S
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
             e.preventDefault();
             Toast.info("Saving...");
-            // Trigger autosave immediately
-            store._triggerAutosave();
+            try {
+                await store.save();
+                Toast.success("Saved!");
+            } catch (err) {
+                Toast.error("Save Failed");
+            }
             return;
         }
 
@@ -536,7 +610,8 @@ function openModuleInEditor(moduleData) {
 
     // Initialize Store
     const courseLangs = courseCache[currentCourseId]?.languages || ['en'];
-    store.init(currentCourseId, moduleData.id, moduleData, courseLangs);
+    const courseTitle = courseCache[currentCourseId]?.title || 'Untitled Course';
+    store.init(currentCourseId, moduleData.id, moduleData, courseLangs, courseTitle);
 
     // Update UI Header
     let displayTitle = moduleData.title;

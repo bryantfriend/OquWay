@@ -50,6 +50,33 @@ export default class BaseEngine {
      * @param {Function} params.onComplete - Callback when step is finished (optional)
      */
     static render({ container, config, context, onComplete }) {
+        // Bridge to Legacy renderPlayer
+        // BaseEngine subclasses (legacy) often have `renderPlayer` as an INSTANCE method or STATIC.
+
+        // 1. Try Static
+        if (typeof this.renderPlayer === 'function') {
+            container.innerHTML = this.renderPlayer(config, context?.lang || 'en');
+            return;
+        }
+
+        // 2. Try Instance
+        try {
+            const instance = new this();
+            if (typeof instance.renderPlayer === 'function') {
+                // Hack: pass config to instance if possible? 
+                // Legacy engines usually don't take config in constructor, 
+                // but rely on internal state? 
+                // Actually legacy RenderPlayer didn't take config args usually, 
+                // it relied on `this.config`. 
+                // So we need to set it.
+                instance.config = config;
+                container.innerHTML = instance.renderPlayer(context?.lang || 'en');
+                return;
+            }
+        } catch (e) {
+            console.warn("Legacy instance render failed", e);
+        }
+
         container.innerHTML = `<div class="p-4 text-red-500">Render method not implemented for ${this.id}</div>`;
     }
 
@@ -59,23 +86,6 @@ export default class BaseEngine {
      * @returns {string} HTML string of the player view
      */
     renderPlayer(lang = 'en') {
-        // Default implementation needed if engines are instances?
-        // Wait, BaseEngine seems to mix static and instance methods in the legacy StepTypes. 
-        // But the new Engines are classes where we might need to instantiate them?
-        // Let's check Canvas logic.
-        // Legacy StepTypes: const step = new StepClass(data); step.renderPlayer();
-        // New Engines: They are mostly Static?
-        // Checking LetterRacingGameEngine: It has `static render`.
-        // BUT `StepTypes.js` classes had `renderPlayer` as INSTANCE method.
-        // Decision: Let's use `Canvas` to render the `renderPlayer` HTML.
-        // If Engine is static, we might need `static renderPlayer(data)`?
-        // Let's look at `LetterRacingGameEngine`. It extended `BaseEngine`.
-        // The previous `StepTypes.js` `LetterRacingGameStep` had `renderPlayer`.
-        // I need to ensure `BaseEngine` PROTOTYPE has `renderPlayer` or `STATIC` has it.
-        // Since `Registry.get(type)` returns the CLASS, and we prefer static methods in new architecture?
-        // OR we instantiate: `new Engine(stepData).renderPlayer()`?
-        // Let's check `Registry.js` usage.
-        // `SmartStepPicker` uses `Registry.getAll()`.
 
         // I will add `static renderPlayer(data)` to BaseEngine for simplicity.
         return `<div class="p-8 text-center border rounded bg-gray-50">

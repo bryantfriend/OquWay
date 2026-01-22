@@ -3,6 +3,7 @@
 
 import { store } from "../Store.js";
 import { Registry } from "../../Shared/steps/Registry.js";
+import { resolveLocalized } from "../../Shared/steps/utils.js";
 
 
 export class Canvas {
@@ -64,7 +65,7 @@ export class Canvas {
                     <div class="flex items-center gap-3">
                         <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-200 text-xs font-bold uppercase">${Engine.displayName}</span>
                         <span class="text-gray-300">|</span>
-                        <h2 class="text-sm font-bold text-gray-800 line-clamp-1">${step.title || 'Untitled Step'}</h2>
+                        <h2 class="text-sm font-bold text-gray-800 line-clamp-1">${resolveLocalized(step.title) || 'Untitled Step'}</h2>
                     </div>
                     
                     <div class="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
@@ -119,8 +120,8 @@ export class Canvas {
                 Engine.render({
                     container: container,
                     config: step,
-                    context: { mode: 'creator' },
-                    onComplete: () => console.log('Step completed')
+                    context: { mode: 'creator', commit: false },
+                    onComplete: () => console.log('Step completed (Simulated)')
                 });
                 rendered = true;
             }

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Home | OquWay</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cosmic: { 950: '#090918', 900: '#101026', 800: '#1B1B3A', 700: '#26264E' },
+                        game: {
+                            gold: '#FFD700',
+                            neonBlue: '#00F0FF',
+                            neonPink: '#FF0099',
+                            neonGreen: '#39FF14',
+                            neonPurple: '#BC13FE',
+                            neonOrange: '#FF5F1F'
+                        }
+                    },
+                    fontFamily: {
+                        header: ['Fredoka', 'sans-serif'],
+                        body: ['Quicksand', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neon-glow': '0 0 15px rgba(188, 19, 254, 0.3), inset 0 0 10px rgba(188, 19, 254, 0.2)',
+                        'card-glow': '0 0 20px rgba(0, 240, 255, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            /* Fallback dark color */
+            background-color: #090918;
+            color: white;
+            font-family: 'Quicksand', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Background Image Container */
+        .bg-scene {
+            position: absolute;
+            inset: 0;
+            background-image: url('assets/splash-bg.jpg');
+            /* Placeholder */
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+        }
+
+        .bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to right, rgba(9, 9, 24, 0.95) 0%, rgba(9, 9, 24, 0.4) 40%, rgba(9, 9, 24, 0.2) 100%);
+            z-index: -1;
+        }
+
+        /* Glass Components */
+        .glass-sidebar {
+            background: rgba(16, 16, 38, 0.6);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(40, 40, 70, 0.6), rgba(20, 20, 40, 0.6));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 15px 40px rgba(188, 19, 254, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Text Gradients */
+        .text-gradient {
+            background: linear-gradient(to right, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Menu Item Active */
+        .menu-item-active {
+            background: linear-gradient(90deg, #FF5F1F, #FF0099);
+            box-shadow: 0 4px 15px rgba(255, 0, 153, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+            color: white;
+        }
+    </style>
+</head>
+
+<body class="h-screen flex text-gray-200">
+
+    <!-- Backgrounds -->
+    <div class="bg-scene"></div>
+    <div class="bg-overlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="w-64 glass-sidebar flex flex-col z-20 h-full py-6 px-4">
+        <!-- Logo -->
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div
+                class="w-10 h-10 rounded-full bg-gradient-to-br from-game-neonBlue to-purple-600 flex items-center justify-center shadow-lg font-bold text-xl text-white">
+                🚀</div>
+            <span class="text-2xl font-heading font-bold text-white tracking-wide">OquWay</span>
+        </div>
+
+        <!-- Menu -->
+        <nav class="flex-1 space-y-3">
+            <a href="#" class="flex items-center gap-4 px-4 py-3 rounded-xl menu-item-active group transition-all">
+                <span class="text-xl">🎛️</span>
+                <span class="text-sm tracking-wide">Dashboard</span>
+            </a>
+            <a href="#"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 transition-all group text-gray-400 hover:text-white">
+                <span class="text-xl group-hover:scale-110 transition">🖥️</span>
+                <span class="text-sm tracking-wide">My Classes</span>
+            </a>
+            <a href="#"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 transition-all group text-gray-400 hover:text-white">
+                <span class="text-xl group-hover:scale-110 transition">📩</span>
+                <span class="text-sm tracking-wide">Inbox</span>
+            </a>
+            <a href="#"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 transition-all group text-gray-400 hover:text-white">
+                <span class="text-xl group-hover:scale-110 transition">📊</span>
+                <span class="text-sm tracking-wide">Reports</span>
+            </a>
+            <a href="#"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 transition-all group text-gray-400 hover:text-white">
+                <span class="text-xl group-hover:scale-110 transition">💬</span>
+                <span class="text-sm tracking-wide">Communicate</span>
+            </a>
+            <a href="#"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 transition-all group text-gray-400 hover:text-white">
+                <span class="text-xl group-hover:rotate-90 transition duration-500">⚙️</span>
+                <span class="text-sm tracking-wide">Settings</span>
+            </a>
+        </nav>
+
+        <!-- Exit -->
+        <button
+            class="menu-item-active bg-gradient-to-r from-red-500/80 to-red-700/80 mt-auto flex items-center justify-center gap-2 py-3 rounded-xl shadow-lg hover:brightness-110 transition-all w-full">
+            <span>🚪</span> Exit
+        </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col relative z-10 min-w-0">
+
+        <!-- Header -->
+        <header class="h-20 flex items-center justify-between px-8 py-4 shrink-0">
+            <div class="flex items-center gap-2">
+                <!-- Branding or breadcrumbs if needed -->
+                <div class="glass-card px-4 py-1.5 rounded-full flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-game-neonGreen animate-pulse"></span>
+                    <span class="text-xs font-bold text-game-neonBlue uppercase tracking-widest">System Online</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <!-- Time/History -->
+                <div class="hidden xl:flex items-center gap-6 text-sm font-bold text-gray-300">
+                    <div class="flex items-center gap-2"><span class="text-game-neonPurple">🎤</span> History</div>
+                    <div class="flex items-center gap-2"><span class="text-game-gold">🤖</span> Robotics</div>
+                    <div class="bg-black/20 px-3 py-1 rounded-lg border border-white/10 font-mono text-white">11:00 •
+                        11:55:59</div>
+                    <div class="flex items-center gap-2 text-game-neonPink">Break time 03:12</div>
+                </div>
+
+                <!-- Profile -->
+                <div class="flex items-center gap-3 pl-6 border-l border-white/10">
+                    <div class="text-right leading-tight">
+                        <div class="font-heading font-bold text-white">Hi Bryant!</div>
+                        <div class="text-[10px] text-gray-400 uppercase tracking-widest">Instructor</div>
+                    </div>
+                    <img src="assets/bryant-avatar.jpg"
+                        class="w-10 h-10 rounded-full border-2 border-white/20 shadow-lg object-cover bg-gray-700">
+                </div>
+            </div>
+        </header>
+
+        <!-- Grid Container -->
+        <div class="flex-1 p-8 flex items-center justify-center overflow-y-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
+
+                <!-- 1. My Classes -->
+                <a href="index.html"
+                    class="glass-card rounded-3xl p-1 relative group cursor-pointer h-64 flex flex-col">
+                    <!-- Inner Border Glow -->
+                    <div
+                        class="absolute inset-0 rounded-3xl border-2 border-game-neonPurple/30 group-hover:border-game-neonPurple/80 transition-colors">
+                    </div>
+                    <!-- Content -->
+                    <div
+                        class="bg-cosmic-900/40 w-full h-full rounded-[20px] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+                        <!-- Image Placeholder -->
+                        <div class="w-full flex-1 flex items-center justify-center mb-2">
+                            <img src="assets/card-my-classes.png"
+                                class="max-h-28 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:scale-110 transition duration-500"
+                                alt="My Classes">
+                        </div>
+                        <div class="text-center z-10">
+                            <h3
+                                class="text-2xl font-heading font-bold text-white mb-1 group-hover:text-game-neonBlue transition-colors">
+                                My Classes</h3>
+                            <p class="text-sm text-gray-400 font-medium">View & Manage</p>
+                        </div>
+                        <!-- BG Glow Spot -->
+                        <div
+                            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-game-neonBlue/20 blur-3xl rounded-full group-hover:bg-game-neonBlue/40 transition">
+                        </div>
+                    </div>
+                </a>
+
+                <!-- 2. Sync Module (Primary Action) -->
+                <a href="index.html"
+                    class="glass-card rounded-3xl p-1 relative group cursor-pointer h-64 flex flex-col ring-1 ring-game-neonPurple/50 shadow-[0_0_30px_rgba(188,19,254,0.15)]">
+                    <div
+                        class="absolute inset-0 rounded-3xl border-2 border-game-neonPurple group-hover:shadow-[0_0_20px_#BC13FE] transition-shadow">
+                    </div>
+                    <div
+                        class="bg-cosmic-900/40 w-full h-full rounded-[20px] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+                        <div class="w-full flex-1 flex items-center justify-center mb-2">
+                            <img src="assets/card-sync-module.png"
+                                class="max-h-32 object-contain drop-shadow-[0_0_25px_rgba(188,19,254,0.6)] group-hover:scale-110 transition duration-500 animate-pulse-slow"
+                                alt="Sync">
+                        </div>
+                        <div class="text-center z-10">
+                            <h3
+                                class="text-2xl font-heading font-bold text-white mb-1 group-hover:text-game-neonPurple transition-colors">
+                                Sync Module</h3>
+                            <p class="text-sm text-gray-400 font-medium">Align Students</p>
+                        </div>
+                        <div
+                            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-game-neonPurple/30 blur-3xl rounded-full">
+                        </div>
+                    </div>
+                </a>
+
+                <!-- 3. Reports -->
+                <div class="glass-card rounded-3xl p-1 relative group cursor-pointer h-64 flex flex-col">
+                    <div
+                        class="absolute inset-0 rounded-3xl border-2 border-game-neonOrange/30 group-hover:border-game-neonOrange/80 transition-colors">
+                    </div>
+                    <div
+                        class="bg-cosmic-900/40 w-full h-full rounded-[20px] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+                        <div class="w-full flex-1 flex items-center justify-center mb-2">
+                            <img src="assets/card-reports.png"
+                                class="max-h-28 object-contain drop-shadow-[0_0_15px_rgba(255,165,0,0.3)] group-hover:scale-110 transition duration-500"
+                                alt="Reports">
+                        </div>
+                        <div class="text-center z-10">
+                            <h3
+                                class="text-2xl font-heading font-bold text-white mb-1 group-hover:text-game-neonOrange transition-colors">
+                                Reports</h3>
+                            <p class="text-sm text-gray-400 font-medium">Progress & Stats</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Student Insights -->
+                <div class="glass-card rounded-3xl p-1 relative group cursor-pointer h-64 flex flex-col">
+                    <div
+                        class="absolute inset-0 rounded-3xl border-2 border-game-neonBlue/30 group-hover:border-game-neonBlue/80 transition-colors">
+                    </div>
+                    <div
+                        class="bg-cosmic-900/40 w-full h-full rounded-[20px] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+                        <div class="w-full flex-1 flex items-center justify-center mb-2">
+                            <img src="assets/card-insights.png"
+                                class="max-h-28 object-contain drop-shadow-[0_0_15px_rgba(0,240,255,0.3)] group-hover:scale-110 transition duration-500"
+                                alt="Insights">
+                        </div>
+                        <div class="text-center z-10">
+                            <h3
+                                class="text-2xl font-heading font-bold text-white mb-1 group-hover:text-game-neonBlue transition-colors">
+                                Student Insights</h3>
+                            <p class="text-sm text-gray-400 font-medium">Track Performance</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Communicate -->
+                <div class="glass-card rounded-3xl p-1 relative group cursor-pointer h-64 flex flex-col">
+                    <div
+                        class="absolute inset-0 rounded-3xl border-2 border-game-neonPink/30 group-hover:border-game-neonPink/80 transition-colors">
+                    </div>
+                    <div
+                        class="bg-cosmic-900/40 w-full h-full rounded-[20px] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+                        <div
+                            class=" absolute top-4 right-4 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border border-white/20 shadow-lg z-20 animate-bounce">
+                            3</div>
+                        <div class="w-full flex-1 flex items-center justify-center mb-2">
+                            <img src="assets/card-communicate.png"
+                                class="max-h-28 object-contain drop-shadow-[0_0_15px_rgba(255,0,153,0.3)] group-hover:scale-110 transition duration-500"
+                                alt="Communicate">
+                        </div>
+                        <div class="text-center z-10">
+                            <h3
+                                class="text-2xl font-heading font-bold text-white mb-1 group-hover:text-game-neonPink transition-colors">
+                                Communicate</h3>
+                            <p class="text-sm text-gray-400 font-medium">Messages & Announcements</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Settings -->
+                <div class="glass-card rounded-3xl p-1 relative group cursor-pointer h-64 flex flex-col">
+                    <div
+                        class="absolute inset-0 rounded-3xl border-2 border-gray-400/30 group-hover:border-gray-300/80 transition-colors">
+                    </div>
+                    <div
+                        class="bg-cosmic-900/40 w-full h-full rounded-[20px] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+                        <div class="w-full flex-1 flex items-center justify-center mb-2">
+                            <img src="assets/card-settings.png"
+                                class="max-h-28 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:rotate-90 transition duration-700"
+                                alt="Settings">
+                        </div>
+                        <div class="text-center z-10">
+                            <h3
+                                class="text-2xl font-heading font-bold text-white mb-1 group-hover:text-white transition-colors">
+                                Settings</h3>
+                            <p class="text-sm text-gray-400 font-medium">Personalize & Adjust</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Sticky Bottom Status -->
+        <div class="px-8 pb-6 pt-2 z-20">
+            <div
+                class="glass-sidebar rounded-2xl h-16 flex items-center justify-between px-6 border border-white/20 shadow-neon-glow relative overflow-hidden">
+                <!-- BG Glow -->
+                <div
+                    class="absolute inset-0 bg-gradient-to-r from-game-neonBlue/10 via-transparent to-game-neonPink/10 pointer-events-none">
+                </div>
+
+                <div class="flex items-center gap-8 relative z-10">
+                    <div class="flex items-center gap-3">
+                        <div class="flex -space-x-3">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-blue-500/80 border-2 border-cosmic-900 flex items-center justify-center text-lg">
+                                👥</div>
+                            <div
+                                class="w-10 h-10 rounded-lg bg-indigo-500/80 border-2 border-cosmic-900 flex items-center justify-center text-lg">
+                                💻</div>
+                        </div>
+                        <span class="font-heading font-bold text-xl text-white">Live Classes</span>
+                    </div>
+
+                    <div class="h-8 w-px bg-white/10"></div>
+
+                    <div class="flex items-center gap-6 font-bold text-sm">
+                        <div class="flex items-center gap-2 text-game-neonGreen">
+                            <span>👤</span> <span class="text-xl">18</span> Active
+                        </div>
+                        <div class="flex items-center gap-2 text-game-neonOrange">
+                            <span>👤</span> <span class="text-xl">12</span> Idle
+                        </div>
+                        <div class="flex items-center gap-2 text-white/60">
+                            <span>👤</span> <span class="text-xl">2</span> Offline
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative z-10">
+                    <button
+                        class="px-6 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 transition font-bold text-white flex items-center gap-2">
+                        <span>+</span> Add Class
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+
+</html>

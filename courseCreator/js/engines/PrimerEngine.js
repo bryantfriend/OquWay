@@ -11,25 +11,39 @@ export default class PrimerEngine extends BaseEngine {
     static get editorSchema() {
         return {
             fields: [
-                { key: "src", label: "Image/Media Source URL", type: "text", default: "images/placeholder.png" },
-                { key: "text", label: "Text Content", type: "textarea", default: "" }
+                { key: "title", label: "Title", type: "text", translatable: true, default: "Lesson Title" },
+                { key: "src", label: "Image", type: "image", default: "images/placeholder.png" },
+                { key: "text", label: "Text Content", type: "textarea", translatable: true, default: "Introduction text here." }
             ]
         };
     }
 
     static get defaultConfig() {
         return {
+            title: { en: "Lesson Title" },
             src: "images/placeholder.png",
-            text: "Introduction text here."
+            text: { en: "Introduction text here." }
         };
     }
 
-    static render({ container, config }) {
+    static render({ container, config, context }) {
         const src = config.src || '';
-        const text = config.text || '';
+        let text = config.text || '';
+        let title = config.title || '';
+
+        // Handle Localization
+        if (context?.language) {
+            const lang = context.language;
+            if (typeof text === 'object') text = text[lang] || text['en'] || '';
+            if (typeof title === 'object') title = title[lang] || title['en'] || '';
+        } else {
+            // Fallback if context missing
+            if (typeof text === 'object') text = text['en'] || '';
+            if (typeof title === 'object') title = title['en'] || '';
+        }
 
         // Simple check for image extension
-        const isImage = src.match(/\.(jpeg|jpg|gif|png|webp)$/i) || src.startsWith('blob:') || src.includes('firebasestorage');
+        const isImage = src.match(/\.(jpeg|jpg|gif|png|webp)$/i) || src.startsWith('blob:') || src.includes('firebasestorage') || src.startsWith('http');
 
         let mediaHtml = '';
         if (src && isImage) {
@@ -41,6 +55,7 @@ export default class PrimerEngine extends BaseEngine {
         container.innerHTML = `
         <div class="p-6 bg-white rounded shadow-md max-w-2xl mx-auto">
             ${mediaHtml}
+            <h2 class="text-2xl font-bold mb-4 text-gray-900">${title}</h2>
             <div class="prose max-w-none text-lg leading-relaxed text-gray-800">
                 ${text.replace(/\n/g, '<br>')}
             </div>
