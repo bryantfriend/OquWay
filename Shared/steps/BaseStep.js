@@ -156,6 +156,40 @@ export default class BaseStep {
     }
 
     /* ======================================================
+       METADATA & TELEMETRY (NEW)
+    ====================================================== */
+
+    /**
+     * Emits a heartbeat event for real-time tracking.
+     * @param {Object} context - Runtime context containing classId, moduleId, etc.
+     */
+    static emitHeartbeat(context) {
+        if (!context || !context.classId) return;
+
+        const event = new CustomEvent('step-heartbeat', {
+            detail: {
+                stepId: this.id,
+                classId: context.classId,
+                moduleId: context.moduleId,
+                studentId: context.studentId,
+                timestamp: new Date().toISOString()
+            },
+            bubbles: true
+        });
+        document.dispatchEvent(event);
+    }
+
+    /**
+     * Starts a heartbeat interval. 
+     * Returns a cleanup function.
+     */
+    static startHeartbeat(context, intervalMs = 15000) {
+        this.emitHeartbeat(context);
+        const interval = setInterval(() => this.emitHeartbeat(context), intervalMs);
+        return () => clearInterval(interval);
+    }
+
+    /* ======================================================
        CLEANUP SAFETY
     ====================================================== */
 

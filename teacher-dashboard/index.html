@@ -113,6 +113,36 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.2);
         }
+
+        /* Tab Styles */
+        .tab-btn {
+            border: 1px solid transparent;
+        }
+
+        .tab-btn.active {
+            box-shadow: 0 0 15px rgba(188, 19, 254, 0.2);
+            background: rgba(188, 19, 254, 0.2);
+            color: #BC13FE;
+            border-color: rgba(188, 19, 254, 0.5);
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .view-pane {
+            transition: opacity 0.3s ease;
+        }
+
+        .view-pane.hidden {
+            display: none;
+            opacity: 0;
+        }
     </style>
 </head>
 
@@ -158,15 +188,25 @@
 
         <!-- Nav -->
         <nav class="p-2 space-y-1 shrink-0">
+            <a href="splash.html"
+                class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg font-bold transition group">
+                <span class="text-lg group-hover:scale-110 transition">🏠</span> <span
+                    class="hidden lg:block text-sm">Home</span>
+            </a>
             <a href="#"
                 class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 bg-white/5 rounded-lg text-white font-bold border border-white/5 hover:bg-white/10 transition group">
-                <span class="text-lg group-hover:scale-110 transition">📊</span> <span
-                    class="hidden lg:block text-sm">Dashboard</span>
+                <span class="text-lg group-hover:scale-110 transition">🖥️</span> <span
+                    class="hidden lg:block text-sm">My Classes</span>
             </a>
             <a href="#"
                 class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg font-bold transition group">
-                <span class="text-lg group-hover:scale-110 transition">🏆</span> <span
-                    class="hidden lg:block text-sm">Leaderboard</span>
+                <span class="text-lg group-hover:scale-110 transition">💬</span> <span
+                    class="hidden lg:block text-sm">Communicate</span>
+            </a>
+            <a href="#"
+                class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg font-bold transition group">
+                <span class="text-lg group-hover:rotate-90 transition duration-500">⚙️</span> <span
+                    class="hidden lg:block text-sm">Settings</span>
             </a>
         </nav>
 
@@ -181,139 +221,147 @@
     <!-- Main Content -->
     <main class="flex-1 flex flex-col min-w-0 z-10 relative h-screen overflow-hidden">
 
-        <!-- Header (Compact) -->
-        <header class="h-18 px-6 py-3 flex items-center justify-between z-20 shrink-0">
-            <!-- Module Progress -->
-            <div
-                class="flex-1 max-w-2xl glass-panel rounded-xl p-1.5 flex items-center gap-4 relative overflow-hidden shadow-neon-blue">
-                <!-- Glow Aura -->
-                <div class="absolute inset-0 bg-game-neonPurple/20 blur-xl"></div>
-
-                <div class="relative z-10 flex items-center gap-2 pl-2">
-                    <div
-                        class="w-8 h-8 rounded-full bg-gradient-to-br from-game-neonBlue to-purple-600 flex items-center justify-center text-white shadow-lg font-bold text-xs ring-2 ring-white/20">
-                        M
-                    </div>
+        <!-- Header (Dynamic) -->
+        <header class="h-18 px-6 py-3 flex items-center justify-between z-20 shrink-0 border-b border-white/5">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-gradient-to-br from-game-neonPurple to-game-neonBlue flex items-center justify-center text-2xl shadow-neon-blue">
+                    🏫
                 </div>
-
-                <div class="flex-1 relative z-10 pr-2">
-                    <div class="flex justify-between items-center mb-0.5 px-0.5">
-                        <select id="module-select"
-                            class="bg-transparent font-heading font-bold text-sm text-white focus:outline-none cursor-pointer">
-                            <option value="photosynthesis">Photosynthesis Module</option>
-                            <option value="demo">Demo Mode</option>
-                        </select>
-                        <div class="flex items-center gap-1 text-game-gold drop-shadow-md">
-                            <span class="animate-spin-slow">✨</span>
-                            <span class="font-black text-lg">85%</span>
-                        </div>
-                    </div>
-                    <!-- Bar -->
-                    <div class="h-2.5 bg-cosmic-900 rounded-full border border-white/10 relative overflow-hidden">
-                        <div
-                            class="absolute inset-0 opacity-50 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')]">
-                        </div>
-                        <div
-                            class="h-full bg-gradient-to-r from-game-neonBlue via-game-neonPurple to-game-neonPink w-[85%] relative transition-all duration-1000">
-                            <div class="absolute inset-0 bg-white/30 animate-[shimmer_1.5s_infinite]"></div>
-                        </div>
-                    </div>
+                <div>
+                    <h1 id="class-title" class="text-xl font-heading font-bold text-white">7th Grade ICT</h1>
+                    <p id="class-subtitle" class="text-xs text-gray-400 font-bold uppercase tracking-widest">32 Students
+                        • Semester 2</p>
                 </div>
             </div>
 
-            <!-- Context Menu (Teacher) -->
-            <div class="flex items-center gap-3 ml-6">
+            <!-- Global Actions -->
+            <div class="flex items-center gap-3">
                 <button
-                    class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition border border-white/10">
-                    <span class="text-xl">🔔</span>
+                    class="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition text-sm font-bold flex items-center gap-2">
+                    <span>📢</span> Broadcast
                 </button>
+                <div class="h-8 w-px bg-white/10 mx-2"></div>
                 <button id="settings-btn"
-                    class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition border border-white/10">
+                    class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition border border-white/10">
                     <span class="text-xl">⚙️</span>
                 </button>
             </div>
         </header>
 
-        <!-- Body Content (Fixed Layout) -->
-        <div class="flex-1 flex overflow-hidden px-6 pb-2 gap-6">
-
-            <!-- CENTER: Scrollable Student Grid -->
-            <div class="flex-1 flex flex-col min-h-0">
-                <div id="student-grid"
-                    class="flex-1 overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 pb-20 scrollbar-thin content-start">
-                    <!-- Student Cards injected here -->
-                </div>
-            </div>
-
-            <!-- RIGHT: Static Widgets Stack -->
-            <div class="w-80 flex flex-col gap-4 shrink-0 h-full overflow-y-auto no-scrollbar pb-20">
-
-                <!-- 1. Class Insights -->
-                <div class="glass-panel p-4 rounded-2xl relative overflow-hidden shrink-0">
-                    <h3 class="font-heading font-bold text-sm mb-3 flex items-center gap-2 text-gray-300">
-                        📊 Class Insights
-                    </h3>
-
-                    <div class="grid grid-cols-3 gap-2 mb-4">
-                        <div class="bg-cosmic-800/50 rounded-lg p-1.5 text-center border border-white/5">
-                            <div class="text-[9px] text-gray-400 uppercase font-bold">Avg Score</div>
-                            <div class="text-lg font-black text-game-neonGreen">82%</div>
-                        </div>
-                        <div class="bg-cosmic-800/50 rounded-lg p-1.5 text-center border border-white/5">
-                            <div class="text-[9px] text-gray-400 uppercase font-bold">Avg Time</div>
-                            <div class="text-lg font-black text-white">14m</div>
-                        </div>
-                        <div class="bg-cosmic-800/50 rounded-lg p-1.5 text-center border border-white/5">
-                            <div class="text-[9px] text-gray-400 uppercase font-bold">Hints</div>
-                            <div class="text-lg font-black text-game-neonPink">12</div>
-                        </div>
-                    </div>
-
-                    <!-- Trouble Spot -->
-                    <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-center gap-3">
-                        <div
-                            class="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400 font-bold text-lg animate-pulse">
-                            ⚠️</div>
-                        <div class="flex-1">
-                            <div class="font-bold text-white text-xs mb-1">Trouble: Cell Resp.</div>
-                            <div class="w-full bg-cosmic-950 h-1.5 rounded-full overflow-hidden">
-                                <div class="bg-gradient-to-r from-red-600 to-orange-500 w-[58%] h-full rounded-full">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. Trend Graph -->
-                <div class="glass-panel p-4 rounded-2xl shrink-0 h-48 flex flex-col">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="font-heading font-bold text-sm text-gray-300">📈 Activity Trend</h3>
-                    </div>
-                    <div class="flex-1 relative w-full" id="graph-container"></div>
-                </div>
-
-                <!-- 3. Leaderboard -->
-                <div class="glass-panel p-4 rounded-2xl flex-1 min-h-0 flex flex-col">
-                    <h3 class="font-heading font-bold text-sm mb-3 flex items-center gap-2 text-gray-300">
-                        🏆 Leaderboard
-                    </h3>
-                    <div id="leaderboard-list" class="space-y-2 overflow-y-auto pr-1 scrollbar-thin flex-1">
-                        <!-- Injected -->
-                    </div>
-                </div>
-
+        <!-- Tab Bar -->
+        <div class="px-6 py-2 bg-cosmic-900/50 backdrop-blur-md border-b border-white/5 z-20 shrink-0">
+            <div class="flex items-center gap-1 overflow-x-auto no-scrollbar" id="class-tabs">
+                <button data-tab="modules"
+                    class="tab-btn active px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap">📚
+                    Modules</button>
+                <button data-tab="students"
+                    class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-all whitespace-nowrap">👥
+                    Students</button>
+                <button data-tab="live"
+                    class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-all whitespace-nowrap">📡
+                    Live Dashboard</button>
+                <button data-tab="progress"
+                    class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-all whitespace-nowrap">📈
+                    Progress</button>
+                <button data-tab="reports"
+                    class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-all whitespace-nowrap">📜
+                    Reports</button>
+                <button data-tab="assign"
+                    class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-all whitespace-nowrap">➕
+                    Assign</button>
+                <button data-tab="schedule"
+                    class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-all whitespace-nowrap">📅
+                    Schedule</button>
+                <button data-tab="communicate"
+                    class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-all whitespace-nowrap">💬
+                    Communicate</button>
             </div>
         </div>
 
-        <!-- Sticky Bottom Feed -->
-        <div
-            class="absolute bottom-4 left-6 right-6 h-12 glass-panel rounded-full flex items-center px-4 overflow-hidden z-30 shadow-2xl border border-white/20">
+        <!-- Body Content (Dynamic Views) -->
+        <div class="flex-1 overflow-hidden relative" id="view-container">
+
+            <!-- 1. Live Dashboard (Current dashboard refactored) -->
+            <div id="view-live" class="view-pane absolute inset-0 flex overflow-hidden p-6 gap-6">
+                <!-- CENTER: Scrollable Student Grid -->
+                <div class="flex-1 flex flex-col min-h-0">
+                    <div id="student-grid"
+                        class="flex-1 overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 pb-20 scrollbar-thin content-start">
+                        <!-- Student Cards injected here -->
+                    </div>
+                </div>
+
+                <!-- RIGHT: Static Widgets Stack -->
+                <div class="w-80 flex flex-col gap-4 shrink-0 h-full overflow-y-auto no-scrollbar pb-20">
+                    <div class="glass-panel p-4 rounded-2xl relative overflow-hidden shrink-0">
+                        <h3 class="font-heading font-bold text-sm mb-3 flex items-center gap-2 text-gray-300">📊 Class
+                            Insights</h3>
+                        <div class="grid grid-cols-3 gap-2 mb-4" id="live-insights">
+                            <!-- Injected -->
+                        </div>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl shrink-0 h-48 flex flex-col">
+                        <h3 class="font-heading font-bold text-sm text-gray-300 mb-2">📈 Activity Trend</h3>
+                        <div class="flex-1 relative w-full" id="graph-container"></div>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl flex-1 min-h-0 flex flex-col">
+                        <h3 class="font-heading font-bold text-sm mb-3 flex items-center gap-2 text-gray-300">🏆
+                            Leaderboard</h3>
+                        <div id="leaderboard-list" class="space-y-2 overflow-y-auto pr-1 scrollbar-thin flex-1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Modules View -->
+            <div id="view-modules" class="view-pane absolute inset-0 hidden p-6 overflow-y-auto">
+                <div class="max-w-4xl mx-auto space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-heading font-bold text-white">Assigned Modules</h2>
+                        <button
+                            class="px-4 py-2 bg-game-neonPurple text-white rounded-xl font-bold shadow-lg hover:shadow-neon-glow transition">Browse
+                            Library</button>
+                    </div>
+                    <div id="assigned-modules-list" class="grid grid-cols-1 gap-4">
+                        <!-- Assigned module cards -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other views will be hidden by default -->
+            <div id="view-students" class="view-pane absolute inset-0 hidden p-6 overflow-y-auto">
+                <div class="max-w-6xl mx-auto" id="students-roster-container"></div>
+            </div>
+
+            <div id="view-progress" class="view-pane absolute inset-0 hidden p-6 overflow-y-auto">
+                <div class="max-w-6xl mx-auto" id="progress-stats-container"></div>
+            </div>
+
+            <div id="view-reports" class="view-pane absolute inset-0 hidden p-6 overflow-y-auto">
+                <div class="max-w-4xl mx-auto" id="reports-container"></div>
+            </div>
+
+            <div id="view-assign" class="view-pane absolute inset-0 hidden p-6 overflow-y-auto">
+                <div class="max-w-6xl mx-auto" id="module-library-container"></div>
+            </div>
+
+            <div id="view-schedule" class="view-pane absolute inset-0 hidden p-6 overflow-y-auto">
+                <div class="max-w-6xl mx-auto" id="class-schedule-container"></div>
+            </div>
+
+            <div id="view-communicate" class="view-pane absolute inset-0 hidden p-6 overflow-y-auto">
+                <div class="max-w-4xl mx-auto" id="class-chat-container"></div>
+            </div>
+
+        </div>
+
+        <!-- Sticky Bottom Feed (only for Live View?) -->
+        <div id="live-feed-bar"
+            class="absolute bottom-4 left-6 right-6 h-12 glass-panel rounded-full flex items-center px-4 overflow-hidden z-30 shadow-2xl border border-white/20 transition-all">
             <div
                 class="bg-game-neonPurple text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider mr-4 shrink-0 shadow-lg">
-                LIVE FEED
-            </div>
+                LIVE FEED</div>
             <div id="activity-feed" class="flex items-center gap-6 overflow-x-auto no-scrollbar mask-gradient w-full">
-                <!-- Log -->
             </div>
         </div>
 
@@ -419,7 +467,7 @@
             </div>
         </div>
 
-        <script type="module" src="./js/dashboardView.js"></script>
+        <script type="module" src="./js/classView.js"></script>
 
 </body>
 

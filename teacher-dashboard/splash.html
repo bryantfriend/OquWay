@@ -123,24 +123,10 @@
 
         <!-- Menu -->
         <nav class="flex-1 space-y-3">
-            <a href="#" class="flex items-center gap-4 px-4 py-3 rounded-xl menu-item-active group transition-all">
-                <span class="text-xl">🎛️</span>
-                <span class="text-sm tracking-wide">Dashboard</span>
-            </a>
-            <a href="#"
-                class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 transition-all group text-gray-400 hover:text-white">
+            <a href="index.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl menu-item-active group transition-all">
                 <span class="text-xl group-hover:scale-110 transition">🖥️</span>
                 <span class="text-sm tracking-wide">My Classes</span>
-            </a>
-            <a href="#"
-                class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 transition-all group text-gray-400 hover:text-white">
-                <span class="text-xl group-hover:scale-110 transition">📩</span>
-                <span class="text-sm tracking-wide">Inbox</span>
-            </a>
-            <a href="#"
-                class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 transition-all group text-gray-400 hover:text-white">
-                <span class="text-xl group-hover:scale-110 transition">📊</span>
-                <span class="text-sm tracking-wide">Reports</span>
             </a>
             <a href="#"
                 class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 transition-all group text-gray-400 hover:text-white">
@@ -196,153 +182,72 @@
             </div>
         </header>
 
-        <!-- Grid Container -->
-        <div class="flex-1 p-8 flex items-center justify-center overflow-y-auto">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
-
-                <!-- 1. My Classes -->
-                <a href="index.html"
-                    class="glass-card rounded-3xl p-1 relative group cursor-pointer h-64 flex flex-col">
-                    <!-- Inner Border Glow -->
-                    <div
-                        class="absolute inset-0 rounded-3xl border-2 border-game-neonPurple/30 group-hover:border-game-neonPurple/80 transition-colors">
-                    </div>
-                    <!-- Content -->
-                    <div
-                        class="bg-cosmic-900/40 w-full h-full rounded-[20px] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                        <!-- Image Placeholder -->
-                        <div class="w-full flex-1 flex items-center justify-center mb-2">
-                            <img src="assets/card-my-classes.png"
-                                class="max-h-28 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:scale-110 transition duration-500"
-                                alt="My Classes">
-                        </div>
-                        <div class="text-center z-10">
-                            <h3
-                                class="text-2xl font-heading font-bold text-white mb-1 group-hover:text-game-neonBlue transition-colors">
-                                My Classes</h3>
-                            <p class="text-sm text-gray-400 font-medium">View & Manage</p>
-                        </div>
-                        <!-- BG Glow Spot -->
-                        <div
-                            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-game-neonBlue/20 blur-3xl rounded-full group-hover:bg-game-neonBlue/40 transition">
-                        </div>
-                    </div>
-                </a>
-
-                <!-- 2. Sync Module (Primary Action) -->
-                <a href="index.html"
-                    class="glass-card rounded-3xl p-1 relative group cursor-pointer h-64 flex flex-col ring-1 ring-game-neonPurple/50 shadow-[0_0_30px_rgba(188,19,254,0.15)]">
-                    <div
-                        class="absolute inset-0 rounded-3xl border-2 border-game-neonPurple group-hover:shadow-[0_0_20px_#BC13FE] transition-shadow">
-                    </div>
-                    <div
-                        class="bg-cosmic-900/40 w-full h-full rounded-[20px] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                        <div class="w-full flex-1 flex items-center justify-center mb-2">
-                            <img src="assets/card-sync-module.png"
-                                class="max-h-32 object-contain drop-shadow-[0_0_25px_rgba(188,19,254,0.6)] group-hover:scale-110 transition duration-500 animate-pulse-slow"
-                                alt="Sync">
-                        </div>
-                        <div class="text-center z-10">
-                            <h3
-                                class="text-2xl font-heading font-bold text-white mb-1 group-hover:text-game-neonPurple transition-colors">
-                                Sync Module</h3>
-                            <p class="text-sm text-gray-400 font-medium">Align Students</p>
-                        </div>
-                        <div
-                            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-game-neonPurple/30 blur-3xl rounded-full">
-                        </div>
-                    </div>
-                </a>
-
-                <!-- 3. Reports -->
-                <div class="glass-card rounded-3xl p-1 relative group cursor-pointer h-64 flex flex-col">
-                    <div
-                        class="absolute inset-0 rounded-3xl border-2 border-game-neonOrange/30 group-hover:border-game-neonOrange/80 transition-colors">
-                    </div>
-                    <div
-                        class="bg-cosmic-900/40 w-full h-full rounded-[20px] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                        <div class="w-full flex-1 flex items-center justify-center mb-2">
-                            <img src="assets/card-reports.png"
-                                class="max-h-28 object-contain drop-shadow-[0_0_15px_rgba(255,165,0,0.3)] group-hover:scale-110 transition duration-500"
-                                alt="Reports">
-                        </div>
-                        <div class="text-center z-10">
-                            <h3
-                                class="text-2xl font-heading font-bold text-white mb-1 group-hover:text-game-neonOrange transition-colors">
-                                Reports</h3>
-                            <p class="text-sm text-gray-400 font-medium">Progress & Stats</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. Student Insights -->
-                <div class="glass-card rounded-3xl p-1 relative group cursor-pointer h-64 flex flex-col">
-                    <div
-                        class="absolute inset-0 rounded-3xl border-2 border-game-neonBlue/30 group-hover:border-game-neonBlue/80 transition-colors">
-                    </div>
-                    <div
-                        class="bg-cosmic-900/40 w-full h-full rounded-[20px] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                        <div class="w-full flex-1 flex items-center justify-center mb-2">
-                            <img src="assets/card-insights.png"
-                                class="max-h-28 object-contain drop-shadow-[0_0_15px_rgba(0,240,255,0.3)] group-hover:scale-110 transition duration-500"
-                                alt="Insights">
-                        </div>
-                        <div class="text-center z-10">
-                            <h3
-                                class="text-2xl font-heading font-bold text-white mb-1 group-hover:text-game-neonBlue transition-colors">
-                                Student Insights</h3>
-                            <p class="text-sm text-gray-400 font-medium">Track Performance</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 5. Communicate -->
-                <div class="glass-card rounded-3xl p-1 relative group cursor-pointer h-64 flex flex-col">
-                    <div
-                        class="absolute inset-0 rounded-3xl border-2 border-game-neonPink/30 group-hover:border-game-neonPink/80 transition-colors">
-                    </div>
-                    <div
-                        class="bg-cosmic-900/40 w-full h-full rounded-[20px] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                        <div
-                            class=" absolute top-4 right-4 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border border-white/20 shadow-lg z-20 animate-bounce">
-                            3</div>
-                        <div class="w-full flex-1 flex items-center justify-center mb-2">
-                            <img src="assets/card-communicate.png"
-                                class="max-h-28 object-contain drop-shadow-[0_0_15px_rgba(255,0,153,0.3)] group-hover:scale-110 transition duration-500"
-                                alt="Communicate">
-                        </div>
-                        <div class="text-center z-10">
-                            <h3
-                                class="text-2xl font-heading font-bold text-white mb-1 group-hover:text-game-neonPink transition-colors">
-                                Communicate</h3>
-                            <p class="text-sm text-gray-400 font-medium">Messages & Announcements</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 6. Settings -->
-                <div class="glass-card rounded-3xl p-1 relative group cursor-pointer h-64 flex flex-col">
-                    <div
-                        class="absolute inset-0 rounded-3xl border-2 border-gray-400/30 group-hover:border-gray-300/80 transition-colors">
-                    </div>
-                    <div
-                        class="bg-cosmic-900/40 w-full h-full rounded-[20px] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                        <div class="w-full flex-1 flex items-center justify-center mb-2">
-                            <img src="assets/card-settings.png"
-                                class="max-h-28 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:rotate-90 transition duration-700"
-                                alt="Settings">
-                        </div>
-                        <div class="text-center z-10">
-                            <h3
-                                class="text-2xl font-heading font-bold text-white mb-1 group-hover:text-white transition-colors">
-                                Settings</h3>
-                            <p class="text-sm text-gray-400 font-medium">Personalize & Adjust</p>
-                        </div>
-                    </div>
-                </div>
-
+        <!-- Dynamic Class List (Requirement 1) -->
+        <div id="class-list-container"
+            class="col-span-1 md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="glass-card rounded-3xl p-6 flex items-center justify-center animate-pulse">
+                <span class="text-gray-500 font-bold">Loading your classes...</span>
             </div>
         </div>
+        </div>
+        </div>
+
+        <script type="module">
+            import { db, auth } from "../Shared/firebase-init.js";
+            import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+            import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+            const container = document.getElementById('class-list-container');
+
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) return;
+
+                try {
+                    // Fetch classes for this teacher
+                    const q = query(collection(db, "classes") /* where("teacherId", "==", user.uid) */);
+                    const snap = await getDocs(q);
+
+                    container.innerHTML = '';
+
+                    if (snap.empty) {
+                        container.innerHTML = `
+                            <div class="col-span-full glass-card rounded-3xl p-10 text-center">
+                                <h3 class="text-2xl font-bold text-white mb-2">No Classes Found</h3>
+                                <p class="text-gray-400 mb-6">You haven't been assigned to any classes yet.</p>
+                                <button class="px-6 py-2 bg-game-neonPurple text-white rounded-xl font-bold">Create First Class</button>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        const card = document.createElement('a');
+                        card.href = `index.html?classId=${doc.id}`;
+                        card.className = "glass-card rounded-3xl p-1 relative group cursor-pointer h-64 flex flex-col";
+                        card.innerHTML = `
+                             <div class="absolute inset-0 rounded-3xl border-2 border-game-neonPurple/30 group-hover:border-game-neonPurple/80 transition-colors"></div>
+                             <div class="bg-cosmic-900/40 w-full h-full rounded-[20px] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+                                <div class="w-full flex-1 flex items-center justify-center mb-2">
+                                    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-game-neonPurple to-game-neonBlue flex items-center justify-center text-3xl shadow-neon-blue group-hover:scale-110 transition duration-500">
+                                        🏫
+                                    </div>
+                                </div>
+                                <div class="text-center z-10">
+                                    <h3 class="text-xl font-heading font-bold text-white mb-1 group-hover:text-game-neonBlue transition-colors">${data.name}</h3>
+                                    <p class="text-xs text-gray-400 font-medium uppercase tracking-widest">${data.classCode || 'NO CODE'}</p>
+                                </div>
+                             </div>
+                        `;
+                        container.appendChild(card);
+                    });
+
+                } catch (e) {
+                    console.error(e);
+                    container.innerHTML = '<div class="text-red-500 font-bold">Failed to load classes.</div>';
+                }
+            });
+        </script>
 
         <!-- Sticky Bottom Status -->
         <div class="px-8 pb-6 pt-2 z-20">

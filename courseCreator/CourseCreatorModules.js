@@ -22,9 +22,23 @@ import { auth, db } from "./firebase-init.js";
 import { onAuthStateChanged } from
     "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
     if (!user) {
         window.location.href = "login.html";
+        return;
+    }
+
+    // Role-based gating (Requirement 6)
+    try {
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+        const userData = userSnap.data();
+        if (userData?.role !== 'admin' && userData?.role !== 'editor') {
+            console.warn("Access denied: Admin or Editor role required.");
+            // Redirect to a safe place (student panel or teacher splash with warning)
+            window.location.href = "../teacher-dashboard/splash.html?error=unauthorized";
+        }
+    } catch (e) {
+        console.error("Auth check failed:", e);
     }
 });
 
