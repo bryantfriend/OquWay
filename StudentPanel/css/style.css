@@ -21,7 +21,7 @@ body {
     touch-action: manipulation;
 }
 
-.container {
+.app-viewport {
     background-color: #ffffff;
     width: 100vw;
     height: 100vh;
@@ -1125,7 +1125,7 @@ body {
         display: flex !important;
     }
 
-    .container,
+    .app-viewport,
     #loadingScreen {
         display: none !important;
     }

@@ -209,7 +209,7 @@ export default class SlideStep extends BaseStep {
 
         container.innerHTML = `
             <div class="mp-wrapper w-full h-full bg-slate-900 text-white overflow-hidden relative font-sans select-none flex flex-col items-center justify-center rounded-xl shadow-2xl">
-                <div id="mp-slide-container" class="relative w-full h-full max-w-5xl aspect-video sm:aspect-video bg-slate-800 overflow-hidden flex items-center justify-center group">
+                <div id="mp-slide-container" class="relative w-full h-full aspect-video sm:aspect-video bg-slate-800 overflow-hidden flex items-center justify-center group">
                     <!-- On mobile, if we are in portrait, the aspect-video might be too short. 
                          However, for slides, 16:9 is standard. We just ensure it doesn't shrink TOO much. -->
                     <!-- Slide Content Injected Here -->

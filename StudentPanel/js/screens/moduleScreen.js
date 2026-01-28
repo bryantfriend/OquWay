@@ -35,13 +35,19 @@ let moduleMeta = { courseTitle: "", moduleId: "", titleRaw: null };
 
 export async function renderModuleScreen(container) {
   container.innerHTML = `
-    <div class="p-4">
-      <h1 id="moduleTitle" class="text-xl font-bold mb-4">Module</h1>
-      <div id="moduleProgress" class="text-sm text-gray-600 mb-2"></div>
-      <div id="moduleContent" class="bg-white p-4 rounded shadow mb-4">Loading module...</div>
-      <div class="flex justify-between items-center gap-2">
-        <button id="backToCourseBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Back</button>
-        <button id="nextPartBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Next</button>
+    <div class="h-full flex flex-col">
+      <div class="py-2 border-b bg-white flex justify-between items-center">
+        <div>
+           <h1 id="moduleTitle" class="text-lg font-bold">Module</h1>
+           <div id="moduleProgress" class="text-xs text-gray-500"></div>
+        </div>
+        <div class="flex gap-2">
+            <button id="backToCourseBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm transition-colors font-medium">Back</button>
+            <button id="nextPartBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-1 rounded text-sm transition-colors font-bold shadow-md shadow-blue-500/20">Next</button>
+        </div>
+      </div>
+      <div id="moduleContent" class="flex-grow relative bg-slate-100 overflow-hidden">
+        <div class="absolute inset-0 flex items-center justify-center">Loading module...</div>
       </div>
     </div>
   `;

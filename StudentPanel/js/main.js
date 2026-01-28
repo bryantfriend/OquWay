@@ -166,7 +166,7 @@ if (localStorage.getItem("kiosk") === "on") {
 let tapCount = 0;
 let tapTimer;
 
-document.querySelector(".container").addEventListener("click", () => {
+document.querySelector(".app-viewport").addEventListener("click", () => {
   tapCount++;
   clearTimeout(tapTimer);
 

@@ -46,12 +46,12 @@ async function isModuleCompleted(moduleId) {
 export async function renderCoursePlayerScreen(container) {
   container.innerHTML = `
     <div class="p-4">
-      <h1 id="courseTitle" class="text-xl font-bold mb-4">Course Modules</h1>
-      <div id="modulesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <h1 id="courseTitle" class="text-2xl font-bold mb-6 text-[#8e44ad]">Course Modules</h1>
+      <div id="modulesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
         <p>Loading modules...</p>
       </div>
-      <button id="backFromCourseBtn" class="bg-gray-600 text-white py-2 w-full rounded">
-        Back
+      <button id="backFromCourseBtn" class="bg-gray-600 hover:bg-gray-700 text-white py-3 w-full rounded-xl font-bold transition-all shadow-lg active:scale-[0.98]">
+        Back to Courses
       </button>
     </div>
   `;
