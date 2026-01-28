@@ -68,6 +68,7 @@ export default class PrimerStep extends BaseStep {
        RENDER
     ====================================================== */
     static render({ container, config, context, onComplete }) {
+        BaseStep.assertRenderArgs({ container });
         const complete = this.createCompletionGuard(onComplete);
         const lang = context.language || 'en';
 

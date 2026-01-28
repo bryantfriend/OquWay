@@ -37,20 +37,58 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       if (!user) {
         await signInAnonymously(auth);
-        return; // will trigger again once signed in
+        return;
       }
 
-      // ✅ Authenticated (anonymous or real)
       await renderLoginScreen(document.getElementById("screenContainer"));
     } catch (err) {
       console.error("Auth error:", err);
     } finally {
-      const loadingScreen = document.getElementById("loadingScreen");
-      if (loadingScreen) loadingScreen.style.display = "none";
-      document.body.classList.remove("overflow-hidden");
+      requestIntroVideoComplete();
     }
   });
 });
+
+async function requestIntroVideoComplete() {
+  const loadingScreen = document.getElementById("loadingScreen");
+  const video = document.getElementById("introVideo");
+  const loadingText = document.getElementById("loadingText");
+
+  if (!loadingScreen) return;
+
+  const hide = () => {
+    loadingScreen.style.opacity = "0";
+    setTimeout(() => {
+      loadingScreen.style.display = "none";
+      document.body.classList.remove("overflow-hidden");
+    }, 800);
+  };
+
+  // If video is present, wait for it OR a timeout
+  if (video) {
+    let videoDone = false;
+
+    const onVideoEnd = () => {
+      if (videoDone) return;
+      videoDone = true;
+      hide();
+    };
+
+    video.onended = onVideoEnd;
+
+    // Fade out text early if video is playing nicely
+    video.onplay = () => {
+      setTimeout(() => {
+        if (loadingText) loadingText.style.opacity = "0";
+      }, 1500);
+    };
+
+    // Safety timeout (10s) in case video fails to load/end
+    setTimeout(onVideoEnd, 10000);
+  } else {
+    hide();
+  }
+}
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 
 function toggleFullscreen() {

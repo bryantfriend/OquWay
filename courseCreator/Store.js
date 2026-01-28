@@ -347,6 +347,9 @@ class Store {
     // --- PERSISTENCE ---
 
     async save() {
+        // Force all active fields to commit their drafts before saving
+        document.dispatchEvent(new CustomEvent('force-commit-drafts'));
+
         if (!this.state.courseId || !this.state.moduleId) return;
 
         // Visual Feedback

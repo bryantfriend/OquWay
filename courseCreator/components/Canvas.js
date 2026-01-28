@@ -15,7 +15,10 @@ export class Canvas {
 
     init() {
         store.subscribe((state) => {
-            this.render(state);
+            if (this._renderTimeout) clearTimeout(this._renderTimeout);
+            this._renderTimeout = setTimeout(() => {
+                this.render(state);
+            }, 50); // Small debounce for preview rendering
         });
 
         // Delegate events inside the canvas
@@ -23,86 +26,94 @@ export class Canvas {
     }
 
     render(state) {
-        // Cleanup previous step if needed
-        const oldPreview = this.canvasPage.querySelector('#preview-container');
-        if (oldPreview && typeof oldPreview.cleanup === 'function') {
-            oldPreview.cleanup();
-        }
-
-        // Clear everything first
-        this.canvasPage.innerHTML = '';
-
         if (!state.selectedStepId) {
             this.canvasPage.innerHTML = this.renderEmptyState();
+            this.lastStepId = null;
             return;
         }
 
         const step = store.getStep(state.selectedStepId);
         if (!step) {
             this.canvasPage.innerHTML = `<div class="flex-1 flex items-center justify-center text-red-500">Selected step not found (ID: ${state.selectedStepId}).</div>`;
+            this.lastStepId = null;
             return;
         }
 
         const Engine = Registry.get(step.type);
         if (!Engine) {
             this.canvasPage.innerHTML = `<div class="flex-1 flex items-center justify-center text-red-500">Unknown step type: ${step.type}</div>`;
+            this.lastStepId = null;
             return;
         }
 
-        // Render Structure: Toolbar (Top) + Scrollable Canvas Area (Bottom)
-        // We do NOT destroy the whole structure on every render if possible, 
-        // to preserve mode (Mobile/Desktop). But for simplicity, we rebuild and restore mode?
-        // Or better: Rebuild content only?
-        // Let's rebuild structure but keep mode state.
-
-        // Restore previous mode if exists, else default to 'desktop' (or mobile if preferred)
+        // Check if structure already exists
+        let mainWrapper = this.canvasPage.querySelector('.canvas-main-wrapper');
         const currentMode = this.currentViewMode || 'desktop';
 
-        this.canvasPage.innerHTML = `
-            <div class="flex flex-col h-full w-full">
-                <!-- EXTERNAL TOOLBAR (Fixed Top) -->
-                <div class="flex-none p-4 bg-white border-b flex justify-between items-center shadow-sm z-20">
-                    <div class="flex items-center gap-3">
-                        <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-200 text-xs font-bold uppercase">${Engine.displayName}</span>
-                        <span class="text-gray-300">|</span>
-                        <h2 class="text-sm font-bold text-gray-800 line-clamp-1">${resolveLocalized(step.title) || 'Untitled Step'}</h2>
-                    </div>
-                    
-                    <div class="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
-                        <button class="resize-preview-btn p-1.5 rounded transition ${currentMode === 'phone' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}" 
-                                data-mode="phone" title="Mobile"><i class="fas fa-mobile-alt"></i></button>
-                        <button class="resize-preview-btn p-1.5 rounded transition ${currentMode === 'tablet' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}" 
-                                data-mode="tablet" title="Tablet"><i class="fas fa-tablet-alt"></i></button>
-                        <button class="resize-preview-btn p-1.5 rounded transition ${currentMode === 'desktop' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}" 
-                                data-mode="desktop" title="Desktop"><i class="fas fa-desktop"></i></button>
+        if (!mainWrapper) {
+            this.canvasPage.innerHTML = `
+                <div class="canvas-main-wrapper flex flex-col h-full w-full">
+                    <!-- EXTERNAL TOOLBAR (Fixed Top) -->
+                    <div class="canvas-toolbar flex-none p-4 bg-white border-b flex justify-between items-center shadow-sm z-20">
+                        <div class="flex items-center gap-3">
+                            <span class="engine-display-name bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-200 text-xs font-bold uppercase"></span>
+                            <span class="text-gray-300">|</span>
+                            <h2 class="step-title-display text-sm font-bold text-gray-800 line-clamp-1"></h2>
+                        </div>
+                        
+                        <div class="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
+                            <button class="resize-preview-btn p-1.5 rounded transition" data-mode="phone" title="Mobile"><i class="fas fa-mobile-alt"></i></button>
+                            <button class="resize-preview-btn p-1.5 rounded transition" data-mode="tablet" title="Tablet"><i class="fas fa-tablet-alt"></i></button>
+                            <button class="resize-preview-btn p-1.5 rounded transition" data-mode="desktop" title="Desktop"><i class="fas fa-desktop"></i></button>
+                        </div>
+
+                        <div class="flex gap-2">
+                             <button id="refresh-preview-btn" class="p-2 text-gray-400 hover:text-blue-600 transition" title="Refresh">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="flex gap-2">
-                         <button id="refresh-preview-btn" class="p-2 text-gray-400 hover:text-blue-600 transition" title="Refresh">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- CANVAS AREA (Scrollable) -->
-                <div class="flex-1 overflow-y-auto bg-gray-100 p-8 flex justify-center items-start custom-scrollbar relative">
-                     <!-- Sizer / Frame -->
-                     <div id="preview-frame" class="device-frame-common ${this.getFrameClass(currentMode)} transition-all duration-300 bg-white">
-                         <div id="preview-container" class="w-full h-full overflow-y-auto device-scroll relative">
-                            <!-- Content injected here -->
+                    <!-- CANVAS AREA (Scrollable) -->
+                    <div class="flex-1 overflow-y-auto bg-gray-100 p-8 flex justify-center items-start custom-scrollbar relative">
+                         <!-- Sizer / Frame -->
+                         <div id="preview-frame" class="device-frame-common transition-all duration-300 bg-white">
+                             <div id="preview-container" class="w-full h-full overflow-y-auto device-scroll relative">
+                                <!-- Content injected here -->
+                             </div>
                          </div>
-                     </div>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+            mainWrapper = this.canvasPage.querySelector('.canvas-main-wrapper');
+            this.setupPreviewControls();
+        }
 
-        const previewContainer = this.canvasPage.querySelector('#preview-container');
+        // Update Toolbar
+        mainWrapper.querySelector('.engine-display-name').textContent = Engine.displayName;
+        mainWrapper.querySelector('.step-title-display').textContent = resolveLocalized(step.title) || 'Untitled Step';
 
-        // Render Content
+        // Update Frame Class
+        const frame = mainWrapper.querySelector('#preview-frame');
+        frame.className = `device-frame-common ${this.getFrameClass(currentMode)} transition-all duration-300 bg-white`;
+
+        // Update Active Button State
+        const btns = mainWrapper.querySelectorAll('.resize-preview-btn');
+        btns.forEach(b => {
+            if (b.dataset.mode === currentMode) {
+                b.className = "resize-preview-btn p-1.5 rounded transition bg-white text-blue-600 shadow-sm";
+            } else {
+                b.className = "resize-preview-btn p-1.5 rounded transition text-gray-500 hover:text-gray-700";
+            }
+        });
+
+        const previewContainer = mainWrapper.querySelector('#preview-container');
+
+        // Render Content - only if step changed or we need a refresh
+        // Note: For dragging, we might still need to call this, but SlideStep.render should handle reconciliation.
         this.renderStepContent(Engine, step, previewContainer);
 
-        // Setup Controls
-        this.setupPreviewControls();
+        this.lastStepId = step.id;
     }
 
     getFrameClass(mode) {
@@ -120,7 +131,16 @@ export class Canvas {
                 Engine.render({
                     container: container,
                     config: step,
-                    context: { mode: 'creator', commit: false },
+                    context: {
+                        mode: 'creator',
+                        commit: false,
+                        language: store.state.courseLanguages ? store.state.courseLanguages[0] : 'en',
+                        isEditor: true,
+                        stepId: step.id,
+                        onUpdate: (newData) => {
+                            store.updateStep(step.id, newData);
+                        }
+                    },
                     onComplete: () => console.log('Step completed (Simulated)')
                 });
                 rendered = true;

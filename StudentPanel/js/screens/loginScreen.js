@@ -1,13 +1,13 @@
 // js/screens/loginScreen.js
 import { db } from '../firebase-init.js';
-import { collection, getDocs, query, where, limit } 
+import { collection, getDocs, query, where, limit }
   from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import { FRUIT_EMOJIS, studentData } from '../config.js';
 import { navigateTo } from '../router.js';
 import { getText } from '../i18n.js';
-import { getFunctions, httpsCallable } 
+import { getFunctions, httpsCallable }
   from "https://www.gstatic.com/firebasejs/11.10.0/firebase-functions.js";
-import { signInWithCustomToken } 
+import { signInWithCustomToken }
   from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import { auth } from "../firebase-init.js";
 import { dumpAuthClaims } from "../firebase-init.js";
@@ -50,7 +50,7 @@ function setLoginLoading(isLoading) {
 
 function isStale(v) { return v !== screenVersion; }
 
-function thumbUrl(u = '', w = 160, h = 160) {
+function thumbUrl(u = '', w = 400, h = 400) {
   const raw = toRenderableUrl(u);
   if (!raw) return '';
   if (raw.startsWith('data:') || raw.startsWith('blob:') || !/^https?:\/\//i.test(raw)) return raw;
@@ -94,7 +94,7 @@ if (saved) {
       (studentData.avatar && studentData.avatar.trim()) || "";
 
     navigateTo("dashboard");
-    
+
     if (studentData.avatar) {
       studentData.avatar += `?t=${Date.now()}`;
     }
@@ -108,10 +108,10 @@ if (saved) {
 
 // --- main render ---
 export async function renderLoginScreen(container) {
-  screenVersion++; 
-  const v = screenVersion; 
-  
-  
+  screenVersion++;
+  const v = screenVersion;
+
+
   container.innerHTML = `
     <div class="p-4">
       <button id="backToLocationBtn" class="text-blue-500 mb-2 hidden" data-i18n="backBtn">
@@ -119,8 +119,8 @@ export async function renderLoginScreen(container) {
       </button>
 
       <div id="locationSection">
-        <h2 class="text-xl font-semibold" data-i18n="selectLocation">${getText("selectLocation")}</h2>
-        <div id="locationButtons" class="grid grid-cols-2 gap-4 mt-4"></div>
+        <h2 class="text-3xl font-bold text-[#8e44ad] mb-6">${getText("selectLocation")}</h2>
+        <div id="locationButtons" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full max-w-7xl"></div>
       </div>
 
       <div id="classSection" class="hidden">
@@ -145,6 +145,12 @@ export async function renderLoginScreen(container) {
 
   await loadLocationsOnly();
   if (v !== screenVersion) return; // screen changed; abort
+
+  // Early pre-fetch icons if we have data
+  if (locations && locations.length > 0) {
+    preloadLocationImages(locations);
+  }
+
   populateLocations();
   buildFruitGrid();
 
@@ -157,12 +163,12 @@ export async function renderLoginScreen(container) {
     if (loc) {
       console.log("📍 Auto-selecting location:", loc.name);
       selectedLocation = loc.id;
-      
+
       // UI updates
       document.getElementById("locationSection").classList.add("hidden");
       document.getElementById("classSection").classList.remove("hidden");
       document.getElementById("backToLocationBtn").classList.remove("hidden");
-      
+
       populateClasses(loc.id);
     }
   }
@@ -179,9 +185,9 @@ export async function renderLoginScreen(container) {
 }
 
 // --- caching helpers ---
-const CLASS_CACHE_KEY   = 'classesCache:v1';
+const CLASS_CACHE_KEY = 'classesCache:v1';
 const STUDENT_CACHE_KEY = 'studentsCache:v1';
-const CLASS_TTL   = 5 * 60 * 1000;
+const CLASS_TTL = 5 * 60 * 1000;
 const STUDENT_TTL = 5 * 60 * 1000;
 
 function readCache(storeKey, id, ttl) {
@@ -200,7 +206,7 @@ function writeCache(storeKey, id, data) {
     const all = raw ? JSON.parse(raw) : {};
     all[id] = { time: Date.now(), data };
     localStorage.setItem(storeKey, JSON.stringify(all));
-  } catch {}
+  } catch { }
 }
 
 // --- data loads ---
@@ -220,11 +226,11 @@ async function loadLocationsOnly() {
   }
 
   const q = query(
-  collection(db, 'locations'),
-  where('isArchived', '==', false)
-);
+    collection(db, 'locations'),
+    where('isArchived', '==', false)
+  );
 
-const snap = await getDocs(q);
+  const snap = await getDocs(q);
   locations = snap.docs.map(docSnap => {
     const raw = docSnap.data();
     const safe = JSON.parse(JSON.stringify(raw));
@@ -233,7 +239,19 @@ const snap = await getDocs(q);
 
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), data: locations }));
-  } catch {}
+  } catch { }
+
+  // 🚀 PRELOAD IMAGES ASAP
+  preloadLocationImages(locations);
+}
+
+function preloadLocationImages(list) {
+  list.forEach(loc => {
+    const src = imgSrcFrom(loc);
+    if (!src) return;
+    const img = new Image();
+    img.src = src;
+  });
 }
 
 async function populateClasses(locationId) {
@@ -264,18 +282,18 @@ async function populateClasses(locationId) {
 
 async function fetchClassesForLocation(locationId) {
   const classesRef = collection(db, 'classes');
-  
+
   // Fetch only the standardized classes (camelCase)
   const q1 = query(
-    classesRef, 
-    where('locationId', '==', locationId), 
+    classesRef,
+    where('locationId', '==', locationId),
     where("isVisible", "==", true)
   );
-  
+
   // Fallback for snake_case data structure
   const q2 = query(
-    classesRef, 
-    where('location_id', '==', locationId), 
+    classesRef,
+    where('location_id', '==', locationId),
     where("isVisible", "==", true)
   );
 
@@ -284,12 +302,12 @@ async function fetchClassesForLocation(locationId) {
     getDocs(q1),
     getDocs(q2)
   ]);
-  
+
   let out = snap1.docs.map(d => ({ id: d.id, ...d.data() }));
   out = out.concat(snap2.docs.map(d => ({ id: d.id, ...d.data() })));
-  
+
   console.log(`✅ [fetchClassesForLocation] Found ${out.length} classes for locationId=${locationId}`);
-  
+
   // Deduplicate and return
   const seen = new Set();
   return out.filter(c => !seen.has(c.id) && seen.add(c.id));
@@ -336,7 +354,7 @@ function populateLocations() {
            width="80" height="80"
            class="w-20 h-20 mx-auto mb-2 rounded-full object-cover"
            loading="lazy" decoding="async" referrerpolicy="no-referrer">
-      <div class="text-sm font-semibold">${loc.name}</div>
+      <div class="text-sm font-semibold overflow-hidden" style="-webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; display: -webkit-box;">${loc.name}</div>
     `;
     container.appendChild(card);
     io.observe(card.querySelector('img'));
@@ -380,7 +398,7 @@ function renderClassNamesFirst(classes) {
     btn.dataset.classId = cls.id || '';
     btn.innerHTML = `
       <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-2">
-        <span class="text-lg font-semibold">${(cls.name || '?').slice(0,1)}</span>
+        <span class="text-lg font-semibold">${(cls.name || '?').slice(0, 1)}</span>
       </div>
       <div class="text-sm font-semibold text-center">${cls.name || ''}</div>
     `;
@@ -471,9 +489,9 @@ function renderStudentNamesFirst(students) {
     btn.dataset.studentId = s.id || '';
     btn.innerHTML = `
       <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-1">
-        <span class="text-lg font-semibold">${(s.name || '?').slice(0,1)}</span>
+        <span class="text-lg font-semibold">${(s.name || '?').slice(0, 1)}</span>
       </div>
-      <div class="text-xs font-medium text-center truncate w-24">${s.name || ''}</div>
+      <div class="text-xs font-medium text-center w-28 break-words leading-tight">${s.name || ''}</div>
     `;
     btn.addEventListener("click", () => onStudentSelected(s));
     container.appendChild(btn);

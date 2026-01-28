@@ -9,10 +9,18 @@ const passwordInput = document.getElementById("password");
 const loginBtn = document.getElementById("loginBtn");
 const errorMsg = document.getElementById("errorMsg");
 
-// If already logged in → skip login
+// If already logged in → skip login (unless we just got an unauthorized error)
 onAuthStateChanged(auth, (user) => {
-  if (user) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isUnauthorized = urlParams.get('error') === 'unauthorized';
+
+  if (user && !isUnauthorized) {
     window.location.href = "CourseCreator.html";
+  }
+
+  if (isUnauthorized) {
+    errorMsg.textContent = "Access Denied: You do not have permission to access the Course Creator.";
+    errorMsg.classList.remove("hidden");
   }
 });
 

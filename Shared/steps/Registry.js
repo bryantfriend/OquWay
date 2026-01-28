@@ -19,10 +19,8 @@ import PrimerStep from './PrimerStep.js';
 
 // Global Shim for Dynamic Steps
 window.CourseEngine = window.CourseEngine || {};
-Object.assign(window.CourseEngine, {
-    BaseStep,
-    utils: { ...(window.CourseEngine.utils || {}), resolveLocalized }
-});
+window.CourseEngine.BaseStep = BaseStep;
+window.CourseEngine.utils = { ...(window.CourseEngine.utils || {}), resolveLocalized };
 
 export const Registry = {
     steps: new Map(),
@@ -30,37 +28,22 @@ export const Registry = {
     initPromise: null, // Singleton promise for init
 
     async init(database) {
-        // If already initializing or initialized, return the existing promise
         if (this.initPromise) return this.initPromise;
 
         this.initPromise = (async () => {
+            console.log("🚀 Registry: Initializing...");
             if (database) {
                 this.db = database;
-            } else {
-                console.warn("Registry.init() called without DB instance. Cloud steps checks might fail if not already set.");
             }
 
             // 1. Register Built-ins
-            // We register generic/test steps here that are part of the codebase.
-            /*
-            try {
-                this.register(GenericSlasher);
-            } catch (e) {
-                console.warn("Failed to register GenericSlasher:", e);
-            }
             try {
                 this.register(SlideStep);
+                this.register(PrimerStep);
+                console.log("✅ Registry: Registered built-in steps (SlideStep, PrimerStep)");
             } catch (e) {
-                console.warn("Failed to register SlideStep:", e);
+                console.error("❌ Registry: Failed to register built-ins:", e);
             }
-            */
-
-            // Or if GenericSlasher was commented out, I should just ensure SlideStep is registered. 
-            // Looking at the file content, GenericSlasher registration was commented out. 
-            // I will register SlideStep clearly.
-
-            this.register(SlideStep);
-            this.register(PrimerStep);
 
             // 2. Fetch Cloud Steps (Only if DB is available)
             if (this.db) {
@@ -69,11 +52,14 @@ export const Registry = {
                     const querySnapshot = await getDocs(collection(this.db, "system_step_types"));
 
                     const loadPromises = querySnapshot.docs.map(async (doc) => {
-                        // TEMP FIX: Skip broken 'primer' from cloud to favor local implementation
-                        if (doc.id === 'primer') {
-                            console.warn("Registry: Skipping cloud 'primer' step to use local fixed version.");
+                        const id = doc.id.toLowerCase();
+
+                        // Protect built-ins (Requirement: local beats cloud for core types)
+                        if (this.steps.has(id)) {
+                            console.log(`[Registry] Skipping cloud implementation for [${id}] (already registered locally)`);
                             return;
                         }
+
                         const data = doc.data();
                         if (!data.code) return;
                         await this.loadAndRegisterStep(doc.id, data.code);
@@ -95,16 +81,18 @@ export const Registry = {
 
     register(StepClass) {
         if (!StepClass || !StepClass.id) {
-            console.error("Invalid StepClass provided to Registry", StepClass);
+            console.error("❌ Registry: Invalid StepClass provided", StepClass);
             return;
         }
 
-        // Optional: annotate quality metadata
+        const id = StepClass.id.toLowerCase();
+
         if (StepClass.experienceContract) {
             StepClass.__experience = StepClass.experienceContract;
         }
 
-        this.steps.set(StepClass.id, StepClass);
+        this.steps.set(id, StepClass);
+        console.log(`✅ Registry: Registered step [${id}]`);
     },
 
     /**
@@ -125,11 +113,13 @@ export const Registry = {
     },
 
     get(id) {
-        if (!this.steps.has(id)) {
+        if (!id) return null;
+        const normalizedId = id.toLowerCase();
+        if (!this.steps.has(normalizedId)) {
             // console.warn(`Step type '${id}' not found in Registry.`);
             return null;
         }
-        return this.steps.get(id);
+        return this.steps.get(normalizedId);
     },
 
     getAll() {

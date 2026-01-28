@@ -107,6 +107,8 @@ export default class BaseStep {
 
     static assertRenderArgs({ container }) {
         if (!container || !(container instanceof HTMLElement)) {
+            // Fallback check in case HTMLElement is from a different context or instanceof fails
+            if (container && typeof container.appendChild === 'function') return;
             throw new Error("render() requires a valid container HTMLElement");
         }
     }

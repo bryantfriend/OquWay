@@ -12,6 +12,17 @@ export class Inspector {
         this.contentContainer = document.getElementById("inspectorContent");
 
         this.init();
+        this._updateDebounceTimers = new Map();
+    }
+
+    _debounce(id, fn, delay = 200) {
+        if (this._updateDebounceTimers.has(id)) {
+            clearTimeout(this._updateDebounceTimers.get(id));
+        }
+        this._updateDebounceTimers.set(id, setTimeout(() => {
+            fn();
+            this._updateDebounceTimers.delete(id);
+        }, delay));
     }
 
     init() {
@@ -29,12 +40,19 @@ export class Inspector {
     }
 
     render(state) {
-        // ... (Keep existing focus check logic if needed, or simplify) ...
         const currentRenderedId = this.contentContainer.dataset.renderedId;
         const targetId = state.selectedStepId || state.selectedTrackId;
 
-        // Simple re-render avoidance
-        if (targetId && currentRenderedId === targetId && document.activeElement && this.contentContainer.contains(document.activeElement)) {
+        // --- STABLE RENDER CHECK ---
+        // If we are already rendering this ID, DO NOT clear the container.
+        // Clearing the container destroys focus and Rich Text editors.
+        if (targetId && currentRenderedId === targetId) {
+            // We still want to trigger the specific renderers so they can update FieldEngine values
+            if (state.selectedStepId) {
+                this.renderStepInspector(state.selectedStepId, true); // true = updateOnly
+            } else if (state.selectedTrackId) {
+                this.renderTrackInspector(state.selectedTrackId);
+            }
             return;
         }
 
@@ -50,7 +68,7 @@ export class Inspector {
         }
     }
 
-    renderStepInspector(stepId) {
+    renderStepInspector(stepId, updateOnly = false) {
         const step = store.getStep(stepId);
         if (!step) return;
 
@@ -60,36 +78,45 @@ export class Inspector {
             return;
         }
 
-        // Header Area (Dynamic)
-        const headerContainer = document.createElement('div');
-        headerContainer.className = "mb-4 border-b bg-white sticky top-0 z-20 transition-all";
-        headerContainer.style.minHeight = "80px"; // Reserve space
+        let headerContainer, formContainer, toolbarContainer, defaultHeader;
 
-        // Default Content
-        const defaultHeader = document.createElement('div');
-        defaultHeader.id = "inspector-default-header";
-        defaultHeader.className = "px-4 py-4";
-        defaultHeader.innerHTML = `
-            <span class="text-xs font-bold text-gray-400 uppercase block">Type Info</span>
-            <div class="font-semibold text-gray-800 text-xs mt-1">${Engine.displayName} <span class="text-gray-400 font-normal">(${step.type})</span></div>
-            <div class="text-xs text-gray-500 mt-1 line-clamp-2">${Engine.description}</div>
-        `;
+        if (updateOnly) {
+            headerContainer = this.contentContainer.querySelector('.inspector-header');
+            formContainer = this.contentContainer.querySelector('.schema-form');
+            toolbarContainer = document.getElementById('inspector-toolbar');
+            defaultHeader = document.getElementById('inspector-default-header');
+        } else {
+            // Header Area (Dynamic)
+            headerContainer = document.createElement('div');
+            headerContainer.className = "inspector-header mb-4 border-b bg-white sticky top-0 z-20 transition-all";
+            headerContainer.style.minHeight = "80px"; // Reserve space
 
-        // Toolbar Container (Hidden by default)
-        const toolbarContainer = document.createElement('div');
-        toolbarContainer.id = "inspector-toolbar";
-        toolbarContainer.className = "hidden"; // content injected by fields
+            // Default Content
+            defaultHeader = document.createElement('div');
+            defaultHeader.id = "inspector-default-header";
+            defaultHeader.className = "px-4 py-4";
+            defaultHeader.innerHTML = `
+                <span class="text-xs font-bold text-gray-400 uppercase block">Type Info</span>
+                <div class="font-semibold text-gray-800 text-xs mt-1">${Engine.displayName} <span class="text-gray-400 font-normal">(${step.type})</span></div>
+                <div class="text-xs text-gray-500 mt-1 line-clamp-2">${Engine.description}</div>
+            `;
 
-        headerContainer.appendChild(defaultHeader);
-        headerContainer.appendChild(toolbarContainer);
-        this.contentContainer.appendChild(headerContainer);
+            // Toolbar Container (Hidden by default)
+            toolbarContainer = document.createElement('div');
+            toolbarContainer.id = "inspector-toolbar";
+            toolbarContainer.className = "hidden"; // content injected by fields
 
-        // Form Container
-        const formContainer = document.createElement('div');
-        formContainer.className = "px-4 pb-20 schema-form";
-        this.contentContainer.appendChild(formContainer);
+            headerContainer.appendChild(defaultHeader);
+            headerContainer.appendChild(toolbarContainer);
+            this.contentContainer.appendChild(headerContainer);
 
-        // ... (schema resolution same) ...
+            // Form Container
+            formContainer = document.createElement('div');
+            formContainer.className = "px-4 pb-20 schema-form";
+            this.contentContainer.appendChild(formContainer);
+        }
+
+        // ... (schema resolution)
         let schema;
         if (Engine.editorSchema) {
             schema = typeof Engine.editorSchema === 'function' ? Engine.editorSchema() : Engine.editorSchema;
@@ -97,7 +124,6 @@ export class Inspector {
             schema = SchemaInference.infer(Engine.defaultConfig);
         }
 
-        // ... (module title resolution same) ...
         let moduleTitle = store.state.module.title;
         if (typeof moduleTitle === 'object') {
             moduleTitle = moduleTitle.en || Object.values(moduleTitle)[0] || 'Module';
@@ -105,16 +131,20 @@ export class Inspector {
 
         // Context Helpers for Toolbar
         const setToolbar = (contentElement) => {
-            defaultHeader.classList.add('hidden');
-            toolbarContainer.innerHTML = '';
-            toolbarContainer.appendChild(contentElement);
-            toolbarContainer.classList.remove('hidden');
+            if (defaultHeader) defaultHeader.classList.add('hidden');
+            if (toolbarContainer) {
+                toolbarContainer.innerHTML = '';
+                toolbarContainer.appendChild(contentElement);
+                toolbarContainer.classList.remove('hidden');
+            }
         };
 
         const clearToolbar = () => {
-            toolbarContainer.classList.add('hidden');
-            toolbarContainer.innerHTML = '';
-            defaultHeader.classList.remove('hidden');
+            if (toolbarContainer) {
+                toolbarContainer.classList.add('hidden');
+                toolbarContainer.innerHTML = '';
+            }
+            if (defaultHeader) defaultHeader.classList.remove('hidden');
         };
 
         // Render FieldEngine
@@ -130,8 +160,10 @@ export class Inspector {
         };
 
         FieldEngine.render(formContainer, schema, step, (newData) => {
-            // Live Auto-Save
-            store.updateStep(stepId, newData);
+            // Live Auto-Save with Debounce to prevent refresh storms
+            this._debounce(stepId, () => {
+                store.updateStep(stepId, newData);
+            }, 150);
         }, context, stepId);
     }
 

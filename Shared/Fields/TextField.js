@@ -8,6 +8,10 @@ export default class TextField extends BufferedField {
     this._draft = {};
     this.quillInstances = {};
     this.isExpanded = false;
+
+    // Bind force commit listener
+    this._onForceCommit = () => this.commitDraft();
+    document.addEventListener('force-commit-drafts', this._onForceCommit);
   }
 
   static get type() {
@@ -359,10 +363,14 @@ export default class TextField extends BufferedField {
         this._domPlaceholder = null;
         this._originalParent = null;
       }
+
+      // Force commit when closing expansion to ensure data is saved
+      this.commitDraft();
     }
   }
 
   cleanup() {
+    document.removeEventListener('force-commit-drafts', this._onForceCommit);
     if (this.isExpanded) {
       const modal = document.getElementById('editor-modal-container');
       if (modal) modal.remove();

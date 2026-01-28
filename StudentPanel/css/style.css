@@ -1,874 +1,1139 @@
 /* Custom styles for OquWay App */
 
-html, body {
-height: 100%;
-margin: 0;
-padding: 0;
-overflow-y: auto;
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
 }
 
 body {
-font-family: 'Inter', sans-serif;
-background: linear-gradient(to right, #a7e6f8, #f8d3a7);
-min-height: 100vh;
-margin: 0;
-color: #333;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(to right, #a7e6f8, #f8d3a7);
+    min-height: 100vh;
+    margin: 0;
+    color: #333;
 }
 
 /* Prevent iOS double-tap zoom while keeping scrolling */
 * {
-  touch-action: manipulation;
+    touch-action: manipulation;
 }
 
 .container {
-background-color: #ffffff;
-width: 100%;
-height: 100%;
-border-radius: 0; 
-border: 5px solid #8e44ad;
-box-sizing: border-box; 
-position: relative;
-display: flex;
-flex-direction: column;
+    background-color: #ffffff;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .language-switcher {
-  position: absolute;
-  top: 1rem;       /* adjust to taste */
-  right: 1rem;     /* move it in from the right edge */
-  display: flex;
-  flex-direction: row;   /* side-by-side */
-  flex-wrap: nowrap;     /* never wrap onto a new line */
-  gap: 0.5rem;           /* space between flags */
-  z-index: 100;
+    position: absolute;
+    top: 1rem;
+    /* adjust to taste */
+    right: 1rem;
+    /* move it in from the right edge */
+    display: flex;
+    flex-direction: row;
+    /* side-by-side */
+    flex-wrap: nowrap;
+    /* never wrap onto a new line */
+    gap: 0.5rem;
+    /* space between flags */
+    z-index: 100;
 }
 
 .content-wrapper {
-padding: 2.5rem;
-width: 100%;
-box-sizing: border-box;
-overflow: hidden; 
-display: flex;
-flex-direction: column;
-flex-grow: 1; 
+    padding: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 }
 
-h1, h2 {
-color: #8e44ad;
-margin-bottom: 1.5rem;
-font-weight: 700;
+h1,
+h2 {
+    color: #8e44ad;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
 }
 
 .screen {
-min-height: 100vh;
-max-height: unset;
-overflow-y: auto;
-overflow-x: hidden;
-padding: 1rem;
-box-sizing: border-box;
-display: flex;
-flex-direction: column;
-align-items: center;
-width: 100%;
+    min-height: 100vh;
+    max-height: unset;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
 }
 
 .screen.active {
-display: flex;
-flex: 1 1 auto;
+    display: flex;
+    flex: 1 1 auto;
 }
 
 .language-switcher img {
-display: inline-block;    
-width: 40px; 
-height: 30px;
-border: 2px solid #8e44ad;
-border-radius: 5px;
-cursor: pointer;
-transition: all 0.2s ease;
-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-object-fit: cover;
+    display: inline-block;
+    width: 40px;
+    height: 30px;
+    border: 2px solid #8e44ad;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    object-fit: cover;
 }
+
 .language-switcher img:hover {
-transform: scale(1.1);
-border-color: #6c3483;
-box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+    border-color: #6c3483;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
+
 .language-switcher img.selected {
-border-color: #2ecc71; 
-box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+    border-color: #2ecc71;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
 }
 
-        /* Login Screen Styles */
-        .class-selection, .student-photo-selection {
-            display: flex;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
+/* Login Screen Styles */
+.class-selection,
+.student-photo-selection {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
 
-        .class-item, .student-photo-item {
-            width: 100px;
-            height: 100px;
-            background-color: #f0f0f0;
-            border-radius: 15px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 3px solid transparent;
-            font-size: 3rem; /* Large icon size for class items */
-            color: #3498db; /* Blue for class icons */
-            padding: 0.5rem;
-            position: relative; /* For the selected tick */
-        }
-        /* Style for image within student photo items */
-        .student-photo-item img {
-            width: 90px;
-            height: 90px;
-            object-fit: cover;
-            border-radius: 50%; /* Make them round */
-            border: 2px solid transparent;
-            transition: border-color 0.3s ease;
-        }
+.class-item,
+.student-photo-item {
+    width: 100px;
+    height: 100px;
+    background-color: #f0f0f0;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 3px solid transparent;
+    font-size: 3rem;
+    /* Large icon size for class items */
+    color: #3498db;
+    /* Blue for class icons */
+    padding: 0.5rem;
+    position: relative;
+    /* For the selected tick */
+}
 
-
-        .class-item.selected, .student-photo-item.selected {
-            border-color: #2ecc71; /* Green selected border */
-            background-color: #e6f7ed;
-            box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
-        }
-        .class-item:hover, .student-photo-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        .student-photo-item.selected img {
-             border-color: #2ecc71; /* Green border on selected photo */
-        }
-
-        .class-item span {
-            font-size: 0.9rem;
-            color: #555;
-            font-weight: 600;
-        }
-
-        .emoji-password-input {
-            width: 80%;
-            max-width: 300px;
-            padding: 0.75rem 1rem;
-            font-size: 1.5rem;
-            text-align: center;
-            border: 2px solid #ccc;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            outline: none;
-            transition: border-color 0.3s ease;
-            letter-spacing: 0.5rem; /* Space out emojis */
-            font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
-        }
-        .emoji-password-input:focus {
-            border-color: #8e44ad;
-        }
-
-        /* Fruit Grid Styles */
-        .fruit-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3 columns */
-            gap: 10px;
-            margin-bottom: 2rem;
-            width: 80%;
-            max-width: 300px;
-        }
-
-        .fruit-button {
-            background-color: #f0f0f0;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            padding: 10px;
-            font-size: 2.5rem; /* Large emoji size */
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 70px; /* Fixed height for consistent grid */
-        }
-        .fruit-button:hover {
-            background-color: #e0e0e0;
-            transform: translateY(-2px);
-        }
-        .fruit-button:active {
-            transform: translateY(0);
-            background-color: #d0d0d0;
-        }
+/* Style for image within student photo items */
+.student-photo-item img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 50%;
+    /* Make them round */
+    border: 2px solid transparent;
+    transition: border-color 0.3s ease;
+}
 
 
-        .login-btn {
-            background-color: #2ecc71; /* Green login button */
-            color: white;
-            padding: 0.8rem 2rem;
-            border-radius: 12px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            border: none;
-            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
-        }
-        .login-btn:hover {
-            background-color: #27ae60;
-            transform: translateY(-3px);
-        }
+.class-item.selected,
+.student-photo-item.selected {
+    border-color: #2ecc71;
+    /* Green selected border */
+    background-color: #e6f7ed;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+}
 
-        /* Dashboard Screen Styles */
-        .student-info {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-            background-color: #f7f7f7;
-            padding: 1.5rem 2.5rem;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            width: fit-content;
-            margin-left: auto;
-            margin-right: auto;
-        }
+.class-item:hover,
+.student-photo-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
 
-        #dashboard-avatar, #store-avatar {
-            width: 100px; /* Fixed width for consistency */
-            height: 100px; /* Fixed height */
-            object-fit: cover; /* Ensure image covers the area without distortion */
-            border-radius: 50%; /* Make it round */
-            border: 4px solid #8e44ad;
-            padding: 0.25rem;
-            background-color: #fff;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
+.student-photo-item.selected img {
+    border-color: #2ecc71;
+    /* Green border on selected photo */
+}
 
-        #student-name, #store-student-name {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #34495e; /* Darker blue for name */
-        }
+.class-item span {
+    font-size: 0.9rem;
+    color: #555;
+    font-weight: 600;
+}
 
-        .intention-points {
-          display: flex;
-          gap: 1.5rem;
-          margin-bottom: 2.5rem;
-          overflow-x: auto;
-          padding-bottom: 0.5rem; /* give space for scrollbar on desktop */
-        }
-        .intention-points .point-type {
-          flex: 0 0 auto;
-          min-width: 120px;
-        }
+.emoji-password-input {
+    width: 80%;
+    max-width: 300px;
+    padding: 0.75rem 1rem;
+    font-size: 1.5rem;
+    text-align: center;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    outline: none;
+    transition: border-color 0.3s ease;
+    letter-spacing: 0.5rem;
+    /* Space out emojis */
+    font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
+}
 
-        .point-type {
-            display: flex;
-            flex: 0 0 auto;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f0f0f0;
-            padding: 1rem 1.5rem;
-            border-radius: 15px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-            min-width: 100px;
-            max-width: 120px;
-            transition: transform 0.2s ease;
-        }
-        .point-type:hover {
-            transform: translateY(-3px);
-        }
+.emoji-password-input:focus {
+    border-color: #8e44ad;
+}
 
-        .point-type .icon {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
+/* Fruit Grid Styles */
+.fruit-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    /* 3 columns */
+    gap: 10px;
+    margin-bottom: 2rem;
+    width: 80%;
+    max-width: 300px;
+}
 
-        .point-type .label {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #666;
-            margin-bottom: 0.25rem;
-        }
+.fruit-button {
+    background-color: #f0f0f0;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 2.5rem;
+    /* Large emoji size */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 70px;
+    /* Fixed height for consistent grid */
+}
 
-        .point-type .value {
-            font-size: 2rem;
-            font-weight: bold;
-        }
+.fruit-button:hover {
+    background-color: #e0e0e0;
+    transform: translateY(-2px);
+}
 
-        /* Specific point colors */
-        .point-physical .icon, .point-physical .value { color: #2ecc71; } /* Green */
-        .point-cognitive .icon, .point-cognitive .value { color: #3498db; } /* Blue */
-        .point-creative .icon, .point-creative .value { color: #e67e22; } /* Orange */
-        .point-social .icon, .point-social .value { color: #8e44ad; } /* Purple */
-
-        .dashboard-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
-            width: 80%;
-            max-width: 400px;
-        }
-
-        .dashboard-btn {
-            background-color: #3498db; /* Blue */
-            color: white;
-            padding: 0.9rem 1.5rem;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            border: none;
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
-        }
-        .dashboard-btn:hover {
-            background-color: #2980b9;
-            transform: translateY(-3px);
-        }
-        .dashboard-btn.activity { background-color: #2ecc71; box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3); }
-        .dashboard-btn.activity:hover { background-color: #27ae60; }
-        .dashboard-btn.log-physical { background-color: #f1c40f; color: #333; box-shadow: 0 5px 15px rgba(241, 196, 15, 0.3); } /* Yellow */
-        .dashboard-btn.log-physical:hover { background-color: #f39c12; }
-        .dashboard-btn.learning-activities { background-color: #8e44ad; box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3); }
-        .dashboard-btn.learning-activities:hover { background-color: #6c3483; }
-
-        /* Store Screen Styles */
-        .store-items, .activity-items-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
-            gap: 1.5rem;
-            width: 100%;
-            margin-bottom: 2rem;
-            max-width: 600px;
-            justify-content: center;
-        }
-
-        .store-item, .activity-card {
-            background-color: #f8f8f8;
-            border-radius: 15px;
-            padding: 1.5rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            border: 2px solid #ddd;
-            transition: all 0.3s ease;
-        }
-        .store-item:hover, .activity-card:hover {
-            transform: translateY(-5px);
-            border-color: #8e44ad;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .item-icon, .subject-icon {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .item-name, .activity-title {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #34495e;
-            margin-bottom: 0.75rem;
-        }
-
-        .activity-description {
-            font-size: 0.95rem;
-            color: #666;
-            margin-bottom: 1.2rem;
-            height: 3em; /* Fixed height for consistent card size */
-            overflow: hidden; /* Hide overflow if description is too long */
-            text-overflow: ellipsis; /* Add ellipsis for overflow */
-            display: -webkit-box;
-            -webkit-line-clamp: 2; /* Limit to 2 lines */
-            -webkit-box-orient: vertical;
-        }
-
-        .item-cost {
-            display: flex;
-            gap: 0.75rem;
-            margin-bottom: 1.2rem;
-            flex-wrap: wrap; /* Allow wrapping for costs */
-            justify-content: center;
-        }
-
-        .cost-point {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        .cost-point .icon {
-            font-size: 1.5rem;
-        }
-
-        .buy-btn, .start-activity-btn, .check-code-btn {
-            background-color: #e67e22; /* Orange buy button */
-            color: white;
-            padding: 0.7rem 1.5rem;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            border: none;
-            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
-        }
-        .buy-btn:hover:not(:disabled), .start-activity-btn:hover:not(:disabled), .check-code-btn:hover:not(:disabled) {
-            background-color: #d35400;
-            transform: translateY(-2px);
-        }
-        .buy-btn:disabled, .start-activity-btn:disabled, .check-code-btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        .back-btn {
-            background-color: #95a5a6; /* Gray back button */
-            color: white;
-            padding: 0.6rem 1.2rem;
-            border-radius: 10px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            border: none;
-            box-shadow: 0 3px 10px rgba(149, 165, 166, 0.3);
-        }
-        .back-btn:hover {
-            background-color: #7f8c8d;
-        }
-
-        /* Math Puzzle Screen specific styles */
-        .math-puzzle-container,
-        .reading-time-container,
-        .creative-writing-container,
-        .science-experiment-container,
-        .memory-challenge-container,
-        .time-travel-quiz-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.5rem;
-            margin-top: 2rem;
-            padding: 2rem;
-            background-color: #f0f8ff; /* Light blue background for math */
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            width: 80%;
-            max-width: 500px;
-            border: 3px solid #3498db; /* Blue border */
-            text-align: left; /* Align text within activity containers */
-        }
-        .math-puzzle-container .math-pattern {
-            text-align: center;
-            width: 100%;
-        }
-
-        .math-puzzle-container p,
-        .reading-time-container p,
-        .creative-writing-container p,
-        .science-experiment-container p,
-        .memory-challenge-container p,
-        .time-travel-quiz-container p {
-            font-size: 1.2rem;
-            color: #555;
-            width: 100%; /* Ensure paragraphs take full width */
-        }
-
-        .math-pattern {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #34495e;
-            margin-bottom: 1rem;
-        }
-
-        .code-input,
-        .writing-textarea,
-        .observation-textarea {
-            width: 100%;
-            padding: 0.75rem;
-            font-size: 1.2rem;
-            text-align: center;
-            border: 2px solid #ccc;
-            border-radius: 10px;
-            outline: none;
-            transition: border-color 0.3s ease;
-            letter-spacing: 0.1rem;
-            min-height: 100px; /* For text areas */
-            resize: vertical; /* Allow vertical resizing for text areas */
-        }
-        .code-input {
-             width: 150px; /* Specific width for code input */
-             font-size: 1.8rem;
-             letter-spacing: 0.2rem;
-        }
-
-        .code-input:focus,
-        .writing-textarea:focus,
-        .observation-textarea:focus {
-            border-color: #3498db;
-        }
-
-        /* Radio button styles for quiz/reading comprehension */
-        .quiz-options, .reading-options {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            width: 100%;
-            margin-bottom: 1.5rem;
-        }
-        .quiz-option, .reading-option {
-            background-color: #eaf6ff;
-            border: 2px solid #a7d9f7;
-            border-radius: 10px;
-            padding: 0.8rem 1.2rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: left;
-            display: flex;
-            align-items: center;
-        }
-        .quiz-option:hover, .reading-option:hover {
-            background-color: #d1ecfd;
-            transform: translateY(-2px);
-        }
-        .quiz-option input[type="radio"], .reading-option input[type="radio"] {
-            margin-right: 10px;
-            transform: scale(1.3); /* Make radio buttons larger */
-        }
-        .quiz-option.selected, .reading-option.selected {
-            background-color: #c9e6ff;
-            border-color: #3498db;
-            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
-        }
-
-        /* Message box styles */
-        .message-box {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            z-index: 1000;
-            font-size: 1.2rem;
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
-            display: none; /* Hidden by default */
-        }
-        .message-box.active {
-            display: block;
-        }
-
-        /* Random Words for Creative Writing */
-        .random-words {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #e67e22; /* Orange color for creative elements */
-            margin-bottom: 1rem;
-            text-align: center;
-            width: 100%;
-        }
-
-        /* Memory Challenge styles */
-        .fact-display {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #34495e;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            width: 100%;
-        }
-        .memory-options {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-            width: 100%;
-        }
-        .memory-option-btn {
-            background-color: #f0f0f0;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            padding: 0.8rem 1.2rem;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .memory-option-btn:hover {
-            background-color: #e0e0e0;
-            transform: translateY(-2px);
-        }
-        .memory-option-btn.correct {
-            background-color: #d4edda; /* Light green */
-            border-color: #28a745; /* Darker green */
-        }
-        .memory-option-btn.incorrect {
-            background-color: #f8d7da; /* Light red */
-            border-color: #dc3545; /* Darker red */
-        }
-        .memory-option-btn:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
+.fruit-button:active {
+    transform: translateY(0);
+    background-color: #d0d0d0;
+}
 
 
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .content-wrapper {
-                padding: 1.5rem;    
-            }
-            h1 {
-                font-size: 2rem;
-                margin-bottom: 1rem;
-            }
-            h2 {
-                font-size: 1.5rem;
-                margin-bottom: 1rem;
-            }
-            .class-item, .student-photo-item {
-                width: 80px;
-                height: 80px;
-                font-size: 2.5rem;
-            }
-            .student-photo-item img {
-                width: 70px;
-                height: 70px;
-            }
-            .emoji-password-input {
-                font-size: 1.2rem;
-                padding: 0.6rem 0.8rem;
-                width: 90%;
-            }
-            .login-btn, .dashboard-btn, .buy-btn, .back-btn, .start-activity-btn, .check-code-btn {
-                padding: 0.7rem 1.5rem;
-                font-size: 1rem;
-            }
-            #dashboard-avatar, #store-avatar {
-                width: 80px;
-                height: 80px;
-            }
-            #student-name, #store-student-name {
-                font-size: 1.5rem;
-            }
-            .point-type {
-                min-width: 100px;
-                padding: 0.8rem 1rem;
-            }
-            .point-type .icon {
-                font-size: 2rem;
-            }
-            .point-type .value {
-                font-size: 1.5rem;
-            }
-            .dashboard-buttons {
-                width: 100%;
-            }
-            .store-item, .activity-card {
-                padding: 1rem;
-            }
-            .item-icon, .subject-icon {
-                font-size: 3rem;
-            }
-            .item-name, .activity-title {
-                font-size: 1.1rem;
-            }
-            .cost-point {
-                font-size: 0.9rem;
-            }
-            .cost-point .icon {
-                font-size: 1.2rem;
-            }
-            .activity-description {
-                font-size: 0.85rem;
-                height: 3.2em; /* Adjusted height for smaller text */
-            }
-            .math-puzzle-container,
-            .reading-time-container,
-            .creative-writing-container,
-            .science-experiment-container,
-            .memory-challenge-container,
-            .time-travel-quiz-container {
-                padding: 1.5rem;
-                width: 90%;
-            }
-            .math-pattern {
-                font-size: 2rem;
-            }
-            .code-input {
-                font-size: 1.5rem;
-                width: 120px;
-            }
-            .reading-time-container p, .creative-writing-container p, .science-experiment-container p, .memory-challenge-container p, .time-travel-quiz-container p {
-                font-size: 1rem;
-            }
-            .writing-textarea, .observation-textarea {
-                font-size: 1rem;
-            }
-            .quiz-option, .reading-option {
-                font-size: 0.9rem;
-                padding: 0.6rem 1rem;
-            }
-            .random-words {
-                font-size: 1.1rem;
-            }
-            .fact-display {
-                font-size: 1.2rem;
-            }
-            .memory-option-btn {
-                font-size: 1rem;
-            }
-            .language-switcher img {
-                width: 30px;
-                height: 20px;
-            }
-        }
+.login-btn {
+    background-color: #2ecc71;
+    /* Green login button */
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    border: none;
+    box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+}
+
+.login-btn:hover {
+    background-color: #27ae60;
+    transform: translateY(-3px);
+}
+
+/* Dashboard Screen Styles */
+.student-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    background-color: #f7f7f7;
+    padding: 1.5rem 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#dashboard-avatar,
+#store-avatar {
+    width: 100px;
+    /* Fixed width for consistency */
+    height: 100px;
+    /* Fixed height */
+    object-fit: cover;
+    /* Ensure image covers the area without distortion */
+    border-radius: 50%;
+    /* Make it round */
+    border: 4px solid #8e44ad;
+    padding: 0.25rem;
+    background-color: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+#student-name,
+#store-student-name {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #34495e;
+    /* Darker blue for name */
+}
+
+.intention-points {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    /* give space for scrollbar on desktop */
+}
+
+.intention-points .point-type {
+    flex: 0 0 auto;
+    min-width: 120px;
+}
+
+.point-type {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f0f0f0;
+    padding: 1rem 1.5rem;
+    border-radius: 15px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    min-width: 100px;
+    max-width: 120px;
+    transition: transform 0.2s ease;
+}
+
+.point-type:hover {
+    transform: translateY(-3px);
+}
+
+.point-type .icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.point-type .label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.point-type .value {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+/* Specific point colors */
+.point-physical .icon,
+.point-physical .value {
+    color: #2ecc71;
+}
+
+/* Green */
+.point-cognitive .icon,
+.point-cognitive .value {
+    color: #3498db;
+}
+
+/* Blue */
+.point-creative .icon,
+.point-creative .value {
+    color: #e67e22;
+}
+
+/* Orange */
+.point-social .icon,
+.point-social .value {
+    color: #8e44ad;
+}
+
+/* Purple */
+
+.dashboard-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    width: 80%;
+    max-width: 400px;
+}
+
+.dashboard-btn {
+    background-color: #3498db;
+    /* Blue */
+    color: white;
+    padding: 0.9rem 1.5rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    border: none;
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+}
+
+.dashboard-btn:hover {
+    background-color: #2980b9;
+    transform: translateY(-3px);
+}
+
+.dashboard-btn.activity {
+    background-color: #2ecc71;
+    box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+}
+
+.dashboard-btn.activity:hover {
+    background-color: #27ae60;
+}
+
+.dashboard-btn.log-physical {
+    background-color: #f1c40f;
+    color: #333;
+    box-shadow: 0 5px 15px rgba(241, 196, 15, 0.3);
+}
+
+/* Yellow */
+.dashboard-btn.log-physical:hover {
+    background-color: #f39c12;
+}
+
+.dashboard-btn.learning-activities {
+    background-color: #8e44ad;
+    box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3);
+}
+
+.dashboard-btn.learning-activities:hover {
+    background-color: #6c3483;
+}
+
+/* Store Screen Styles */
+.store-items,
+.activity-items-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    /* Responsive grid */
+    gap: 1.5rem;
+    width: 100%;
+    margin-bottom: 2rem;
+    max-width: 600px;
+    justify-content: center;
+}
+
+.store-item,
+.activity-card {
+    background-color: #f8f8f8;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 2px solid #ddd;
+    transition: all 0.3s ease;
+}
+
+.store-item:hover,
+.activity-card:hover {
+    transform: translateY(-5px);
+    border-color: #8e44ad;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.item-icon,
+.subject-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+}
+
+.item-name,
+.activity-title {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #34495e;
+    margin-bottom: 0.75rem;
+}
+
+.activity-description {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 1.2rem;
+    height: 3em;
+    /* Fixed height for consistent card size */
+    overflow: hidden;
+    /* Hide overflow if description is too long */
+    text-overflow: ellipsis;
+    /* Add ellipsis for overflow */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* Limit to 2 lines */
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.item-cost {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.2rem;
+    flex-wrap: wrap;
+    /* Allow wrapping for costs */
+    justify-content: center;
+}
+
+.cost-point {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.cost-point .icon {
+    font-size: 1.5rem;
+}
+
+.buy-btn,
+.start-activity-btn,
+.check-code-btn {
+    background-color: #e67e22;
+    /* Orange buy button */
+    color: white;
+    padding: 0.7rem 1.5rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    border: none;
+    box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+}
+
+.buy-btn:hover:not(:disabled),
+.start-activity-btn:hover:not(:disabled),
+.check-code-btn:hover:not(:disabled) {
+    background-color: #d35400;
+    transform: translateY(-2px);
+}
+
+.buy-btn:disabled,
+.start-activity-btn:disabled,
+.check-code-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.back-btn {
+    background-color: #95a5a6;
+    /* Gray back button */
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border: none;
+    box-shadow: 0 3px 10px rgba(149, 165, 166, 0.3);
+}
+
+.back-btn:hover {
+    background-color: #7f8c8d;
+}
+
+/* Math Puzzle Screen specific styles */
+.math-puzzle-container,
+.reading-time-container,
+.creative-writing-container,
+.science-experiment-container,
+.memory-challenge-container,
+.time-travel-quiz-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding: 2rem;
+    background-color: #f0f8ff;
+    /* Light blue background for math */
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    width: 80%;
+    max-width: 500px;
+    border: 3px solid #3498db;
+    /* Blue border */
+    text-align: left;
+    /* Align text within activity containers */
+}
+
+.math-puzzle-container .math-pattern {
+    text-align: center;
+    width: 100%;
+}
+
+.math-puzzle-container p,
+.reading-time-container p,
+.creative-writing-container p,
+.science-experiment-container p,
+.memory-challenge-container p,
+.time-travel-quiz-container p {
+    font-size: 1.2rem;
+    color: #555;
+    width: 100%;
+    /* Ensure paragraphs take full width */
+}
+
+.math-pattern {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #34495e;
+    margin-bottom: 1rem;
+}
+
+.code-input,
+.writing-textarea,
+.observation-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1.2rem;
+    text-align: center;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.3s ease;
+    letter-spacing: 0.1rem;
+    min-height: 100px;
+    /* For text areas */
+    resize: vertical;
+    /* Allow vertical resizing for text areas */
+}
+
+.code-input {
+    width: 150px;
+    /* Specific width for code input */
+    font-size: 1.8rem;
+    letter-spacing: 0.2rem;
+}
+
+.code-input:focus,
+.writing-textarea:focus,
+.observation-textarea:focus {
+    border-color: #3498db;
+}
+
+/* Radio button styles for quiz/reading comprehension */
+.quiz-options,
+.reading-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.quiz-option,
+.reading-option {
+    background-color: #eaf6ff;
+    border: 2px solid #a7d9f7;
+    border-radius: 10px;
+    padding: 0.8rem 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    display: flex;
+    align-items: center;
+}
+
+.quiz-option:hover,
+.reading-option:hover {
+    background-color: #d1ecfd;
+    transform: translateY(-2px);
+}
+
+.quiz-option input[type="radio"],
+.reading-option input[type="radio"] {
+    margin-right: 10px;
+    transform: scale(1.3);
+    /* Make radio buttons larger */
+}
+
+.quiz-option.selected,
+.reading-option.selected {
+    background-color: #c9e6ff;
+    border-color: #3498db;
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+}
+
+/* Message box styles */
+.message-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 15px;
+    z-index: 1000;
+    font-size: 1.2rem;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
+    display: none;
+    /* Hidden by default */
+}
+
+.message-box.active {
+    display: block;
+}
+
+/* Random Words for Creative Writing */
+.random-words {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #e67e22;
+    /* Orange color for creative elements */
+    margin-bottom: 1rem;
+    text-align: center;
+    width: 100%;
+}
+
+/* Memory Challenge styles */
+.fact-display {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #34495e;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    width: 100%;
+}
+
+.memory-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    width: 100%;
+}
+
+.memory-option-btn {
+    background-color: #f0f0f0;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    padding: 0.8rem 1.2rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.memory-option-btn:hover {
+    background-color: #e0e0e0;
+    transform: translateY(-2px);
+}
+
+.memory-option-btn.correct {
+    background-color: #d4edda;
+    /* Light green */
+    border-color: #28a745;
+    /* Darker green */
+}
+
+.memory-option-btn.incorrect {
+    background-color: #f8d7da;
+    /* Light red */
+    border-color: #dc3545;
+    /* Darker red */
+}
+
+.memory-option-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding: 1.5rem;
+    }
+
+    h1 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .class-item,
+    .student-photo-item {
+        width: 80px;
+        height: 80px;
+        font-size: 2.5rem;
+    }
+
+    .student-photo-item img {
+        width: 70px;
+        height: 70px;
+    }
+
+    .emoji-password-input {
+        font-size: 1.2rem;
+        padding: 0.6rem 0.8rem;
+        width: 90%;
+    }
+
+    .login-btn,
+    .dashboard-btn,
+    .buy-btn,
+    .back-btn,
+    .start-activity-btn,
+    .check-code-btn {
+        padding: 0.7rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    #dashboard-avatar,
+    #store-avatar {
+        width: 80px;
+        height: 80px;
+    }
+
+    #student-name,
+    #store-student-name {
+        font-size: 1.5rem;
+    }
+
+    .point-type {
+        min-width: 100px;
+        padding: 0.8rem 1rem;
+    }
+
+    .point-type .icon {
+        font-size: 2rem;
+    }
+
+    .point-type .value {
+        font-size: 1.5rem;
+    }
+
+    .dashboard-buttons {
+        width: 100%;
+    }
+
+    .store-item,
+    .activity-card {
+        padding: 1rem;
+    }
+
+    .item-icon,
+    .subject-icon {
+        font-size: 3rem;
+    }
+
+    .item-name,
+    .activity-title {
+        font-size: 1.1rem;
+    }
+
+    .cost-point {
+        font-size: 0.9rem;
+    }
+
+    .cost-point .icon {
+        font-size: 1.2rem;
+    }
+
+    .activity-description {
+        font-size: 0.85rem;
+        height: 3.2em;
+        /* Adjusted height for smaller text */
+    }
+
+    .math-puzzle-container,
+    .reading-time-container,
+    .creative-writing-container,
+    .science-experiment-container,
+    .memory-challenge-container,
+    .time-travel-quiz-container {
+        padding: 1.5rem;
+        width: 90%;
+    }
+
+    .math-pattern {
+        font-size: 2rem;
+    }
+
+    .code-input {
+        font-size: 1.5rem;
+        width: 120px;
+    }
+
+    .reading-time-container p,
+    .creative-writing-container p,
+    .science-experiment-container p,
+    .memory-challenge-container p,
+    .time-travel-quiz-container p {
+        font-size: 1rem;
+    }
+
+    .writing-textarea,
+    .observation-textarea {
+        font-size: 1rem;
+    }
+
+    .quiz-option,
+    .reading-option {
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
+    }
+
+    .random-words {
+        font-size: 1.1rem;
+    }
+
+    .fact-display {
+        font-size: 1.2rem;
+    }
+
+    .memory-option-btn {
+        font-size: 1rem;
+    }
+
+    .language-switcher img {
+        width: 30px;
+        height: 20px;
+    }
+}
 
 #loginScreen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  overflow-y: auto; /* Allow ONLY this part to scroll */
-  flex-grow: 1;
-  padding: 1rem;
-  box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    overflow-y: auto;
+    /* Allow ONLY this part to scroll */
+    flex-grow: 1;
+    padding: 1rem;
+    box-sizing: border-box;
 }
 
 #loginScreen::-webkit-scrollbar {
-  width: 8px;
+    width: 8px;
 }
+
 #loginScreen::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.1);
-  border-radius: 10px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
 }
 
 .fullscreen-btn {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  z-index: 200;
-  background: rgba(0, 0, 0, 0.65);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 0.4rem 0.6rem;
-  font-size: 1.2rem;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  transition: background 0.2s ease, transform 0.15s ease;
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.65);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.4rem 0.6rem;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: background 0.2s ease, transform 0.15s ease;
 }
 
 .fullscreen-btn:hover {
-  background: rgba(0, 0, 0, 0.85);
-  transform: scale(1.05);
+    background: rgba(0, 0, 0, 0.85);
+    transform: scale(1.05);
 }
 
 .fullscreen-btn:active {
-  transform: scale(0.95);
+    transform: scale(0.95);
 }
 
 
 #classButtons img,
 #studentButtons img {
-  width: 72px;
-  height: 72px;
-  object-fit: cover;
-  border-radius: 12px;
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 12px;
 }
 
 #classSection h2,
 #selectStudentHeading {
-  margin-bottom: 0.25rem;
+    margin-bottom: 0.25rem;
 }
 
 #classButtons,
 #studentButtons {
-  gap: 1rem;
-  margin-bottom: 1rem;
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
 
-.animate-fade-in { animation: fadeIn 0.5s ease forwards; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.animate-fade-in {
+    animation: fadeIn 0.5s ease forwards;
+}
 
-.shake { animation: shake 0.3s; }
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.shake {
+    animation: shake 0.3s;
+}
+
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-3px); }
-  75% { transform: translateX(3px); }
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-3px);
+    }
+
+    75% {
+        transform: translateX(3px);
+    }
 }
 
 .animate-fall {
-  animation: confettiFall 1.2s linear forwards;
+    animation: confettiFall 1.2s linear forwards;
 }
+
 @keyframes confettiFall {
-  from { transform: translateY(-100%); opacity: 1; }
-  to { transform: translateY(100%); opacity: 0; }
+    from {
+        transform: translateY(-100%);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateY(100%);
+        opacity: 0;
+    }
 }
 
 .avatar-talking {
-  animation: mouthMove 0.25s infinite alternate;
+    animation: mouthMove 0.25s infinite alternate;
 }
+
 @keyframes mouthMove {
-  0% { transform: scaleY(1); }
-  100% { transform: scaleY(0.85); }
+    0% {
+        transform: scaleY(1);
+    }
+
+    100% {
+        transform: scaleY(0.85);
+    }
 }
 
 .avatar-idle {
-  animation: idleMove 3s ease-in-out infinite;
+    animation: idleMove 3s ease-in-out infinite;
 }
+
 @keyframes idleMove {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(2px); }
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(2px);
+    }
 }
 
 .avatar-talking {
-  transition: transform 0.1s ease;
-  filter: brightness(1.1);
+    transition: transform 0.1s ease;
+    filter: brightness(1.1);
 }
 
 .avatar-talking::after {
-  content: "";
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(255,255,255,0.15);
-  animation: blink 3s infinite;
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    animation: blink 3s infinite;
 }
 
 @keyframes blink {
-  0%, 90%, 100% { opacity: 0; }
-  95% { opacity: 1; }
+
+    0%,
+    90%,
+    100% {
+        opacity: 0;
+    }
+
+    95% {
+        opacity: 1;
+    }
 }
 
 /* Remove iOS tap highlight */
 * {
-  -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* Prevent overscroll bounce on iOS */
-html, body {
-  overscroll-behavior: none;
+html,
+body {
+    overscroll-behavior: none;
 }
 
 .kiosk-btn {
-  position: absolute;
-  top: 1rem;
-  left: 4rem;
-  z-index: 200;
-  background: #c0392b;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 0.4rem 0.6rem;
-  font-size: 1rem;
-  cursor: pointer;
+    position: absolute;
+    top: 1rem;
+    left: 4rem;
+    z-index: 200;
+    background: #c0392b;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.4rem 0.6rem;
+    font-size: 1rem;
+    cursor: pointer;
 }
 
+/* Orientation Lock: Force Landscape on Phones/Tablets */
+@media (orientation: portrait) {
+    #orientationBlock {
+        display: flex !important;
+    }
+
+    .container,
+    #loadingScreen {
+        display: none !important;
+    }
+}
+
+/* Hide orientation block in landscape */
+@media (orientation: landscape) {
+    #orientationBlock {
+        display: none !important;
+    }
+}
