@@ -1,51 +1,49 @@
-import BaseField from './BaseField.js';
+import BufferedField from './BufferedField.js';
 import { translationService } from '../../courseCreator/services/translationService.js';
 import { Toast } from '../../courseCreator/components/Toast.js';
-import { store } from '../../courseCreator/Store.js';
 
-export default class TextField extends BaseField {
+export default class TextField extends BufferedField {
+  constructor(opts) {
+    super(opts);
+    this._draft = {};
+    this.quillInstances = {};
+    this.isExpanded = false;
+  }
 
   static get type() {
     return 'string';
   }
 
   render(container) {
+    // Label and Description
     this.ensureLabel(container);
     this.ensureDescription(container);
 
     const languages = this.context.languages || ['en'];
     const isMultiValue = typeof this.value === 'object' && this.value !== null;
 
-    // Configure Quill to use inline styles for fonts and sizes
+    // One-time Quill config
     if (window.Quill && !window.Quill._configured_fonts_size) {
       const Font = window.Quill.import('attributors/style/font');
       const Size = window.Quill.import('attributors/style/size');
-
-      // Define 10 fonts
       Font.whitelist = [
         'sans-serif', 'serif', 'monospace',
-        'roboto', 'open-sans', 'lato', 'montserrat',
-        'oswald', 'merriweather', 'playfair-display'
+        'roboto', 'open-sans', 'lato', 'montserrat'
       ];
-
       window.Quill.register(Font, true);
       window.Quill.register(Size, true);
       window.Quill._configured_fonts_size = true;
     }
 
-    // We decide to use Tabs (Multi-language) if:
-    // 1. Schema says translatable
-    // 2. Schema type is localizedText
-    // 3. Or we have multiple languages AND the value is already an object
     const useTabs =
       this.schema.translatable === true ||
       this.schema.type === 'localizedText' ||
       (languages.length > 1 && isMultiValue);
 
-    if (!useTabs) {
-      this.renderSingle(container, languages[0]);
-    } else {
+    if (useTabs) {
       this.renderTabs(container, languages);
+    } else {
+      this.renderSingle(container, languages[0]);
     }
   }
 
@@ -54,349 +52,328 @@ export default class TextField extends BaseField {
   -------------------------------------------------- */
 
   renderSingle(container, lang) {
-    // If we want Quill everywhere, we initialize it here.
-    // However, for simple fields, Quill might be overkill.
-    // Let's use a heuristic: if 'long' attribute is true or schema says 'richText', use Quill.
-    // OR per requirement: "all text boxes". We should probably be careful about small inputs.
-    // But request said "all text boxes in the Module editor".
+    if (container.querySelector('.quill-wrapper')) return;
 
-    // Check if container already possesses a Quill instance to avoid re-render loop
-    const existingEditor = container.querySelector('.quill-container');
-    if (existingEditor) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'quill-wrapper relative mb-4';
 
-    const editorContainer = document.createElement('div');
-    editorContainer.className = "quill-container bg-white";
-    editorContainer.style.minHeight = "100px";
+    // Top Controls (Expand)
+    const toolbarAction = document.createElement('div');
+    toolbarAction.className = 'flex justify-end mb-1';
+    wrapper.appendChild(toolbarAction);
+
+    const expandBtn = document.createElement('button');
+    expandBtn.className = 'text-[10px] uppercase font-bold text-slate-500 hover:text-blue-400 transition flex items-center gap-1';
+    expandBtn.innerHTML = '<i class="fas fa-expand-alt"></i> Expand';
+    expandBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); this.toggleExpand(wrapper); };
+    toolbarAction.appendChild(expandBtn);
+
+    // Expand on click if not already expanded
+    wrapper.onclick = (e) => {
+      if (!this.isExpanded) {
+        this.toggleExpand(wrapper);
+      }
+    };
 
     const editorEl = document.createElement('div');
-    editorContainer.appendChild(editorEl);
-    container.appendChild(editorContainer);
+    editorEl.className = 'quill-container bg-slate-900 border border-slate-700 rounded-lg min-h-[100px] text-slate-100';
+    wrapper.appendChild(editorEl);
+    container.appendChild(wrapper);
 
-    // Initial Value
-    const val = typeof this.value === 'object' && this.value !== null ? this.value[lang] : this.value;
-    editorEl.innerHTML = val || '';
+    editorEl.innerHTML = (typeof this.value === 'object' ? this.value?.[lang] : this.value) || '';
 
-    // Initialize Quill
-    if (window.Quill) {
-      const quill = new Quill(editorEl, {
+    if (!window.Quill) return;
+
+    const quill = new Quill(editorEl, {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['clean']
+        ]
+      }
+    });
+
+    this.quillInstances[lang] = quill;
+
+    quill.on('text-change', () => {
+      const html = quill.root.innerHTML;
+      const cleanHtml = html === '<p><br></p>' ? '' : html;
+      if (typeof this.value === 'object') {
+        this._draft[lang] = cleanHtml;
+      } else {
+        this._draft = cleanHtml;
+      }
+      this.setDraft(this._draft);
+    });
+
+    quill.on('selection-change', range => {
+      this.markFocused(!!range);
+      if (!range) this.commitDraft();
+    });
+  }
+
+  /* --------------------------------------------------
+     MULTI LANGUAGE (TABS)
+  -------------------------------------------------- */
+
+  renderTabs(container, languages) {
+    if (container.querySelector('.quill-multi-wrapper')) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'quill-multi-wrapper relative mb-4';
+
+    const header = document.createElement('div');
+    header.className = 'flex justify-between items-center bg-slate-800/50 p-1 rounded-t-lg border-x border-t border-slate-700';
+
+    const tabs = document.createElement('div');
+    tabs.className = 'lang-tabs flex gap-1';
+    header.appendChild(tabs);
+
+    const actions = document.createElement('div');
+    actions.className = 'flex gap-2 items-center';
+    header.appendChild(actions);
+
+    // Translate All button
+    const translateBtn = document.createElement('button');
+    translateBtn.className = 'text-[10px] px-2 py-0.5 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded hover:bg-blue-600/40 transition flex items-center gap-1';
+    translateBtn.innerHTML = '<i class="fas fa-language"></i> Translate All';
+    translateBtn.onclick = (e) => { e.preventDefault(); this.handleTranslateAll(languages); };
+    actions.appendChild(translateBtn);
+
+    // Expand
+    const expandBtn = document.createElement('button');
+    expandBtn.className = 'text-slate-500 hover:text-white p-1 transition';
+    expandBtn.innerHTML = '<i class="fas fa-expand-alt"></i>';
+    expandBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); this.toggleExpand(wrapper); };
+    actions.appendChild(expandBtn);
+
+    // Expand on click if not already expanded
+    wrapper.onclick = (e) => {
+      if (!this.isExpanded && !e.target.closest('button')) {
+        this.toggleExpand(wrapper);
+      }
+    };
+
+    const inputs = document.createElement('div');
+    inputs.className = 'lang-inputs bg-slate-900 border border-slate-700 rounded-b-lg overflow-hidden';
+
+    languages.forEach((lang, idx) => {
+      const btn = document.createElement('button');
+      btn.textContent = lang.toUpperCase();
+      btn.className = `px-3 py-1 text-[10px] font-bold rounded transition-colors ${idx === 0 ? 'text-blue-400 bg-slate-900' : 'text-slate-500 hover:text-slate-300'}`;
+      btn.onclick = (e) => { e.preventDefault(); this.switchTab(wrapper, lang); };
+      tabs.appendChild(btn);
+
+      const wrap = document.createElement('div');
+      wrap.dataset.lang = lang;
+      wrap.className = idx === 0 ? 'block' : 'hidden';
+
+      const editor = document.createElement('div');
+      editor.className = 'quill-editor bg-slate-900 min-h-[140px] text-slate-100';
+      wrap.appendChild(editor);
+      inputs.appendChild(wrap);
+
+      editor.innerHTML = (typeof this.value === 'object' ? this.value?.[lang] : this.value) || '';
+
+      if (!window.Quill) return;
+
+      const quill = new Quill(editor, {
         theme: 'snow',
         modules: {
           toolbar: [
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-            [{ 'color': [] }, { 'background': [] }],
+            [{ header: [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
             ['clean']
           ]
         }
       });
 
-      // Sync Change
+      this.quillInstances[lang] = quill;
+
       quill.on('text-change', () => {
-        const html = editorEl.children[0].innerHTML; // Quill puts content in ql-editor
-        this.onChange(html === '<p><br></p>' ? '' : html);
-      });
-    } else {
-      // Fallback to textarea
-      console.warn("Quill not found, falling back to textarea");
-      const area = document.createElement('textarea');
-      area.className = "w-full border p-2";
-      area.value = val || '';
-      area.onchange = e => this.onChange(e.target.value);
-      container.innerHTML = '';
-      container.appendChild(area);
-    }
-  }
-
-  /* --------------------------------------------------
-     MULTI LANGUAGE (TABS) with TRANSLATION
-  -------------------------------------------------- */
-
-  renderTabs(container, languages) {
-    let tabHeader = container.querySelector('.lang-tabs');
-    let inputContainer = container.querySelector('.lang-inputs');
-
-    if (!tabHeader) {
-      // Create Structure
-      const headerRow = document.createElement('div');
-      headerRow.className = "flex justify-between items-end border-b border-gray-200 mb-2";
-
-      tabHeader = document.createElement('div');
-      tabHeader.className = "lang-tabs flex space-x-1";
-      headerRow.appendChild(tabHeader);
-
-      // Auto-Translate Button
-      const translateBtn = document.createElement('button');
-      translateBtn.className = "text-xs text-blue-600 hover:text-blue-800 font-medium mb-1 mr-1";
-      translateBtn.innerHTML = '<i class="fas fa-language"></i> Translate All';
-      translateBtn.title = "Translate from English to other languages";
-      translateBtn.type = "button";
-      translateBtn.onclick = () => this.handleTranslateAll(languages, inputContainer);
-      translateBtn.onclick = () => this.handleTranslateAll(languages, inputContainer);
-      headerRow.appendChild(translateBtn);
-
-      // Maximize Button
-      const maxBtn = document.createElement('button');
-      maxBtn.className = "text-xs text-gray-500 hover:text-gray-700 font-medium mb-1 mr-1 ml-auto";
-      maxBtn.innerHTML = '<i class="fas fa-expand"></i>';
-      maxBtn.title = "Maximize Editor";
-      maxBtn.type = "button";
-      maxBtn.onclick = () => this.toggleFullscreen(container, maxBtn);
-      headerRow.appendChild(maxBtn);
-
-      inputContainer = document.createElement('div');
-      inputContainer.className = "lang-inputs";
-
-      languages.forEach((lang, index) => {
-        // Tab Button
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.dataset.lang = lang;
-        btn.textContent = lang;
-        btn.className = "px-2 py-1 text-xs font-bold uppercase rounded-t transition " +
-          (index === 0 ? 'bg-slate-100 text-slate-700' : 'text-gray-400 hover:text-gray-600');
-        btn.onclick = () => this.switchTab(container, lang);
-        tabHeader.appendChild(btn);
-
-        // Input Wrapper
-        const wrapper = document.createElement('div');
-        wrapper.dataset.lang = lang;
-        wrapper.className = (index === 0 ? '' : 'hidden');
-
-        // Editor Element
-        const editorEl = document.createElement('div');
-        editorEl.className = "quill-editor bg-white border-l border-r border-b rounded-b";
-        editorEl.style.minHeight = "120px";
-        wrapper.appendChild(editorEl);
-        inputContainer.appendChild(wrapper);
-
-        // Store ref to init Quill later
-        // We defer init to when tab is visible or immediately content-wise?
-        // Better to init all immediately so values are ready, but hidden editors might be weird.
-        // Quill handles hidden containers okay usually.
+        const html = quill.root.innerHTML;
+        const cleanHtml = html === '<p><br></p>' ? '' : html;
+        if (!this._draft || typeof this._draft !== 'object') this._draft = {};
+        this._draft[lang] = cleanHtml;
+        this.setDraft({ ...this._draft });
       });
 
-      container.appendChild(headerRow);
-      container.appendChild(inputContainer);
-
-      // Initialize Quills
-      this.quillInstances = {}; // Store instances to set values programmatically
-
-      languages.forEach(lang => {
-        const wrapper = inputContainer.querySelector(`div[data-lang="${lang}"]`);
-        const editorEl = wrapper.querySelector('.quill-editor');
-
-        const val = typeof this.value === 'object' && this.value !== null ? this.value[lang] : '';
-        editorEl.innerHTML = val || ''; // Set initial HTML
-
-        if (window.Quill) {
-          // Create Detached Toolbar Container
-          const toolbarContainer = document.createElement('div');
-          toolbarContainer.className = "flex flex-wrap gap-2 p-2 justify-center bg-gray-50 border-b";
-          // We keep it in memory, not attached until focus
-
-          const quill = new Quill(editorEl, {
-            theme: 'snow',
-            modules: {
-              toolbar: {
-                container: [
-                  [{ 'header': [1, 2, 3, false] }],
-                  ['bold', 'italic', 'underline', 'strike'],
-                  [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                  [{ 'align': [] }],
-                  ['link', 'clean']
-                ],
-                // handlers: { ... } if needed
-              }
-            }
-          });
-
-          this.quillInstances[lang] = quill;
-
-          // Detach the default toolbar created by Quill and store it
-          // Quill ('snow' theme) automatically creates a sibling toolbar if we pass an array or config object
-          // But we want to MOVE that toolbar to our context header.
-          const qToolbar = wrapper.querySelector('.ql-toolbar');
-          if (qToolbar) {
-            qToolbar.style.border = 'none'; // Clean up borders
-            qToolbar.style.padding = '0';
-            // We remove it from DOM immediately so it doesn't show inline
-            qToolbar.remove();
-          }
-
-          // Handle Focus/Selection to Show Toolbar
-          quill.on('selection-change', (range, oldRange, source) => {
-            if (range) {
-              // Focused
-              if (this.context.setToolbar && qToolbar) {
-                this.context.setToolbar(qToolbar);
-              }
-            } else {
-              // Blurred
-              if (this.context.clearToolbar) {
-                this.context.clearToolbar();
-              }
-            }
-          });
-
-          // Re-attach toolbar on click just in case selection-change misfires?
-          // selection-change is usually reliable.
-
-          quill.on('text-change', () => {
-            const html = editorEl.children[0].innerHTML; // ql-editor content
-            this.updateValue(lang, html === '<p><br></p>' ? '' : html);
-          });
-        }
+      quill.on('selection-change', range => {
+        this.markFocused(!!range);
+        if (!range) this.commitDraft();
       });
-    }
-  }
-
-  updateValue(lang, text) {
-    const nextValue = typeof this.value === 'object' && this.value !== null ? { ...this.value } : {};
-    nextValue[lang] = text;
-    this.onChange(nextValue);
-  }
-
-  switchTab(container, activeLang) {
-    container.querySelectorAll('.lang-tabs button').forEach(btn => {
-      const isActive = btn.dataset.lang === activeLang;
-      btn.className = "px-2 py-1 text-xs font-bold uppercase rounded-t transition " +
-        (isActive ? 'bg-slate-100 text-slate-700 border-t border-r border-l border-white' : 'text-gray-400 hover:text-gray-600');
     });
 
-    container.querySelectorAll('.lang-inputs > div').forEach(div => {
-      div.classList.toggle('hidden', div.dataset.lang !== activeLang);
+    wrapper.appendChild(header);
+    wrapper.appendChild(inputs);
+    container.appendChild(wrapper);
+  }
+
+  switchTab(wrapper, targetLang) {
+    const tabs = wrapper.querySelectorAll('.lang-tabs button');
+    const wraps = wrapper.querySelectorAll('.lang-inputs > div');
+
+    tabs.forEach(btn => {
+      const isActive = btn.textContent.toLowerCase() === targetLang.toLowerCase();
+      btn.className = `px-3 py-1 text-[10px] font-bold rounded transition-colors ${isActive ? 'text-blue-400 bg-slate-900' : 'text-slate-500 hover:text-slate-300'}`;
+    });
+
+    wraps.forEach(wrap => {
+      wrap.className = wrap.dataset.lang === targetLang ? 'block' : 'hidden';
     });
   }
 
-  async handleTranslateAll(languages, inputContainer) {
-    if (!this.quillInstances || !this.quillInstances['en']) {
-      if (typeof Toast !== 'undefined') Toast.error("English content missing or editor not ready.");
+  async handleTranslateAll(languages) {
+    const sourceText = this.quillInstances['en']?.root.innerHTML || '';
+    if (!sourceText || sourceText === '<p><br></p>') {
+      Toast.show('Please enter English text first.', 'warning');
       return;
     }
 
-    // Get source HTML
-    const enContent = this.quillInstances['en'].root.innerHTML;
-
-    // Check if empty
-    if (!enContent || enContent === '<p><br></p>') return;
-
+    Toast.show('Translating all languages...', 'info');
+    const translations = { en: sourceText };
     const targets = languages.filter(l => l !== 'en');
-    let updatedCount = 0;
 
-    // Loading 
-    const btn = inputContainer.parentElement.querySelector('button');
-    const origText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Translating...';
-    btn.disabled = true;
-
-    // Initialize accumulated value from current state, BUT override 'en' with live content
-    let accumulatedValue = typeof this.value === 'object' && this.value !== null ? { ...this.value } : {};
-    accumulatedValue['en'] = enContent;
-
-    // Force save the English content immediately so it's not lost
-    this.onChange({ ...accumulatedValue });
-
-    try {
-      // We parse the HTML into a temporary DOM to walk it
-      const parser = new DOMParser();
-
-      for (const lang of targets) {
-        // CLONE the content for this language target
-        // usage of DOMParser to create a document or just use a div
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = enContent;
-
-        // Helper to collect text nodes
-        const textNodes = [];
-        const walk = (node) => {
-          if (node.nodeType === 3) { // Text Node
-            if (node.nodeValue.trim().length > 0) {
-              textNodes.push(node);
-            }
-          } else {
-            for (let child of node.childNodes) {
-              walk(child);
-            }
-          }
-        };
-        walk(wrapper);
-
-        // Translate each node
-        await Promise.all(textNodes.map(async (node) => {
-          const original = node.nodeValue;
-          const translated = await translationService.translateText(original, 'en', lang);
-          node.nodeValue = translated;
-        }));
-
-        const finalHtml = wrapper.innerHTML;
-
-        // Update Editor
-        if (this.quillInstances[lang]) {
-          const q = this.quillInstances[lang];
-          // Use clipboard to safely insert HTML
-          q.clipboard.dangerouslyPasteHTML(finalHtml);
-
-          // Update accumulated value and emit change
-          accumulatedValue[lang] = finalHtml;
-          this.onChange({ ...accumulatedValue });
-
-          updatedCount++;
-        }
-      }
-      if (typeof Toast !== 'undefined') Toast.success(`Translated to ${updatedCount} languages.`);
-
-      // Auto-Save specifically for this action as requested
+    for (const lang of targets) {
       try {
-        await store.save();
-        if (typeof Toast !== 'undefined') Toast.success("Translations saved automatically.");
-      } catch (saveErr) {
-        console.error("Auto-save failed", saveErr);
-        if (typeof Toast !== 'undefined') Toast.warning("Translations done, but auto-save failed. Please click Save manually.");
+        const result = await translationService.translateText(sourceText, 'en', lang);
+        translations[lang] = result;
+        if (this.quillInstances[lang]) {
+          this.quillInstances[lang].root.innerHTML = result;
+        }
+      } catch (e) {
+        console.error(`Translation failed for ${lang}:`, e);
       }
-    } catch (e) {
-      console.error(e);
-      if (typeof Toast !== 'undefined') Toast.error("Translation partially failed.");
-    } finally {
-      btn.innerHTML = origText;
-      btn.disabled = false;
+    }
+
+    this._draft = translations;
+    this.setDraft({ ...this._draft });
+    this.commitDraft();
+    Toast.show('Translation complete!', 'success');
+  }
+
+  toggleExpand(wrapper) {
+    this.isExpanded = !this.isExpanded;
+
+    if (this.isExpanded) {
+      // Store original parent and a placeholder to maintain position
+      this._originalParent = wrapper.parentNode;
+      this._domPlaceholder = document.createElement('div');
+      this._domPlaceholder.style.display = 'none';
+      this._originalParent.insertBefore(this._domPlaceholder, wrapper);
+
+      // --- Create Modal Container ---
+      const modal = document.createElement('div');
+      modal.id = 'editor-modal-container';
+      modal.className = 'fixed inset-0 z-[10000] flex items-center justify-center p-4 md:p-12';
+      modal.style.zIndex = '10000';
+
+      // --- Create Backdrop ---
+      const backdrop = document.createElement('div');
+      backdrop.className = 'absolute inset-0 bg-slate-950/90 backdrop-blur-xl';
+      backdrop.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.toggleExpand(wrapper);
+      };
+      modal.appendChild(backdrop);
+
+      // --- Prepare Wrapper ---
+      wrapper.classList.add('relative', 'z-10', 'w-full', 'h-full', 'max-w-6xl', 'bg-slate-900', 'rounded-3xl', 'shadow-2xl', 'border', 'border-slate-700', 'flex', 'flex-col', 'overflow-hidden');
+      wrapper.style.margin = '0';
+      wrapper.style.zIndex = '10';
+
+      // Stop clicks inside from closing
+      wrapper.onclick = (e) => e.stopPropagation();
+
+      modal.appendChild(wrapper);
+      document.body.appendChild(modal);
+
+      // Adjust height for inner editors
+      const editors = wrapper.querySelectorAll('.ql-container, .quill-editor');
+      editors.forEach(ed => {
+        ed.style.flex = '1';
+        ed.style.color = '#f1f5f9';
+      });
+
+      const langInputs = wrapper.querySelector('.lang-inputs');
+      if (langInputs) {
+        langInputs.style.flex = '1';
+        langInputs.style.display = 'flex';
+        langInputs.style.flexDirection = 'column';
+      }
+
+      let closeExp = wrapper.querySelector('.close-expand-btn');
+      if (!closeExp) {
+        closeExp = document.createElement('button');
+        closeExp.className = 'close-expand-btn absolute top-4 right-4 text-slate-500 hover:text-white text-3xl p-2 transition z-20 hover:scale-110';
+        closeExp.innerHTML = '<i class="fas fa-times"></i>';
+        closeExp.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.toggleExpand(wrapper);
+        };
+        wrapper.appendChild(closeExp);
+      }
+      closeExp.classList.remove('hidden');
+
+    } else {
+      // --- Cleanup Modal ---
+      const modal = document.getElementById('editor-modal-container');
+      if (modal) modal.remove();
+
+      // Reset wrapper styles
+      wrapper.classList.remove('relative', 'z-10', 'w-full', 'h-full', 'max-w-6xl', 'bg-slate-900', 'rounded-3xl', 'shadow-2xl', 'border', 'border-slate-700', 'flex', 'flex-col', 'overflow-hidden');
+      wrapper.style.margin = '';
+      wrapper.style.zIndex = '';
+
+      // Restore default onclick behavior
+      wrapper.onclick = (e) => {
+        if (!this.isExpanded) {
+          this.toggleExpand(wrapper);
+        }
+      };
+
+      const editors = wrapper.querySelectorAll('.ql-container, .quill-editor');
+      editors.forEach(ed => {
+        ed.style.flex = '';
+      });
+
+      const langInputs = wrapper.querySelector('.lang-inputs');
+      if (langInputs) {
+        langInputs.style.removeProperty('flex');
+        langInputs.style.removeProperty('display');
+        langInputs.style.removeProperty('flex-direction');
+      }
+
+      const closeExp = wrapper.querySelector('.close-expand-btn');
+      if (closeExp) closeExp.classList.add('hidden');
+
+      // Restore to original parent
+      if (this._originalParent && this._domPlaceholder) {
+        this._originalParent.replaceChild(wrapper, this._domPlaceholder);
+        this._domPlaceholder = null;
+        this._originalParent = null;
+      }
     }
   }
 
-  toggleFullscreen(container, btn) {
-    // Track state on the instance
-    this.isFullscreen = !this.isFullscreen;
-    const isMax = this.isFullscreen;
-
-    // Dispatch Global Event to animate layout
-    const event = new CustomEvent('toggle-inspector-fullscreen', {
-      detail: { isFullscreen: isMax },
-      bubbles: true,
-      composed: true
-    });
-    container.dispatchEvent(event);
-
-    if (isMax) {
-      // Maximize UI updates
-      btn.innerHTML = '<i class="fas fa-compress"></i> Minimize';
-      btn.title = "Minimize Editor";
-
-      // Expand the editor area locally (just ensuring flex growth)
-      const inputContainer = container.querySelector('.lang-inputs');
-      if (inputContainer) inputContainer.classList.add('flex-1', 'overflow-y-auto');
-
-      // We DON'T set 'fixed' anymore, relying on parent layout change.
-      // But we might want to ensure height fills parent if needed.
-      container.classList.add('h-full', 'flex', 'flex-col'); // Ensure it takes full height of expanded panel
-
-    } else {
-      // Minimize
-      btn.innerHTML = '<i class="fas fa-expand"></i>';
-      btn.title = "Maximize Editor";
-
-      const inputContainer = container.querySelector('.lang-inputs');
-      if (inputContainer) inputContainer.classList.remove('flex-1', 'overflow-y-auto');
-
-      container.classList.remove('h-full', 'flex', 'flex-col');
+  cleanup() {
+    if (this.isExpanded) {
+      const modal = document.getElementById('editor-modal-container');
+      if (modal) modal.remove();
+      if (this._domPlaceholder) this._domPlaceholder.remove();
     }
+
+    if (!this.quillInstances) return;
+    Object.values(this.quillInstances).forEach(q => {
+      q.off('text-change');
+      q.off('selection-change');
+    });
+    this.quillInstances = null;
   }
 }

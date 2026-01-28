@@ -1,63 +1,143 @@
-
 /* --- DARK MODE EDITOR OVERRIDES --- */
 
-/* Only apply these styles when inside the dark mode editor view */
+/* Base Input Styles */
 #editorView input[type="text"],
 #editorView input[type="number"],
 #editorView textarea,
 #editorView select {
-  background-color: #1e293b; /* slate-800 */
-  border-color: #334155; /* slate-700 */
-  color: #e2e8f0; /* slate-200 */
+  background-color: #0f172a;
+  /* slate-950/900 */
+  border-color: #334155;
+  /* slate-700 */
+  color: #f1f5f9;
+  /* slate-100 */
+  border-radius: 0.5rem;
 }
 
 #editorView input:focus,
 #editorView textarea:focus,
 #editorView select:focus {
-  border-color: #6366f1; /* indigo-500 */
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-  background-color: #0f172a; /* slate-900 */
+  border-color: #3b82f6;
+  /* blue-500 */
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  background-color: #020617;
+  /* slate-950 */
 }
 
+/* Scrollbars */
 #editorView ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 #editorView ::-webkit-scrollbar-track {
-  background: #0f172a; /* slate-900 */
+  background: transparent;
 }
 
 #editorView ::-webkit-scrollbar-thumb {
-  background: #334155; /* slate-700 */
-  border-radius: 3px;
+  background: #334155;
+  border-radius: 10px;
 }
 
 #editorView ::-webkit-scrollbar-thumb:hover {
-  background: #475569; /* slate-600 */
+  background: #475569;
 }
 
-/* Field Labels in Dark Mode */
-#editorView label {
-  color: #94a3b8; /* slate-400 */
+/* Field Labels */
+#editorView label.field-label {
+  color: #94a3b8;
+  /* slate-400 */
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-/* Quill Editor Dark Mode Tweaks */
-#editorView .ql-toolbar {
-  background-color: #1e293b;
-  border-color: #334155;
+/* Quill Editor Dark Mode REFINEMENT */
+.ql-toolbar.ql-snow {
+  background-color: #1e293b !important;
+  /* slate-800 */
+  border-color: #334155 !important;
+  /* slate-700 */
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
 }
-#editorView .ql-container {
-  background-color: #0f172a;
-  border-color: #334155;
-  color: #e2e8f0;
+
+.ql-container.ql-snow {
+  background-color: #0f172a !important;
+  /* slate-900 */
+  border-color: #334155 !important;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  color: #f1f5f9 !important;
+  /* slate-100 - ENSURE TEXT IS VISIBLE */
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
 }
-#editorView .ql-stroke {
-  stroke: #cbd5e1;
+
+/* Force text color inside the editor */
+.ql-editor {
+  color: #f1f5f9 !important;
 }
-#editorView .ql-fill {
-  fill: #cbd5e1;
+
+/* Quill Stroke & Fill for Dark Mode */
+.ql-snow .ql-stroke {
+  stroke: #94a3b8 !important;
+  /* slate-400 */
 }
-#editorView .ql-picker {
-  color: #cbd5e1;
+
+.ql-snow .ql-fill {
+  fill: #94a3b8 !important;
+}
+
+.ql-snow .ql-picker {
+  color: #94a3b8 !important;
+}
+
+.ql-snow .ql-stroke:hover,
+.ql-snow .ql-fill:hover,
+.ql-snow .ql-picker:hover {
+  stroke: #f1f5f9 !important;
+  fill: #f1f5f9 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Active states for toolbar buttons */
+.ql-snow.ql-toolbar button:hover,
+.ql-snow.ql-toolbar button.ql-active {
+  color: #3b82f6 !important;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke {
+  stroke: #3b82f6 !important;
+}
+
+/* Tooltips & Pickers */
+.ql-snow .ql-tooltip {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+.ql-snow .ql-picker-options {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Expansion Styles (fallback if Tailwind doesn't catch them all) */
+#editor-backdrop {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }

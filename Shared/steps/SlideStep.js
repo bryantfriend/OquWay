@@ -2,6 +2,25 @@
 import BaseStep from './BaseStep.js';
 import { resolveLocalized } from './utils.js';
 
+// Helpers
+
+const ANIM_IN_MAP = {
+    fade: 'fade-in',
+    'slide-up': 'slide-up',
+    'slide-left': 'slide-left',
+    'scale-pop': 'scale-pop',
+    typewriter: 'typewriter'
+};
+
+const ANIM_OUT_MAP = {
+    'fade-out': 'fade-out',
+    'slide-away': 'slide-away',
+    shrink: 'shrink'
+};
+
+
+
+
 export default class SlideStep extends BaseStep {
     static get id() { return 'slideStep'; }
     static get version() { return '1.0.0'; }
@@ -50,9 +69,15 @@ export default class SlideStep extends BaseStep {
                             // --- CONTENT SECTION ---
                             sectionContent: { type: 'section', label: 'Content' },
 
+                            title: {
+                                key: 'title',
+                                label: 'Slide Title',
+                                type: 'localizedText',
+                                default: { en: '' }
+                            },
                             text: {
                                 key: 'text',
-                                label: 'Text Content',
+                                label: 'Body Text',
                                 type: 'localizedText',
                                 default: { en: 'Slide content goes here.' }
                             },
@@ -63,7 +88,7 @@ export default class SlideStep extends BaseStep {
                                     x: { type: 'number', label: 'X (%)', default: 50 },
                                     y: { type: 'number', label: 'Y (%)', default: 50 }
                                 },
-                                hidden: true // Hidden from properties, edited via Drag in Preview
+                                hidden: true
                             },
                             image: { type: 'image', label: 'Image URL' },
 
@@ -96,23 +121,34 @@ export default class SlideStep extends BaseStep {
                                 ]
                             },
 
-                            // Conditionals (Optional but kept for now)
+                            // Conditionals
                             hotspots: {
                                 key: 'hotspots',
                                 label: 'Hotspots Config',
                                 type: 'array',
+                                condition: (item) => item.interactionMode === 'hotspots',
                                 itemSchema: {
                                     type: 'object',
                                     fields: {
-                                        x: { type: 'number', label: 'X (%)' },
-                                        y: { type: 'number', label: 'Y (%)' },
+                                        x: { type: 'number', label: 'X (%)', hidden: true },
+                                        y: { type: 'number', label: 'Y (%)', hidden: true },
                                         label: { type: 'localizedText', label: 'Title' },
                                         description: { type: 'localizedText', label: 'Description' }
                                     }
                                 }
                             },
-                            secondaryImage: { type: 'image', label: 'Reveal Image (Drag Mode)', optional: true },
-                            duration: { type: 'number', label: 'Duration (Auto Mode)', default: 5 }
+                            secondaryImage: {
+                                type: 'image',
+                                label: 'Reveal Image (Drag Mode)',
+                                optional: true,
+                                condition: (item) => item.interactionMode === 'drag_reveal'
+                            },
+                            duration: {
+                                type: 'number',
+                                label: 'Duration (Auto Mode)',
+                                default: 5,
+                                condition: (item) => item.interactionMode === 'auto'
+                            }
                         }
                     }
                 }
@@ -121,7 +157,7 @@ export default class SlideStep extends BaseStep {
     }
 
     static render({ container, config, context, onComplete }) {
-        this.assertRenderArgs({ container });
+        BaseStep.assertRenderArgs({ container });
         const signalComplete = this.createCompletionGuard(onComplete);
 
         // Inject Styles if needed
@@ -139,23 +175,48 @@ export default class SlideStep extends BaseStep {
                 .mp-anim-slide-up { animation: slideUp 0.6s ease-out forwards; }
                 .mp-anim-slide-left { animation: slideLeft 0.5s ease-out forwards; }
                 .mp-anim-scale-pop { animation: scalePop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-                .mp-anim-typewriter { animation: typewriter 0.8s steps(40) forwards; overflow: hidden; white-space: nowrap; display: inline-block;}
+                .mp-anim-typewriter { animation: typewriter 0.8s steps(40) forwards; overflow: hidden; display: inline-block;}
                 
                 .mp-anim-out-fade-out { opacity: 0; transform: scale(1); transition: all 0.5s; }
                 .mp-anim-out-slide-away { transform: translateX(-100%); opacity: 0; transition: all 0.5s; }
                 .mp-anim-out-shrink { transform: scale(0.5); opacity: 0; transition: all 0.5s; }
+                
+                .mp-drag-hint { border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px; position: relative; pointer-events: auto !important; }
+                .mp-drag-hint::after { content: 'Shift+Drag to move'; position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; white-space: nowrap; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+                .mp-drag-hint:hover::after { opacity: 1; }
+
+                .step-title { word-break: break-word; max-width: 95%; }
+
+                @media (max-width: 640px) {
+                    .mp-slide-text-el { font-size: 1.75rem !important; line-height: 1.2 !important; }
+                    .mp-slide-title-el { font-size: 1rem !important; }
+                    .mp-progress-hud { top: 1rem !important; left: 1rem !important; right: 1rem !important; }
+                }
+                
+                .mp-hotspot-touch-area { 
+                    width: 60px; height: 60px; 
+                    display: flex; items-center; justify-center; 
+                    pointer-events: auto; transform: translate(-50%, -50%);
+                }
             `;
             document.head.appendChild(style);
         }
 
+        // --- CLEANUP PREVIOUS RENDER ---
+        const previousCleanup = container.cleanup;
+        if (previousCleanup) previousCleanup();
+
+
         container.innerHTML = `
             <div class="mp-wrapper w-full h-full bg-slate-900 text-white overflow-hidden relative font-sans select-none flex flex-col items-center justify-center rounded-xl shadow-2xl">
-                <div id="mp-slide-container" class="relative w-full h-full max-w-4xl aspect-video bg-slate-800 overflow-hidden flex items-center justify-center group">
+                <div id="mp-slide-container" class="relative w-full h-full max-w-5xl aspect-video sm:aspect-video bg-slate-800 overflow-hidden flex items-center justify-center group">
+                    <!-- On mobile, if we are in portrait, the aspect-video might be too short. 
+                         However, for slides, 16:9 is standard. We just ensure it doesn't shrink TOO much. -->
                     <!-- Slide Content Injected Here -->
                 </div>
                 
                  <!-- Overlay HUD -->
-                <div class="absolute top-6 left-6 right-6 flex justify-between items-center pointer-events-none z-20">
+                <div class="mp-progress-hud absolute top-6 left-6 right-6 flex justify-between items-center pointer-events-none z-20">
                     <div id="mp-progress" class="flex gap-1.5 p-1 bg-black/20 backdrop-blur-sm rounded-full px-3">
                         <!-- Progress dots -->
                     </div>
@@ -174,22 +235,20 @@ export default class SlideStep extends BaseStep {
 
         // Initialize state
         let state = {
-            currentIdx: 0,
+            currentIdx: container._slideIdx || 0,
             animState: 'in', // 'in', 'out'
             slides: config.slides || [],
             completed: false,
-            history: []
+            history: [],
+            autoTimeout: null
         };
 
         // --- EDITOR SYNC LISTENER ---
-        // Listen for slide selection changes from SlideListField
         const onSlideChange = (e) => {
-            // Check if this event is for ME (or global if we don't have ID check yet)
-            // Ideally check e.detail.stepId === context.stepId if available.
-            // For now, simple index update.
             if (e.detail && typeof e.detail.index === 'number') {
                 if (state.currentIdx !== e.detail.index) {
                     state.currentIdx = e.detail.index;
+                    container._slideIdx = state.currentIdx; // Save for persistence
                     state.animState = 'in';
                     renderSlide();
                 }
@@ -197,11 +256,23 @@ export default class SlideStep extends BaseStep {
         };
         window.addEventListener('slide-step-change', onSlideChange);
 
+        // --- CLEANUP ---
+        container.cleanup = () => {
+            if (state.autoTimeout) clearTimeout(state.autoTimeout);
+            window.removeEventListener('slide-step-change', onSlideChange);
+
+            const wrapper = slideContainer.firstElementChild;
+            if (wrapper && wrapper._cleanup) wrapper._cleanup();
+
+            if (previousCleanup) previousCleanup();
+            container.cleanup = null;
+        };
+
+
 
         // --- Render Helpers ---
 
         const renderProgress = () => {
-            // ... (Keep existing progress logic or simplify if needed) ...
             if (!progressContainer) return;
             progressContainer.innerHTML = state.slides.map((_, i) => `
                 <div class="h-1.5 rounded-full transition-all duration-300 ${i === state.currentIdx ? 'w-6 bg-indigo-500' : i < state.currentIdx ? 'w-1.5 bg-white/40' : 'w-1.5 bg-white/10'
@@ -211,10 +282,13 @@ export default class SlideStep extends BaseStep {
 
         const getAnimClass = (slide) => {
             if (state.animState === 'out') {
-                return `mp-anim-out-${slide.animationOut || 'fade-out'}`;
+                const out = ANIM_OUT_MAP[slide.animationOut] || 'fade-out';
+                return `mp-anim-out-${out}`;
             }
-            return `mp-anim-${slide.animationIn || 'fade'}`;
+            const anim = ANIM_IN_MAP[slide.animationIn] || 'fade-in';
+            return `mp-anim-${anim}`;
         };
+
 
         const renderSlide = () => {
             if (state.completed) {
@@ -223,33 +297,80 @@ export default class SlideStep extends BaseStep {
             }
 
             const slide = state.slides[state.currentIdx];
-            if (!slide) return;
+            if (!slide.id) {
+                slide.id = `slide_${state.currentIdx}_${Date.now()}`;
+            }
+
+
+            // --- DATA SANITY ---
+            // If slide has numerical keys from a previous bug, they might conflict
+            // However, inside SlideStep we focus on the slide object itself.
 
             // Localized Content
-            const slideText = resolveLocalized(slide.text, context.language);
+            const slideTitle = resolveLocalized(slide.title, context.language || context.lang);
+            const slideText = resolveLocalized(slide.text, context.language || context.lang);
 
             // Positioning (Default center 50,50)
             const tx = slide.textPos ? slide.textPos.x : 50;
             const ty = slide.textPos ? slide.textPos.y : 50;
 
-            // Clear previous
+            // --- TARGETED UPDATE ---
+            let wrapper = slideContainer.querySelector('.mp-slide-wrapper');
+            if (wrapper && wrapper.dataset.slideId === slide.id) {
+
+                wrapper.style.animation = 'none';
+                wrapper.getBoundingClientRect(); // force reflow
+                wrapper.style.animation = '';
+
+                const titleEl = wrapper.querySelector('.mp-slide-title-el');
+                if (titleEl && titleEl.innerHTML !== slideTitle) {
+                    titleEl.innerHTML = slideTitle;
+                    titleEl.style.display = slideTitle ? 'block' : 'none';
+                }
+                const textEl = wrapper.querySelector('.mp-slide-text-el');
+                if (textEl && textEl.innerHTML !== slideText) {
+                    textEl.innerHTML = slideText;
+                }
+                const imgEl = wrapper.querySelector('.mp-slide-image-el');
+                if (imgEl && imgEl.src !== slide.image) {
+                    imgEl.src = slide.image || '';
+                }
+
+                // Update position
+                const textContainer = wrapper.querySelector('#mp-text-content');
+                if (textContainer) {
+                    textContainer.style.left = `${tx}%`;
+                    textContainer.style.top = `${ty}%`;
+                }
+
+                // Interaction area might need full refresh if type changed
+                const interactionArea = wrapper.querySelector('#mp-interaction-area');
+                if (interactionArea) {
+                    interactionArea.innerHTML = '';
+                    renderInteractionOrnaments(interactionArea, wrapper, slide);
+                }
+                return;
+            }
+
+            // Clear previous if not matched
             slideContainer.innerHTML = '';
 
-            const wrapper = document.createElement('div');
-            // We remove flex items-center justify-center to allow absolute positioning of children
-            wrapper.className = `relative w-full h-full transition-all ${getAnimClass(slide)} ${slide.interactionMode === 'tap_anywhere' ? 'cursor-pointer' : ''}`;
+            wrapper = document.createElement('div');
+            wrapper.className = `mp-slide-wrapper relative w-full h-full transition-all ${getAnimClass(slide)} ${slide.interactionMode === 'tap_anywhere' ? 'cursor-pointer' : ''}`;
+            wrapper.dataset.slideId = slide.id;
 
             // Background
             wrapper.innerHTML = `
                 <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-                    <img src="${slide.image || ''}" class="w-full h-full object-cover opacity-60 transition-transform duration-[10s] ease-linear scale-110 group-hover:scale-100" />
+                    <img src="${slide.image || ''}" class="mp-slide-image-el w-full h-full object-cover opacity-60 transition-transform duration-[10s] ease-linear scale-110 group-hover:scale-100" />
                     <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900/40"></div>
                 </div>
                 <!-- Content (Draggable) -->
-                <div id="mp-text-content" class="absolute z-10 w-full max-w-2xl text-center pointer-events-none flex flex-col items-center" style="left: ${tx}%; top: ${ty}%; transform: translate(-50%, -50%);">
-                     <div class="text-3xl md:text-5xl font-bold leading-tight mb-8 drop-shadow-lg text-white step-title ${context.isEditor ? 'hover:outline hover:outline-dashed hover:outline-white/50 cursor-move pointer-events-auto rounded p-2' : ''}">${slideText}</div>
-                     <div id="mp-interaction-area" class="w-full flex justify-center mt-4 pointer-events-auto"></div>
+                <div id="mp-text-content" class="absolute z-10 w-full p-4 text-center pointer-events-none flex flex-col items-center" style="left: ${tx}%; top: ${ty}%; transform: translate(-50%, -50%);">
+                     <div class="mp-slide-title-el text-xl md:text-2xl font-medium mb-2 opacity-90 drop-shadow-md text-white/80 ${slideTitle ? '' : 'hidden'}">${slideTitle}</div>
+                     <div class="mp-slide-text-el text-3xl md:text-5xl font-bold leading-tight mb-8 drop-shadow-lg text-white step-title ${context.isEditor || context.mode === 'creator' ? 'pointer-events-auto rounded p-2 mp-drag-hint' : ''}">${slideText}</div>
                 </div>
+                <div id="mp-interaction-area" class="absolute inset-0 z-20 flex justify-center items-center pointer-events-none"></div>
             `;
 
             // Logic binds
@@ -285,15 +406,16 @@ export default class SlideStep extends BaseStep {
             renderInteractionOrnaments(interactionArea, wrapper, slide); // Pass wrapper for hotspots
 
             // --- DRAGGABLE TEXT LOGIC (EDITOR ONLY) ---
-            if (context.isEditor) {
+            if (context.isEditor || context.mode === 'creator') {
                 const textBlock = wrapper.querySelector('#mp-text-content');
                 const titleEl = textBlock.querySelector('.step-title');
 
                 let isDragging = false;
 
                 titleEl.onmousedown = (e) => {
+                    if (!e.shiftKey) return;
                     e.preventDefault();
-                    e.stopPropagation(); // Don't trigger slide click
+                    e.stopPropagation();
                     isDragging = true;
 
                     const onMove = (moveEv) => {
@@ -311,8 +433,8 @@ export default class SlideStep extends BaseStep {
 
                         // Save Coords
                         const rect = slideContainer.getBoundingClientRect();
-                        const x = ((upEv.clientX - rect.left) / rect.width) * 100;
-                        const y = ((upEv.clientY - rect.top) / rect.height) * 100;
+                        const x = Math.round(((upEv.clientX - rect.left) / rect.width) * 100);
+                        const y = Math.round(((upEv.clientY - rect.top) / rect.height) * 100);
 
                         if (typeof context.onUpdate === 'function') {
                             const newSlides = JSON.parse(JSON.stringify(config.slides));
@@ -331,7 +453,8 @@ export default class SlideStep extends BaseStep {
 
             // Auto Advance
             if (slide.interactionMode === 'auto' && state.animState === 'in') {
-                setTimeout(handleNext, (slide.duration || 3) * 1000);
+                if (state.autoTimeout) clearTimeout(state.autoTimeout);
+                state.autoTimeout = setTimeout(handleNext, (slide.duration || 5) * 1000);
             }
         };
 
@@ -339,7 +462,7 @@ export default class SlideStep extends BaseStep {
             // Button Mode
             if (slide.interactionMode === 'button') {
                 const btn = document.createElement('button');
-                btn.className = "bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-2xl text-xl font-bold shadow-xl shadow-indigo-500/20 active:scale-95 transition-transform pointer-events-auto";
+                btn.className = "bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-2xl text-xl font-bold shadow-xl shadow-indigo-500/20 active:scale-95 transition-transform pointer-events-auto mt-auto mb-12";
                 btn.textContent = "Got it!";
                 btn.onclick = (e) => { e.stopPropagation(); handleNext(); };
                 area.appendChild(btn);
@@ -348,7 +471,7 @@ export default class SlideStep extends BaseStep {
             // Emoji Mode
             if (slide.interactionMode === 'emoji') {
                 const container = document.createElement('div');
-                container.className = "flex gap-4 p-4 bg-black/20 backdrop-blur-xl rounded-3xl border border-white/10 pointer-events-auto";
+                container.className = "flex gap-4 p-4 bg-black/20 backdrop-blur-xl rounded-3xl border border-white/10 pointer-events-auto mt-auto mb-12";
                 (slide.emojis || ['👍', '👎']).forEach(emoji => {
                     const btn = document.createElement('button');
                     btn.className = "text-4xl hover:scale-125 active:scale-90 transition-transform p-2 grayscale hover:grayscale-0";
@@ -426,8 +549,8 @@ export default class SlideStep extends BaseStep {
             // Hotspots Mode
             if (slide.interactionMode === 'hotspots') {
                 const container = document.createElement('div');
-                container.className = "absolute inset-0 pointer-events-none"; // Overlays entire slide
-                wrapper.appendChild(container); // Append to wrapper
+                container.className = "relative w-full h-full pointer-events-none";
+                area.appendChild(container);
 
                 const isEditor = context.isEditor;
 
@@ -435,22 +558,21 @@ export default class SlideStep extends BaseStep {
                     const point = document.createElement('div');
                     point.style.left = `${hs.x}%`;
                     point.style.top = `${hs.y}%`;
-                    point.className = "absolute pointer-events-auto";
+                    point.className = "absolute mp-hotspot-touch-area";
                     point.innerHTML = `
-                         <button class="w-10 h-10 rounded-full flex items-center justify-center transition-all border-2 bg-indigo-500/40 backdrop-blur-md text-white border-white/50 animate-pulse hover:bg-white hover:text-indigo-600 hover:scale-125 hover:border-indigo-500 shadow-lg cursor-pointer">
+                         <button class="w-10 h-10 rounded-full flex items-center justify-center transition-all border-2 bg-indigo-500/40 backdrop-blur-md text-white border-white/50 animate-pulse hover:bg-white hover:text-indigo-600 hover:scale-125 hover:border-indigo-500 shadow-lg cursor-pointer mp-drag-hint" title="Shift+Drag to move">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
                          </button>
                     `;
 
-                    // Editor Drag Logic
                     if (isEditor) {
                         const btn = point.querySelector('button');
                         btn.style.cursor = 'move';
-                        btn.title = 'Drag to move';
 
                         let isDragging = false;
 
                         btn.onmousedown = (e) => {
+                            if (!e.shiftKey) return;
                             e.stopPropagation();
                             e.preventDefault();
                             isDragging = true;
@@ -474,9 +596,8 @@ export default class SlideStep extends BaseStep {
 
                                 if (typeof context.onUpdate === 'function') {
                                     const newSlides = JSON.parse(JSON.stringify(config.slides));
-                                    // Ensure structure exists
                                     if (!newSlides[state.currentIdx].hotspots) newSlides[state.currentIdx].hotspots = [];
-                                    if (!newSlides[state.currentIdx].hotspots[index]) return; // Safety
+                                    if (!newSlides[state.currentIdx].hotspots[index]) return;
 
                                     newSlides[state.currentIdx].hotspots[index].x = x;
                                     newSlides[state.currentIdx].hotspots[index].y = y;
@@ -488,14 +609,11 @@ export default class SlideStep extends BaseStep {
                             window.addEventListener('mouseup', onUp);
                         };
 
-                        // Prevent click on drag
                         btn.onclick = (e) => e.stopPropagation();
                     } else {
-                        // Standard Interaction (Player)
                         point.querySelector('button').onclick = (e) => {
                             e.stopPropagation();
 
-                            // Close others
                             const others = container.querySelectorAll('.mp-hotspot-popup');
                             let wasOpen = false;
                             others.forEach(p => {
@@ -504,21 +622,34 @@ export default class SlideStep extends BaseStep {
                             });
 
                             if (!wasOpen) {
-                                const label = resolveLocalized(hs.label, context.language);
-                                const desc = resolveLocalized(hs.description, context.language);
+                                const label = resolveLocalized(hs.label, context.language || context.lang);
+                                const desc = resolveLocalized(hs.description, context.language || context.lang);
 
                                 const popup = document.createElement('div');
-                                popup.className = "mp-hotspot-popup absolute top-12 left-1/2 -translate-x-1/2 w-48 p-4 bg-white text-slate-900 rounded-xl shadow-2xl z-20 animate-scale-pop text-left cursor-default";
+                                // Move slightly higher and adaptive width for mobile
+                                popup.className = "mp-hotspot-popup absolute bottom-12 left-1/2 -translate-x-1/2 w-48 sm:w-64 p-4 bg-white text-slate-900 rounded-xl shadow-2xl z-20 animate-scale-pop text-left cursor-default";
                                 popup.innerHTML = `
-                                    <p class="font-bold text-sm mb-1">${label}</p>
-                                    <p class="text-xs opacity-70 leading-relaxed mb-3">${desc}</p>
+                                    <p class="font-bold text-sm mb-1">${label || 'Info'}</p>
+                                    <p class="text-xs opacity-70 leading-relaxed mb-3">${desc || ''}</p>
                                 `;
                                 const nextBtn = document.createElement('button');
-                                nextBtn.className = "w-full py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors";
+                                nextBtn.className = "w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors";
                                 nextBtn.textContent = "Next Step";
                                 nextBtn.onclick = handleNext;
                                 popup.appendChild(nextBtn);
                                 point.appendChild(popup);
+
+                                // Sanity check for screen edges
+                                setTimeout(() => {
+                                    const rect = popup.getBoundingClientRect();
+                                    const containerRect = container.getBoundingClientRect();
+                                    if (rect.left < containerRect.left) popup.style.left = '0%';
+                                    if (rect.right > containerRect.right) {
+                                        popup.style.left = 'auto';
+                                        popup.style.right = '0%';
+                                        popup.style.transform = 'translateY(-100%)'; // Just a simple flip or nudge
+                                    }
+                                }, 0);
                             }
                         };
                     }
@@ -529,12 +660,12 @@ export default class SlideStep extends BaseStep {
 
         const renderCompletion = () => {
             slideContainer.innerHTML = `
-                <div class="flex flex-col items-center text-center max-w-md animate-scale-pop bg-slate-800 p-12 rounded-[2.5rem] border border-slate-700 shadow-2xl z-20">
-                    <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-green-500/20">
-                        <svg class="text-white w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <div class="flex flex-col items-center text-center max-w-md animate-scale-pop bg-slate-800 p-8 sm:p-12 rounded-3xl sm:rounded-[2.5rem] border border-slate-700 shadow-2xl z-20 m-4">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-green-500/20">
+                        <svg class="text-white w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     </div>
-                    <h2 class="text-4xl font-bold mb-3 text-white">Great Job!</h2>
-                    <p class="text-slate-400 mb-8 leading-relaxed">
+                    <h2 class="text-3xl sm:text-4xl font-bold mb-3 text-white">Great Job!</h2>
+                    <p class="text-slate-400 mb-8 leading-relaxed text-sm sm:text-base">
                         You've completed the Motion Primer. You viewed all ${state.slides.length} concepts.
                     </p>
                     <button id="mp-btn-finish" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 text-white">
@@ -549,15 +680,12 @@ export default class SlideStep extends BaseStep {
                 reset();
             };
 
-            // SIGNAL COMPLETION
             signalComplete({
                 success: true,
                 slidesViewed: state.slides.length,
-                duration: state.history.length * 3 // Approx
+                duration: state.history.length * 3
             });
         };
-
-        // --- Logic ---
 
         const handleNext = () => {
             if (state.animState === 'out') return;
@@ -565,29 +693,33 @@ export default class SlideStep extends BaseStep {
             state.animState = 'out';
             const wrapper = slideContainer.firstElementChild;
             if (wrapper) {
-                // Apply Exit Class
                 const slide = state.slides[state.currentIdx];
                 wrapper.className = `relative w-full h-full flex flex-col items-center justify-center transition-all ${getAnimClass(slide)}`;
-
-                // Cleanup listeners if any
                 if (wrapper._cleanup) wrapper._cleanup();
             }
 
             setTimeout(() => {
                 if (state.currentIdx < state.slides.length - 1) {
                     state.currentIdx++;
+                    container._slideIdx = state.currentIdx; // Persist
                     state.animState = 'in';
                     state.history.push({ slideId: state.slides[state.currentIdx - 1].id, timestamp: Date.now() });
                     renderProgress();
                     renderSlide();
+
+                    // SYNC BACK TO EDITOR PROPERTIES
+                    window.dispatchEvent(new CustomEvent('slide-step-change', {
+                        detail: { stepId: context.stepId, index: state.currentIdx, source: 'preview' }
+                    }));
                 } else {
                     state.completed = true;
-                    renderSlide(); // Renders completion
+                    renderSlide();
                 }
             }, 500);
         };
 
         const reset = () => {
+            if (state.autoTimeout) clearTimeout(state.autoTimeout);
             state.currentIdx = 0;
             state.animState = 'in';
             state.completed = false;
@@ -596,16 +728,8 @@ export default class SlideStep extends BaseStep {
             renderSlide();
         };
 
-        // Init
         restartBtn.onclick = reset;
         renderProgress();
         renderSlide();
-
-        // Register Global Cleanup
-        container.cleanup = () => {
-            // If any global listeners were added, remove them
-            const wrapper = slideContainer.firstElementChild;
-            if (wrapper && wrapper._cleanup) wrapper._cleanup();
-        };
     }
 }

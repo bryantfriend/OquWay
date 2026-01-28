@@ -1,9 +1,39 @@
 import FieldRegistry from './Fields/index.js';
 
 export default class FieldEngine {
-  static render(container, schema, value, onChange, context, path = 'root') {
+  static render(container, schema, value, onChange, context, path = 'root', parentValue = null) {
     if (!schema) return;
 
+    // --- CLEANUP PREVIOUS INSTANCE ---
+    const activePaths = context?._activeFieldPaths || new Set();
+    const isThisFieldActive = activePaths.has(path);
+
+    if (
+      typeof container.cleanup === 'function' &&
+      container.dataset.feLastPath !== path &&
+      !isThisFieldActive
+    ) {
+      try {
+        container.cleanup();
+      } catch (e) {
+        console.warn('FieldEngine: Cleanup failed', e);
+      }
+      delete container.cleanup;
+    }
+
+    // Handle Hidden
+    if (schema.hidden === true) {
+      container.innerHTML = '';
+      return;
+    }
+
+    // Handle Condition
+    if (typeof schema.condition === 'function' && parentValue) {
+      if (!schema.condition(parentValue)) {
+        container.innerHTML = '';
+        return;
+      }
+    }
 
     const FieldClass = FieldRegistry.get(schema);
     if (!FieldClass) {
@@ -19,8 +49,13 @@ export default class FieldEngine {
     // Reconcile wrapper
     let wrapper = container.querySelector(`[data-fe-path="${path}"]`);
     if (!wrapper) {
+      // If container was used for a different path before, clear it
+      if (container.dataset.feLastPath && container.dataset.feLastPath !== path) {
+        container.innerHTML = '';
+      }
       wrapper = document.createElement('div');
       wrapper.dataset.fePath = path;
+      container.dataset.feLastPath = path;
       wrapper.className = 'field-wrapper space-y-1';
       container.appendChild(wrapper);
     }
@@ -35,7 +70,12 @@ export default class FieldEngine {
 
     field.render(wrapper);
 
-    container.cleanup = () => field.cleanup(wrapper);
+    // Store cleanup on the container so it can be called next time
+    container.cleanup = () => {
+      if (typeof field.cleanup === 'function') {
+        field.cleanup(wrapper);
+      }
+    };
   }
 
   static showValidation(container, errors = []) {
